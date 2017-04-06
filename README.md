@@ -1,2 +1,2 @@
-# InSituVisualization
-In-situ Visualization Softwares based KVS
+# In-Situ Visualization
+In-situ Visualization based on KVS
