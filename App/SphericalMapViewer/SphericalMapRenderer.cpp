@@ -62,7 +62,9 @@ void SphericalMapRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, k
 
     BaseClass::startTimer();
 
+//    kvs::OpenGL::SetClearDepth( 1.0 );
     kvs::OpenGL::Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
     kvs::OpenGL::WithPushedAttrib p( GL_ALL_ATTRIB_BITS );
     {
         kvs::OpenGL::Disable( GL_DEPTH_TEST );
@@ -74,6 +76,7 @@ void SphericalMapRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, k
         kvs::Texture::Binder unit( m_texture, 0 );
 
         m_shader_program.setUniform( "spherical_map", 0 );
+        m_shader_program.setUniform( "R", object->xform().rotation() );
         m_shader_program.setUniform( "image_size", kvs::Vec2( image->width(), image->height() ) );
         m_shader_program.setUniform( "screen_size", kvs::Vec2( camera->windowWidth(), camera->windowHeight() ) );
 
@@ -150,6 +153,10 @@ void SphericalMapRenderer::create_texture( const kvs::ImageObject* image )
     }
 
     kvs::Texture::SetEnv( GL_TEXTURE_ENV_MODE, GL_REPLACE );
+    m_texture.setWrapS( GL_REPEAT );
+    m_texture.setWrapT( GL_REPEAT );
+    m_texture.setMagFilter( GL_LINEAR );
+    m_texture.setMinFilter( GL_LINEAR );
     m_texture.create( image->width(), image->height(), image->pixels().data() );
 }
 

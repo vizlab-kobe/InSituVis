@@ -7,6 +7,7 @@ const float DEG2RAD = 0.01745329251994329576923690768489;
 const float hfovDegrees = 90.0;
 const float vfovDegrees = 90.0;
 
+uniform mat3 R;
 uniform vec2 image_size;
 uniform vec2 screen_size;
 uniform sampler2D spherical_map;
@@ -24,7 +25,7 @@ void main()
     vec2 uv = gl_FragCoord.xy * 2.0 / screen_size.xy - 1.0;
     vec3 dir = normalize(vec3(uv.xy * vec2(tan(0.5 * hfovDegrees * DEG2RAD), tan(0.5 * vfovDegrees * DEG2RAD)), 1.0));
     vec3 rot = vec3( ( ( vec2( 1024, 768 ) / image_size.xy ) - 0.5 ) * vec2( 2.0 * PI,  PI ), 0.0 );
-    vec3 rd = normalize(rotateXY(dir, rot.yx));
+    vec3 rd = normalize(rotateXY(dir*R, rot.yx));
 
     vec2 tex_coord = vec2( atan( rd.z, rd.x ) + PI, acos( -rd.y ) ) / vec2( 2.0 * PI, PI );
     gl_FragColor = LookupTexture2D( spherical_map, tex_coord );
