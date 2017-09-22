@@ -1,2 +1,2 @@
 #!/bin/sh
-./SphericalMapViewer output_sphe.bmp
+./SphericalMapViewer test_sphe.bmp

@@ -1,5 +1,3 @@
-#include <KVS.osmesa/Lib/OSMesa.h>
-#include <KVS.osmesa/Lib/Screen.h>
 #include <kvs/StructuredVolumeObject>
 #include <kvs/TornadoVolumeData>
 #include <kvs/PolygonObject>
@@ -9,6 +7,8 @@
 #include <kvs/Tubeline>
 #include <kvs/DivergingColorMap>
 #include <kvs/Timer>
+#include <KVS.osmesa/Lib/OSMesa.h>
+#include <KVS.osmesa/Lib/Screen.h>
 #include <KVS.osmesa/Lib/CubicImages.h>
 
 
