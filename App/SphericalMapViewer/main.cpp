@@ -3,10 +3,14 @@
 #include <kvs/ImageObject>
 #include <kvs/ImageRenderer>
 #include <kvs/ImageImporter>
-#include "SphericalMapRenderer.h"
+#include <kvs/ShaderSource>
+#include <InSituVisualization/Lib/SphericalMapRenderer.h>
+
 
 int main( int argc, char** argv )
 {
+    kvs::ShaderSource::AddSearchPath("../../Lib");
+
     kvs::glut::Application app( argc, argv );
 
     kvs::glut::Screen screen1( &app );
@@ -23,7 +27,7 @@ int main( int argc, char** argv )
     screen2.show();
     {
         kvs::ImageObject* object = new kvs::ImageImporter( argv[1] );
-        kvs::SphericalMapRenderer* renderer = new kvs::SphericalMapRenderer();
+        InSituVis::SphericalMapRenderer* renderer = new InSituVis::SphericalMapRenderer();
         screen2.registerObject( object, renderer );
     }
 
