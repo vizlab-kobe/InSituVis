@@ -4,7 +4,7 @@
 #include <kvs/ImageRenderer>
 #include <kvs/ImageImporter>
 #include <kvs/ShaderSource>
-#include <InSituVisualization/Lib/SphericalMapRenderer.h>
+#include <InSituVis/Lib/SphericalMapRenderer.h>
 
 
 int main( int argc, char** argv )
