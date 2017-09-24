@@ -1,6 +1,7 @@
 #pragma once
 #include <kvs/ObjectBase>
 #include <kvs/Module>
+#include <kvs/SharedPointer>
 #include <kvs/opencv/CaptureDevice>
 #include <string>
 
@@ -23,6 +24,8 @@ class MovieObject : public kvs::ObjectBase
     kvsModuleBaseClass( kvs::ObjectBase );
 
 public:
+    typedef kvs::SharedPointer<kvs::opencv::CaptureDevice> CaptureDevice;
+
     enum PixelType
     {
         Gray8 = 8, ///< 8 bit gray pixel
@@ -31,7 +34,7 @@ public:
 
 private:
     int m_device_id; ///< capture device ID
-    kvs::opencv::CaptureDevice m_device; ///< video capture device
+    CaptureDevice m_device; ///< video capture device
     PixelType m_type; ///< pixel type
     size_t m_width; ///< capture widht
     size_t m_height; ///< capture height
@@ -43,8 +46,10 @@ public:
     virtual ~MovieObject() {}
 
     ObjectType objectType() const;
+    void shallowCopy( const MovieObject& other );
+
     int deviceID() const { return m_device_id; }
-    const kvs::opencv::CaptureDevice& device() const { return m_device; }
+    const kvs::opencv::CaptureDevice& device() const { return *( m_device.get() ); }
     PixelType type() const { return m_type; }
     size_t width() const { return m_width; }
     size_t height() const { return m_height; }

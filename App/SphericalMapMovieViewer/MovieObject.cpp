@@ -14,6 +14,7 @@ namespace opencv
 /*===========================================================================*/
 MovieObject::MovieObject():
     m_device_id( CV_CAP_ANY ),
+    m_device( new kvs::opencv::CaptureDevice() ),
     m_type( local::opencv::MovieObject::Color24 )
 {
 }
@@ -25,7 +26,8 @@ MovieObject::MovieObject():
  */
 /*===========================================================================*/
 MovieObject::MovieObject( const std::string& filename ):
-    m_device_id( CV_CAP_ANY )
+    m_device_id( CV_CAP_ANY ),
+    m_device( new kvs::opencv::CaptureDevice() )
 {
     if ( !this->initialize( filename ) )
     {
@@ -44,6 +46,17 @@ kvs::ObjectBase::ObjectType MovieObject::objectType() const
     return kvs::ObjectBase::Image;
 }
 
+void MovieObject::shallowCopy( const MovieObject& other )
+{
+    BaseClass::operator=( other );
+    m_device_id = other.m_device_id;
+    m_device = other.m_device;
+    m_type = other.m_type;
+    m_width = other.m_width;
+    m_height = other.m_height;
+    m_nchannels = other.m_nchannels;
+}
+
 /*===========================================================================*/
 /**
  *  @brief  Initialize the video object.
@@ -53,13 +66,13 @@ kvs::ObjectBase::ObjectType MovieObject::objectType() const
 /*===========================================================================*/
 const bool MovieObject::initialize( const std::string& filename )
 {
-    if ( !m_device.create( filename ) )
+    if ( !m_device->create( filename ) )
     {
         kvsMessageError("Cannot create a capture device for %s.", filename.c_str() );
         return false;
     }
 
-    const IplImage* frame = m_device.queryFrame();
+    const IplImage* frame = m_device->queryFrame();
     if ( !frame )
     {
         kvsMessageError("Cannot query a new frame from the capture device.");
