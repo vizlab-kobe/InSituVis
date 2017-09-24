@@ -5,15 +5,14 @@
 #include <kvs/Module>
 #include "MovieObject.h"
 
-
-namespace local
+namespace kvs
 {
+class ObjectBase;
+class Camera;
+class Light;
+}
 
-class kvs::ObjectBase;
-class kvs::Camera;
-class kvs::Light;
-
-namespace opencv
+namespace InSituVis
 {
 
 /*===========================================================================*/
@@ -23,7 +22,7 @@ namespace opencv
 /*===========================================================================*/
 class MovieRenderer : public kvs::RendererBase
 {
-    kvsModuleName( local::opencv::MovieRenderer );
+    kvsModuleName( InSituVis::MovieRenderer );
     kvsModuleCategory( Renderer );
     kvsModuleBaseClass( kvs::RendererBase );
 
@@ -50,11 +49,9 @@ public:
     void exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light );
 
 private:
-    void create_texture( const local::opencv::MovieObject* movie );
+    void create_texture( const InSituVis::MovieObject* movie );
     void centering( const double width, const double height );
 };
 
-} // end of namespace opencv
-
-} // end of namespace local
+} // end of namespace InSituVis
 

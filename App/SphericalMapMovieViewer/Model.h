@@ -9,7 +9,7 @@ namespace local
 class Model
 {
 public:
-    typedef local::opencv::MovieObject Object;
+    typedef InSituVis::MovieObject Object;
     typedef kvs::SharedPointer<Object> ObjectPointer;
 
 private:

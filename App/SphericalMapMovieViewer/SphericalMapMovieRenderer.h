@@ -13,10 +13,7 @@ class Camera;
 class Light;
 }
 
-namespace local
-{
-
-namespace opencv
+namespace InSituVis
 {
 
 /*==========================================================================*/
@@ -26,7 +23,7 @@ namespace opencv
 /*==========================================================================*/
 class SphericalMapMovieRenderer : public kvs::RendererBase
 {
-    kvsModule( local::opencv::SphericalMapMovieRenderer, Renderer );
+    kvsModule( InSituVis::SphericalMapMovieRenderer, Renderer );
     kvsModuleBaseClass( kvs::RendererBase );
 
 public:
@@ -53,10 +50,8 @@ public:
 
 private:
     void create_shader_program();
-    void create_texture( const local::opencv::MovieObject* movie );
+    void create_texture( const InSituVis::MovieObject* movie );
     void center_alignment( const double width, const double height );
 };
 
-} // end of namespace opencv
-
-} // end of namespace local
+} // end of namespace InSituVis

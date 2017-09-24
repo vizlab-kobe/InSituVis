@@ -5,11 +5,7 @@
 #include <kvs/Vector2>
 #include <kvs/OpenGL>
 
-
-namespace local
-{
-
-namespace opencv
+namespace InSituVis
 {
 
 /*===========================================================================*/
@@ -45,7 +41,7 @@ void MovieRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Lig
     kvs::IgnoreUnusedVariable( light );
 
     BaseClass::startTimer();
-    local::opencv::MovieObject* video = reinterpret_cast<local::opencv::MovieObject*>( object );
+    InSituVis::MovieObject* video = reinterpret_cast<InSituVis::MovieObject*>( object );
 
     video->device().setNextFrameIndex( video->device().nextFrameIndex() - 1 );
 
@@ -121,7 +117,7 @@ void MovieRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Lig
  *  @param  video [in] pointer to the video object
  */
 /*===========================================================================*/
-void MovieRenderer::create_texture( const local::opencv::MovieObject* movie )
+void MovieRenderer::create_texture( const InSituVis::MovieObject* movie )
 {
     const double width  = movie->width();
     const double height = movie->height();
@@ -131,11 +127,11 @@ void MovieRenderer::create_texture( const local::opencv::MovieObject* movie )
     m_bottom = 0.0;
     m_top = 1.0;
 
-    if ( movie->type() == local::opencv::MovieObject::Gray8 )
+    if ( movie->type() == InSituVis::MovieObject::Gray8 )
     {
         m_texture.setPixelFormat( GL_INTENSITY8, GL_LUMINANCE, GL_UNSIGNED_BYTE );
     }
-    else if ( movie->type() == local::opencv::MovieObject::Color24 )
+    else if ( movie->type() == InSituVis::MovieObject::Color24 )
     {
 #ifdef GL_BGR_EXT
         m_texture.setPixelFormat( GL_RGB8, GL_BGR_EXT, GL_UNSIGNED_BYTE );
@@ -179,6 +175,4 @@ void MovieRenderer::centering( const double width, const double height )
     }
 }
 
-} // end of namespace opencv
-
-} // end of namespace local
+} // end of namespace InSituVis

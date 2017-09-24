@@ -26,14 +26,14 @@ void View::setup()
 {
     m_distorted_movie_screen.setTitle( "Equirectanglar movie" );
     {
-        typedef local::opencv::MovieRenderer Renderer;
+        typedef InSituVis::MovieRenderer Renderer;
         m_distorted_movie_screen.registerObject( m_model->object(), new Renderer() );
         m_distorted_movie_screen.addEvent( new IdleEvent() );
     }
 
     m_undistorted_movie_screen.setTitle( "Undistorted movie" );
     {
-        typedef local::opencv::SphericalMapMovieRenderer Renderer;
+        typedef InSituVis::SphericalMapMovieRenderer Renderer;
         m_undistorted_movie_screen.registerObject( m_model->object(), new Renderer() );
         m_undistorted_movie_screen.addEvent( new IdleEvent() );
     }

@@ -1,10 +1,7 @@
 #include "MovieObject.h"
 
 
-namespace local
-{
-
-namespace opencv
+namespace InSituVis
 {
 
 /*===========================================================================*/
@@ -15,7 +12,7 @@ namespace opencv
 MovieObject::MovieObject():
     m_device_id( CV_CAP_ANY ),
     m_device( new kvs::opencv::CaptureDevice() ),
-    m_type( local::opencv::MovieObject::Color24 )
+    m_type( InSituVis::MovieObject::Color24 )
 {
 }
 
@@ -95,6 +92,4 @@ const bool MovieObject::initialize( const std::string& filename )
     return true;
 }
 
-} // end of namespace opencv
-
-} // end of namespace local
+} // end of namespace InSituVis

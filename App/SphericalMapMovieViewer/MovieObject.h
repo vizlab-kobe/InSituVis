@@ -6,10 +6,7 @@
 #include <string>
 
 
-namespace local
-{
-
-namespace opencv
+namespace InSituVis
 {
 
 /*===========================================================================*/
@@ -19,7 +16,7 @@ namespace opencv
 /*===========================================================================*/
 class MovieObject : public kvs::ObjectBase
 {
-    kvsModuleName( local::opencv::MovieObject );
+    kvsModuleName( InSituVis::MovieObject );
     kvsModuleCategory( Object );
     kvsModuleBaseClass( kvs::ObjectBase );
 
@@ -59,6 +56,4 @@ public:
     const bool initialize( const std::string& filename );
 };
 
-} // end of namespace opencv
-
-} // end of namespace local
+} // end of namespace InSituVis

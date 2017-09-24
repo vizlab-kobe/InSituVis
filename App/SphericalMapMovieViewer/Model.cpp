@@ -10,7 +10,7 @@ Model::Model( const local::Input& input )
     if ( !file.exists() ) { throw; }
     if ( !file.isFile() ) { throw; }
 
-    m_object_pointer = ObjectPointer( new local::opencv::MovieObject( file.filePath() ) );
+    m_object_pointer = ObjectPointer( new InSituVis::MovieObject( file.filePath() ) );
 }
 
 Model::Object* Model::object() const
