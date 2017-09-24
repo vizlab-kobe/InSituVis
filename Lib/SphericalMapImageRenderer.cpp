@@ -1,4 +1,4 @@
-#include "SphericalMapRenderer.h"
+#include "SphericalMapImageRenderer.h"
 #include <kvs/Camera>
 #include <kvs/ImageObject>
 #include <kvs/Message>
@@ -12,21 +12,21 @@ namespace InSituVis
 
 /*==========================================================================*/
 /**
- *  @brief  Constructs a new SphericalMapRenderer class.
+ *  @brief  Constructs a new SphericalMapImageRenderer class.
  *  @param  type [in] rendering type
  */
 /*==========================================================================*/
-SphericalMapRenderer::SphericalMapRenderer( const SphericalMapRenderer::Type& type )
+SphericalMapImageRenderer::SphericalMapImageRenderer( const SphericalMapImageRenderer::Type& type )
 {
     m_type = type;
 }
 
 /*==========================================================================*/
 /**
- *  @brief  Destruct the SphericalMapRenderer class.
+ *  @brief  Destruct the SphericalMapImageRenderer class.
  */
 /*==========================================================================*/
-SphericalMapRenderer::~SphericalMapRenderer()
+SphericalMapImageRenderer::~SphericalMapImageRenderer()
 {
 }
 
@@ -38,7 +38,7 @@ SphericalMapRenderer::~SphericalMapRenderer()
  *  @param  light [in] pointer to the light
  */
 /*==========================================================================*/
-void SphericalMapRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light )
+void SphericalMapImageRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light )
 {
     kvs::IgnoreUnusedVariable( light );
 
@@ -100,7 +100,7 @@ void SphericalMapRenderer::exec( kvs::ObjectBase* object, kvs::Camera* camera, k
     BaseClass::stopTimer();
 }
 
-void SphericalMapRenderer::create_shader_program()
+void SphericalMapImageRenderer::create_shader_program()
 {
     kvs::ShaderSource vert("spherical_map.vert");
     kvs::ShaderSource frag("spherical_map.frag");
@@ -113,7 +113,7 @@ void SphericalMapRenderer::create_shader_program()
  *  @param  image [in] pointer to the image object
  */
 /*==========================================================================*/
-void SphericalMapRenderer::create_texture( const kvs::ImageObject* image )
+void SphericalMapImageRenderer::create_texture( const kvs::ImageObject* image )
 {
     const double width  = image->width();
     const double height = image->height();
@@ -167,7 +167,7 @@ void SphericalMapRenderer::create_texture( const kvs::ImageObject* image )
  *  @param  height [in] image height
  */
 /*==========================================================================*/
-void SphericalMapRenderer::center_alignment( const double width, const double height )
+void SphericalMapImageRenderer::center_alignment( const double width, const double height )
 {
     const double current_aspect_ratio = width / height;
     const double aspect_ratio = current_aspect_ratio / m_initial_aspect_ratio;

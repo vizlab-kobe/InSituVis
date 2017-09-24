@@ -1,7 +1,7 @@
 #include "View.h"
 #include <kvs/ImageObject>
 #include <kvs/ImageRenderer>
-#include <InSituVis/Lib/SphericalMapRenderer.h>
+#include <InSituVis/Lib/SphericalMapImageRenderer.h>
 
 namespace local
 {
@@ -26,7 +26,7 @@ void View::setup()
 
     m_undistorted_image_screen.setTitle( "Undistorted image" );
     {
-        typedef InSituVis::SphericalMapRenderer Renderer;
+        typedef InSituVis::SphericalMapImageRenderer Renderer;
         m_undistorted_image_screen.registerObject( m_model->object(), new Renderer() );
     }
 }

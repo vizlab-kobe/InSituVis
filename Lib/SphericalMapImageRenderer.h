@@ -18,9 +18,9 @@ class Light;
  *  Image renderer class.
  */
 /*==========================================================================*/
-class SphericalMapRenderer : public kvs::RendererBase
+class SphericalMapImageRenderer : public kvs::RendererBase
 {
-    kvsModule( InSituVis::SphericalMapRenderer, Renderer );
+    kvsModule( InSituVis::SphericalMapImageRenderer, Renderer );
     kvsModuleBaseClass( kvs::RendererBase );
 
 public:
@@ -41,8 +41,8 @@ private:
     kvs::ProgramObject m_shader_program; ///< shader program
 
 public:
-    SphericalMapRenderer( const Type& type = SphericalMapRenderer::Centering );
-    virtual ~SphericalMapRenderer();
+    SphericalMapImageRenderer( const Type& type = SphericalMapImageRenderer::Centering );
+    virtual ~SphericalMapImageRenderer();
     void exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light );
 
 private:
