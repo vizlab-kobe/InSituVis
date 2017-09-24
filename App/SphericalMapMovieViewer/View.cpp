@@ -24,14 +24,22 @@ View::View( local::Application* app, local::Model* model ):
 
 void View::setup()
 {
-    m_distorted_movie_screen.setTitle( "Equirectanglar movie" );
+    const size_t width = 512;
+    const size_t height = 512;
+    const size_t movie_width = m_model->objectPointer()->width();
+    const size_t movie_height = m_model->objectPointer()->height();
+    const float scale = float( movie_width ) / movie_height;
+
+    m_distorted_movie_screen.setTitle( "Source Movie" );
+    m_distorted_movie_screen.setSize( width * scale, height );
     {
         typedef InSituVis::MovieRenderer Renderer;
         m_distorted_movie_screen.registerObject( m_model->object(), new Renderer() );
         m_distorted_movie_screen.addEvent( new IdleEvent() );
     }
 
-    m_undistorted_movie_screen.setTitle( "Undistorted movie" );
+    m_undistorted_movie_screen.setTitle( "Cropped Movie" );
+    m_undistorted_movie_screen.setSize( width, height );
     {
         typedef InSituVis::SphericalMapMovieRenderer Renderer;
         m_undistorted_movie_screen.registerObject( m_model->object(), new Renderer() );

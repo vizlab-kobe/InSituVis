@@ -18,13 +18,21 @@ View::View( local::Application* app, local::Model* model ):
 
 void View::setup()
 {
-    m_distorted_image_screen.setTitle( "Equirectanglar image" );
+    const size_t width = 512;
+    const size_t height = 512;
+    const size_t image_width = m_model->objectPointer()->width();
+    const size_t image_height = m_model->objectPointer()->height();
+    const float scale = float( image_width ) / image_height;
+
+    m_distorted_image_screen.setTitle( "Source Image" );
+    m_distorted_image_screen.setSize( width * scale, height );
     {
         typedef kvs::ImageRenderer Renderer;
         m_distorted_image_screen.registerObject( m_model->object(), new Renderer() );
     }
 
-    m_undistorted_image_screen.setTitle( "Undistorted image" );
+    m_undistorted_image_screen.setTitle( "Cropped Image" );
+    m_undistorted_image_screen.setSize( width, height );
     {
         typedef InSituVis::SphericalMapImageRenderer Renderer;
         m_undistorted_image_screen.registerObject( m_model->object(), new Renderer() );

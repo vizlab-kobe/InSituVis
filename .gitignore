@@ -31,3 +31,7 @@
 *.kvs
 
 App/SphericalMapViewer/SphericalMapViewer
+
+App/SphericalMapImageViewer/SphericalMapImageViewer
+
+App/SphericalMapMovieViewer/SphericalMapMovieViewer
