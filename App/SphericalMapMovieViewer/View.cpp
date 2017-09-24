@@ -1,7 +1,7 @@
 #include "View.h"
-#include "MovieObject.h"
-#include "MovieRenderer.h"
-#include "SphericalMapMovieRenderer.h"
+#include <InSituVis/Lib/MovieObject.h>
+#include <InSituVis/Lib/MovieRenderer.h>
+#include <InSituVis/Lib/SphericalMapMovieRenderer.h>
 
 #include <kvs/IdleEventListener>
 class IdleEvent : public kvs::IdleEventListener

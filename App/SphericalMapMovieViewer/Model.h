@@ -1,7 +1,7 @@
 #pragma once
 #include "Input.h"
 #include <kvs/SharedPointer>
-#include "MovieObject.h"
+#include <InSituVis/Lib/MovieObject.h>
 
 namespace local
 {
