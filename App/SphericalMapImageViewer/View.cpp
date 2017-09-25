@@ -1,4 +1,5 @@
 #include "View.h"
+#include <kvs/Font>
 #include <kvs/ImageObject>
 #include <kvs/ImageRenderer>
 #include <InSituVis/Lib/SphericalMapImageRenderer.h>
@@ -9,7 +10,9 @@ namespace local
 View::View( local::Application* app, local::Model* model ):
     m_model( model ),
     m_distorted_image_screen( app ),
-    m_undistorted_image_screen( app )
+    m_undistorted_image_screen( app ),
+    m_distorted_image_info( &m_distorted_image_screen ),
+    m_undistorted_image_info( &m_undistorted_image_screen )
 {
     this->setup();
     this->layout();
@@ -37,6 +40,24 @@ void View::setup()
         typedef InSituVis::SphericalMapImageRenderer Renderer;
         m_undistorted_image_screen.registerObject( m_model->object(), new Renderer() );
     }
+
+    kvs::Font font;
+    font.setSize( 24 );
+    font.setFamilyToSans();
+    font.setStyleToBold();
+    font.setColor( kvs::RGBColor::White() );
+    font.setShadowColor( kvs::RGBColor::Black() );
+    font.setEnabledShadow( true );
+
+    m_distorted_image_info.setFont( font );
+    m_distorted_image_info.setMargin( 10 );
+    m_distorted_image_info.setText( "Filename: %s", m_model->filename().c_str() );
+    m_distorted_image_info.addText( "Image Size: %d x %d", image_width, image_height );
+
+    m_undistorted_image_info.setFont( font );
+    m_undistorted_image_info.setMargin( 10 );
+    m_undistorted_image_info.setText( "Filename: %s", m_model->filename().c_str() );
+    m_undistorted_image_info.addText( "Cropped Size: %d x %d", width, height );
 }
 
 void View::layout()
@@ -60,6 +81,9 @@ void View::show()
 {
     m_distorted_image_screen.show();
     m_undistorted_image_screen.show();
+
+    m_distorted_image_info.show();
+    m_undistorted_image_info.show();
 }
 
 } // end of namespace local

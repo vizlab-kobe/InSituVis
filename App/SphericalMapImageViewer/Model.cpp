@@ -11,7 +11,8 @@ Model::Model( const local::Input& input )
     if ( !file.exists() ) { throw; }
     if ( !file.isFile() ) { throw; }
 
-    m_object_pointer = ObjectPointer( new kvs::ImageImporter( file.filePath() ) );
+    m_filename = file.filePath();
+    m_object_pointer = ObjectPointer( new kvs::ImageImporter( m_filename ) );
 }
 
 Model::Object* Model::object() const
