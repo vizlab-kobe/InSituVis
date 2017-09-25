@@ -13,11 +13,13 @@ public:
     typedef kvs::SharedPointer<Object> ObjectPointer;
 
 private:
+    std::string m_filename;
     ObjectPointer m_object_pointer;
 
 public:
     Model( const local::Input& input );
 
+    const std::string& filename() const { return m_filename; }
     const ObjectPointer& objectPointer() const { return m_object_pointer; }
     Object* object() const;
 };

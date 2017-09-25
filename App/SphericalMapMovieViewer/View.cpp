@@ -1,4 +1,5 @@
 #include "View.h"
+#include <kvs/Font>
 #include <InSituVis/Lib/MovieObject.h>
 #include <InSituVis/Lib/MovieRenderer.h>
 #include <InSituVis/Lib/SphericalMapMovieRenderer.h>
@@ -15,7 +16,10 @@ namespace local
 View::View( local::Application* app, local::Model* model ):
     m_model( model ),
     m_distorted_movie_screen( app ),
-    m_undistorted_movie_screen( app )
+    m_undistorted_movie_screen( app ),
+    m_distorted_movie_info( &m_distorted_movie_screen ),
+    m_undistorted_movie_info( &m_undistorted_movie_screen )
+
 {
     this->setup();
     this->layout();
@@ -45,6 +49,24 @@ void View::setup()
         m_undistorted_movie_screen.registerObject( m_model->object(), new Renderer() );
         m_undistorted_movie_screen.addEvent( new IdleEvent() );
     }
+
+    kvs::Font font;
+    font.setSize( 24 );
+    font.setFamilyToSans();
+    font.setStyleToBold();
+    font.setColor( kvs::RGBColor::White() );
+    font.setShadowColor( kvs::RGBColor::Black() );
+    font.setEnabledShadow( true );
+
+    m_distorted_movie_info.setFont( font );
+    m_distorted_movie_info.setMargin( 10 );
+    m_distorted_movie_info.setText( "Filename: %s", m_model->filename().c_str() );
+    m_distorted_movie_info.addText( "Resolution: %d x %d", movie_width, movie_height );
+
+    m_undistorted_movie_info.setFont( font );
+    m_undistorted_movie_info.setMargin( 10 );
+    m_undistorted_movie_info.setText( "Filename: %s", m_model->filename().c_str() );
+    m_undistorted_movie_info.addText( "Resolution: %d x %d", width, height );
 }
 
 void View::layout()
@@ -68,6 +90,9 @@ void View::show()
 {
     m_distorted_movie_screen.show();
     m_undistorted_movie_screen.show();
+
+    m_distorted_movie_info.show();
+    m_undistorted_movie_info.show();
 }
 
 } // end of namespace local
