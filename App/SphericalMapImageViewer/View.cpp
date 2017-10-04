@@ -12,7 +12,7 @@ View::View( local::Application* app, local::Model* model ):
     m_distorted_image_screen( app ),
     m_undistorted_image_screen( app ),
     m_distorted_image_info( &m_distorted_image_screen ),
-    m_undistorted_image_info( &m_undistorted_image_screen )
+    m_undistorted_image_info( &m_undistorted_image_screen, model )
 {
     this->setup();
     this->layout();
@@ -54,10 +54,10 @@ void View::setup()
     m_distorted_image_info.setText( "Filename: %s", m_model->filename().c_str() );
     m_distorted_image_info.addText( "Resolution: %d x %d", image_width, image_height );
 
-    m_undistorted_image_info.setFont( font );
-    m_undistorted_image_info.setMargin( 10 );
-    m_undistorted_image_info.setText( "Filename: %s", m_model->filename().c_str() );
-    m_undistorted_image_info.addText( "Resolution: %d x %d", width, height );
+//    m_undistorted_image_info.setFont( font );
+//    m_undistorted_image_info.setMargin( 10 );
+//    m_undistorted_image_info.setText( "Filename: %s", m_model->filename().c_str() );
+//    m_undistorted_image_info.addText( "Resolution: %d x %d", width, height );
 }
 
 void View::layout()
