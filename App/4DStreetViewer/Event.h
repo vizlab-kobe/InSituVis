@@ -17,6 +17,7 @@ public:
     Event( local::Model* model, local::View* view );
 
 private:
+    void mouseDoubleClickEvent( kvs::MouseEvent* event );
     void keyPressEvent( kvs::KeyEvent* event );
 };
 
