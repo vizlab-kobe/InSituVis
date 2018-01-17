@@ -1,10 +1,43 @@
 #include "Controller.h"
-#include <kvs/IdleEventListener>
+#include <kvs/TimerEventListener>
+#include <InSituVis/Lib/SphericalMapMovieRenderer.h>
 
-class IdleEvent : public kvs::IdleEventListener
+
+namespace
 {
-    void update() { screen()->redraw(); }
+
+class TimerEvent : public kvs::TimerEventListener
+{
+private:
+    local::Model* m_model;
+    local::View* m_view;
+    local::Slider* m_slider;
+
+public:
+    TimerEvent( local::Model* model, local::View* view, local::Slider* slider ):
+        m_model( model ),
+        m_view( view ),
+        m_slider( slider ) {}
+
+    void update( kvs::TimeEvent* event )
+    {
+//        screen()->redraw();
+//        typedef InSituVis::MovieObject Object;
+        typedef InSituVis::SphericalMapMovieRenderer Renderer;
+
+        Renderer* renderer = Renderer::DownCast( m_view->movieScreen().scene()->renderer("Renderer") );
+        if ( renderer->isEnabledAutoPlay() )
+        {
+            screen()->redraw();
+            const int index = renderer->frameIndex();
+            m_slider->setValue( index );
+//            m_model->objectPointer()->device().setNextFrameIndex( index + 1 );
+//            screen()->redraw();
+        }
+    }
 };
+
+}
 
 namespace local
 {
@@ -15,10 +48,11 @@ Controller::Controller( local::Model* model, local::View* view ):
     m_event( model, view ),
     m_slider( model, view ),
     m_button( model, view ),
-    m_check_box( model, view )
+    m_check_box( model, view ),
+    m_timer( 200 )
 {
     m_view->movieScreen().addEvent( &m_event );
-    m_view->movieScreen().addEvent( new IdleEvent() );
+    m_view->movieScreen().addTimerEvent( new TimerEvent( model, view, &m_slider ), &m_timer );
 
     const size_t widget_width = 150;
     const size_t widget_height = 30;

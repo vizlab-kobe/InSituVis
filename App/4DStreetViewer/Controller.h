@@ -5,6 +5,7 @@
 #include "Slider.h"
 #include "Button.h"
 #include "CheckBox.h"
+#include "Timer.h"
 
 
 namespace local
@@ -19,6 +20,7 @@ private:
     local::Slider m_slider;
     local::Button m_button;
     local::CheckBox m_check_box;
+    local::Timer m_timer;
 
 public:
     Controller( local::Model* model, local::View* view );
