@@ -15,7 +15,10 @@ namespace InSituVis
  *  @param  type [in] rendering type
  */
 /*==========================================================================*/
-SphericalMapMovieRenderer::SphericalMapMovieRenderer( const SphericalMapMovieRenderer::Type& type )
+SphericalMapMovieRenderer::SphericalMapMovieRenderer( const SphericalMapMovieRenderer::Type& type ):
+    m_enable_auto_play( false ),
+    m_enable_loop_play( false ),
+    m_frame_index( 0 )
 {
     m_type = type;
 }
@@ -43,14 +46,6 @@ void SphericalMapMovieRenderer::exec( kvs::ObjectBase* object, kvs::Camera* came
 
     BaseClass::startTimer();
     InSituVis::MovieObject* video = reinterpret_cast<InSituVis::MovieObject*>( object );
-
-//    video->device().setNextFrameIndex( video->device().nextFrameIndex() - 1 );
-
-    if ( video->device().nextFrameIndex() == video->device().numberOfFrames() )
-    {
-        video->device().setNextFrameIndex(0);
-//        video->device().setNextFrameIndex( video->device().numberOfFrames() - 1 );
-    }
 
     if ( !m_texture.isCreated() )
     {
@@ -106,6 +101,32 @@ void SphericalMapMovieRenderer::exec( kvs::ObjectBase* object, kvs::Camera* came
                 kvs::OpenGL::End();
             }
         }
+    }
+
+    if ( m_enable_auto_play )
+    {
+        m_frame_index++;
+        if ( m_enable_loop_play )
+        {
+            if ( video->device().nextFrameIndex() == video->device().numberOfFrames() )
+            {
+                video->device().setNextFrameIndex(0);
+                m_frame_index = 0;
+            }
+        }
+        else
+        {
+            if ( video->device().nextFrameIndex() == video->device().numberOfFrames() )
+            {
+                video->device().setNextFrameIndex( video->device().numberOfFrames() - 1 );
+                m_frame_index = video->device().numberOfFrames() - 1;
+            }
+        }
+    }
+    else
+    {
+        const int index = kvs::Math::Clamp( m_frame_index, 0, (int)video->device().numberOfFrames() - 1 );
+        video->device().setNextFrameIndex( index );
     }
 
     BaseClass::stopTimer();

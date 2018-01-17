@@ -2,13 +2,6 @@
 #include <InSituVis/Lib/SphericalMapMovieRenderer.h>
 
 
-#include <kvs/IdleEventListener>
-class IdleEvent : public kvs::IdleEventListener
-{
-    void update() { screen()->redraw(); }
-};
-
-
 namespace local
 {
 
@@ -23,11 +16,6 @@ void MovieScreen::setup( local::Model* model )
 {
     const size_t width = 512;
     const size_t height = 512;
-
-    const size_t movie_width = model->objectPointer()->width();
-    const size_t movie_height = model->objectPointer()->height();
-//    const float scale = float( movie_width ) / movie_height;
-
     this->setSize( width, height );
     {
         typedef InSituVis::MovieObject Object;
@@ -36,8 +24,12 @@ void MovieScreen::setup( local::Model* model )
         Object* object = model->object();
         object->setName("Object");
 
-        this->registerObject( object, new Renderer() );
-        this->addEvent( new IdleEvent() );
+        Renderer* renderer = new Renderer();
+        renderer->setName("Renderer");
+        renderer->setEnabledAutoPlay( false );
+        renderer->setEnabledLoopPlay( false );
+
+        this->registerObject( object, renderer );
     }
 
     m_info.setup( model );
@@ -46,8 +38,11 @@ void MovieScreen::setup( local::Model* model )
 void MovieScreen::update( local::Model* model )
 {
     typedef InSituVis::MovieObject Object;
+    const int index = static_cast<Object*>( scene()->object("Object") )->device().nextFrameIndex();
+
     Object* object = model->object();
     object->setName("Object");
+    object->device().setNextFrameIndex( index );
 
     scene()->replaceObject( "Object", object );
 }

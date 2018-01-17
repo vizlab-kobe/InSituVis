@@ -42,11 +42,26 @@ private:
     Type m_type; ///< rendering type
     kvs::Texture2D m_texture; ///< texture image
     kvs::ProgramObject m_shader_program; ///< shader program
+    bool m_enable_auto_play;
+    bool m_enable_loop_play;
+    int m_frame_index;
 
 public:
     SphericalMapMovieRenderer( const Type& type = SphericalMapMovieRenderer::Centering );
     virtual ~SphericalMapMovieRenderer();
     void exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light );
+
+    int frameIndex() const { return m_frame_index; }
+    bool isEnabledAutoPlay() const { return m_enable_auto_play; }
+    bool isEnabledLoopPlay() const { return m_enable_loop_play; }
+
+    void setFrameIndex( const int index ) { m_frame_index = index; }
+    void setEnabledAutoPlay( const bool enable ) { m_enable_auto_play = enable; }
+    void setEnabledLoopPlay( const bool enable ) { m_enable_loop_play = enable; }
+    void enableAutoPlay() { this->setEnabledAutoPlay( true ); }
+    void enableLoopPlay() { this->setEnabledLoopPlay( true ); }
+    void disableAutoPlay() { this->setEnabledAutoPlay( false ); }
+    void disableLoopPlay() { this->setEnabledLoopPlay( false ); }
 
 private:
     void create_shader_program();

@@ -1,5 +1,6 @@
 #include "Event.h"
 #include <kvs/Camera>
+#include <InSituVis/Lib/SphericalMapMovieRenderer.h>
 
 
 namespace local
@@ -76,6 +77,13 @@ void Event::keyPressEvent( kvs::KeyEvent* event )
     case kvs::Key::PageDown:
     {
         m_model->setCameraPosition( pos + kvs::Vec3i( 0, 0, -1 ) );
+        break;
+    }
+    case kvs::Key::Space:
+    {
+        typedef InSituVis::SphericalMapMovieRenderer Renderer;
+        Renderer* renderer = Renderer::DownCast( m_view->movieScreen().scene()->renderer("Renderer") );
+        renderer->setEnabledAutoPlay( !renderer->isEnabledAutoPlay() );
         break;
     }
     default:
