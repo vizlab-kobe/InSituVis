@@ -5,8 +5,8 @@ namespace local
 
 Input::Input( int argc, char** argv ):
     dirname( "" ),
-    extension( "mp4" ),
     dimensions( 0, 0, 0 ),
+    extension( "mp4" ),
     position( 0, 0, 0 )
 {
     m_commandline = kvs::CommandLine( argc, argv );

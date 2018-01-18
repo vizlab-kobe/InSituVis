@@ -24,6 +24,9 @@ private:
 
 public:
     Controller( local::Model* model, local::View* view );
+    local::Slider& slider() { return m_slider; }
+    local::Button& button() { return m_button; }
+    local::CheckBox& checkBox() { return m_check_box; }
 };
 
 } // end of namespace local

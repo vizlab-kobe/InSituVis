@@ -11,28 +11,33 @@ class TimerEvent : public kvs::TimerEventListener
 private:
     local::Model* m_model;
     local::View* m_view;
-    local::Slider* m_slider;
+    local::Controller* m_controller;
 
 public:
-    TimerEvent( local::Model* model, local::View* view, local::Slider* slider ):
+    TimerEvent( local::Model* model, local::View* view, local::Controller* controller ):
         m_model( model ),
         m_view( view ),
-        m_slider( slider ) {}
+        m_controller( controller ) {}
 
     void update( kvs::TimeEvent* event )
     {
-//        screen()->redraw();
-//        typedef InSituVis::MovieObject Object;
         typedef InSituVis::SphericalMapMovieRenderer Renderer;
-
         Renderer* renderer = Renderer::DownCast( m_view->movieScreen().scene()->renderer("Renderer") );
         if ( renderer->isEnabledAutoPlay() )
         {
             screen()->redraw();
             const int index = renderer->frameIndex();
-            m_slider->setValue( index );
-//            m_model->objectPointer()->device().setNextFrameIndex( index + 1 );
-//            screen()->redraw();
+            m_controller->slider().setValue( index );
+
+            if ( !renderer->isEnabledLoopPlay() )
+            {
+                const int nframes = (int)m_model->objectPointer()->device().numberOfFrames();
+                if ( index == nframes - 1 )
+                {
+                    renderer->disableAutoPlay();
+                    m_controller->button().setCaption("Play");
+                }
+            }
         }
     }
 };
@@ -49,10 +54,10 @@ Controller::Controller( local::Model* model, local::View* view ):
     m_slider( model, view ),
     m_button( model, view ),
     m_check_box( model, view ),
-    m_timer( 200 )
+    m_timer( 1000.0f / model->frameRate() )
 {
     m_view->movieScreen().addEvent( &m_event );
-    m_view->movieScreen().addTimerEvent( new TimerEvent( model, view, &m_slider ), &m_timer );
+    m_view->movieScreen().addTimerEvent( new TimerEvent( model, view, this ), &m_timer );
 
     const size_t widget_width = 150;
     const size_t widget_height = 30;

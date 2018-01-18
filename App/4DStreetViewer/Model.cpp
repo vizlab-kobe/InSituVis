@@ -24,6 +24,7 @@ Model::Model( const local::Input& input )
 
     m_camera_position = input.position;
     m_camera_array_dimensions = input.dimensions;
+    m_frame_rate = 5.0f;
 
     this->setup_object( this->camera_position_index() );
 }

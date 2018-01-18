@@ -40,7 +40,7 @@ void MovieInfo::screenUpdated()
         this->addText( "Camera array dimensions: %d x %d x %d", dims.x(), dims.y(), dims.z() );
         this->addText( "Camera position: (%d, %d, %d)", pos.x(), pos.y(), pos.z() );
         this->addText( "Number of frames: %d", nframes );
-        this->addText( "Curent frame index: %d", index );
+        this->addText( "Current frame index: %d", index );
     }
 }
 
