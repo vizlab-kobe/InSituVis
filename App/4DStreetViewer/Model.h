@@ -30,8 +30,7 @@ public:
     const ObjectPointer& objectPointer() const { return m_object_pointer; }
     float frameRate() const { return m_frame_rate; }
     Object* object() const;
-
-    void setCameraPosition( const kvs::Vec3i& position );
+    void updateCameraPosition( const kvs::Vec3i& position );
 
 private:
     void setup_object( const size_t index );

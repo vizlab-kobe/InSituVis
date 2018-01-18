@@ -42,6 +42,11 @@ public:
     }
 };
 
+inline float FrameRate2MSec( const float fps )
+{
+    return 1000.0f / fps;
+}
+
 }
 
 namespace local
@@ -50,14 +55,14 @@ namespace local
 Controller::Controller( local::Model* model, local::View* view ):
     m_model( model ),
     m_view( view ),
-    m_event( model, view ),
+    m_event( model, view, this ),
     m_slider( model, view ),
     m_button( model, view ),
     m_check_box( model, view ),
-    m_timer( 1000.0f / model->frameRate() )
+    m_timer( ::FrameRate2MSec( model->frameRate() ) )
 {
     m_view->movieScreen().addEvent( &m_event );
-    m_view->movieScreen().addTimerEvent( new TimerEvent( model, view, this ), &m_timer );
+    m_view->movieScreen().addTimerEvent( new ::TimerEvent( model, view, this ), &m_timer );
 
     const size_t widget_width = 150;
     const size_t widget_height = 30;

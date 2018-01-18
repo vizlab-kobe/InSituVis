@@ -15,7 +15,7 @@ private:
 
 public:
     Button( local::Model* model, local::View* view );
-    void released();
+    void pressed();
 };
 
 } // end of namespace local

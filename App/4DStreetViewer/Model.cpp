@@ -12,7 +12,7 @@ Model::Model( const local::Input& input )
     if ( !dir.exists() ) { throw; }
     if ( !dir.isDirectory() ) { throw; }
 
-    const std::string ext = "mp4";
+    const std::string ext = input.extension;
     const kvs::FileList& files = dir.fileList();
     for ( size_t i = 0; i < files.size(); i++ )
     {
@@ -24,7 +24,7 @@ Model::Model( const local::Input& input )
 
     m_camera_position = input.position;
     m_camera_array_dimensions = input.dimensions;
-    m_frame_rate = 5.0f;
+    m_frame_rate = input.frame_rate;
 
     this->setup_object( this->camera_position_index() );
 }
@@ -36,13 +36,14 @@ Model::Object* Model::object() const
     return object;
 }
 
-void Model::setCameraPosition( const kvs::Vec3i& position )
+void Model::updateCameraPosition( const kvs::Vec3i& position )
 {
     const kvs::Vec3i dims = m_camera_array_dimensions;
     const int x = kvs::Math::Clamp( position.x(), 0, dims.x() - 1 );
     const int y = kvs::Math::Clamp( position.y(), 0, dims.y() - 1 );
     const int z = kvs::Math::Clamp( position.z(), 0, dims.z() - 1 );
     m_camera_position = kvs::Vec3i( x, y, z );
+
     this->setup_object( this->camera_position_index() );
 }
 

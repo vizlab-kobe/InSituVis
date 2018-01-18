@@ -13,7 +13,7 @@ Button::Button( local::Model* model, local::View* view ):
     this->setCaption("Play");
 }
 
-void Button::released()
+void Button::pressed()
 {
     typedef InSituVis::SphericalMapMovieRenderer Renderer;
     Renderer* renderer = Renderer::DownCast( m_view->movieScreen().scene()->renderer("Renderer") );

@@ -17,6 +17,7 @@ public:
     kvs::Vec3i dimensions;
     std::string extension;
     kvs::Vec3i position;
+    float frame_rate;
 
     Input( int argc, char** argv );
     bool parse();
