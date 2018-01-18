@@ -6,7 +6,8 @@ namespace local
 
 View::View( local::Application* app, local::Model* model ):
     m_model( model ),
-    m_movie_screen( app )
+    m_movie_screen( app ),
+    m_info( &m_movie_screen )
 {
     this->setup();
     this->layout();
@@ -16,6 +17,7 @@ View::View( local::Application* app, local::Model* model ):
 void View::setup()
 {
     m_movie_screen.setup( m_model );
+    m_info.setup( m_model );
 }
 
 void View::layout()
@@ -28,6 +30,7 @@ void View::layout()
 void View::show()
 {
     m_movie_screen.show();
+    m_info.show();
 }
 
 } // end of namespace local

@@ -6,8 +6,7 @@ namespace local
 {
 
 MovieScreen::MovieScreen( local::Application* app ):
-    local::Screen( app ),
-    m_info( this )
+    local::Screen( app )
 {
     this->setTitle( "4D Street Viewer" );
 }
@@ -31,8 +30,6 @@ void MovieScreen::setup( local::Model* model )
 
         this->registerObject( object, renderer );
     }
-
-    m_info.setup( model );
 }
 
 void MovieScreen::update( local::Model* model )
@@ -45,12 +42,6 @@ void MovieScreen::update( local::Model* model )
     object->device().setNextFrameIndex( index );
 
     scene()->replaceObject( "Object", object );
-}
-
-void MovieScreen::show()
-{
-    local::Screen::show();
-    m_info.show();
 }
 
 } // end of namespace local
