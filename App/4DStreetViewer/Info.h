@@ -7,13 +7,13 @@
 namespace local
 {
 
-class MovieInfo : public kvs::Label
+class Info : public kvs::Label
 {
 private:
     local::Model* m_model;
 
 public:
-    MovieInfo( local::Screen* screen );
+    Info( local::Screen* screen );
     void setup( local::Model* model ) { m_model = model; }
     void screenUpdated();
 };

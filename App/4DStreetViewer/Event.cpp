@@ -96,6 +96,24 @@ void Event::keyPressEvent( kvs::KeyEvent* event )
         m_controller->slider().sliderMoved();
         break;
     }
+    case kvs::Key::e:
+    {
+        const int index = m_model->objectPointer()->device().numberOfFrames() - 1;
+        m_controller->slider().setValue( index );
+        m_controller->slider().sliderMoved();
+        break;
+    }
+    case kvs::Key::i:
+    {
+        if ( m_view->info().isShown() )
+        {
+            m_view->info().hide();
+        }
+        else
+        {
+            m_view->info().show();
+        }
+    }
     default: break;
     }
 

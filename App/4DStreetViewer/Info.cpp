@@ -1,4 +1,4 @@
-#include "MovieInfo.h"
+#include "Info.h"
 #include <kvs/Font>
 #include <InSituVis/Lib/SphericalMapMovieRenderer.h>
 
@@ -6,7 +6,7 @@
 namespace local
 {
 
-MovieInfo::MovieInfo( local::Screen* screen ):
+Info::Info( local::Screen* screen ):
     kvs::Label( screen ),
     m_model( NULL )
 {
@@ -22,7 +22,7 @@ MovieInfo::MovieInfo( local::Screen* screen ):
     this->setMargin( 10 );
 }
 
-void MovieInfo::screenUpdated()
+void Info::screenUpdated()
 {
     if ( m_model )
     {
