@@ -2,6 +2,8 @@
 #include "Model.h"
 #include "View.h"
 #include "Controller.h"
+#include "Program.h"
+#include <kvs/Timer>
 #include <kvs/Camera>
 #include <InSituVis/Lib/SphericalMapMovieRenderer.h>
 
@@ -17,6 +19,7 @@ Event::Event( local::Model* model, local::View* view, local::Controller* control
 {
     setEventType(
         kvs::EventBase::MousePressEvent |
+        kvs::EventBase::MouseMoveEvent |
         kvs::EventBase::MouseReleaseEvent |
         kvs::EventBase::MouseDoubleClickEvent |
         kvs::EventBase::KeyPressEvent );
@@ -28,6 +31,13 @@ void Event::mousePressEvent( kvs::MouseEvent* event )
     Renderer* renderer = Renderer::DownCast( m_view->movieScreen().scene()->renderer("Renderer") );
     m_enable_auto_play = renderer->isEnabledAutoPlay();
     if ( m_enable_auto_play ) { renderer->disableAutoPlay(); }
+}
+
+void Event::mouseMoveEvent( kvs::MouseEvent* event )
+{
+    typedef InSituVis::SphericalMapMovieRenderer Renderer;
+    Renderer* renderer = Renderer::DownCast( m_view->movieScreen().scene()->renderer("Renderer") );
+    local::Program::Logger().pushRayChangeTime( renderer->timer().msec() );
 }
 
 void Event::mouseReleaseEvent( kvs::MouseEvent* event )
@@ -54,7 +64,11 @@ void Event::mouseDoubleClickEvent( kvs::MouseEvent* event )
     case kvs::Key::ShiftModifier: d *= -1; break;
     default: break;
     }
+
+    kvs::Timer timer( kvs::Timer::Start );
     m_model->updateCameraPosition( pos + d );
+    timer.stop();
+    local::Program::Logger().pushPositionChangeTime( timer.msec() );
 
     m_view->movieScreen().update( m_model );
 }
@@ -73,7 +87,11 @@ void Event::keyPressEvent( kvs::KeyEvent* event )
     case kvs::Key::PageDown: d.z() = -1; break;
     default: break;
     }
+
+    kvs::Timer timer( kvs::Timer::Start );
     m_model->updateCameraPosition( pos + d );
+    timer.stop();
+    local::Program::Logger().pushPositionChangeTime( timer.msec() );
 
     switch ( event->key() )
     {

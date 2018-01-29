@@ -24,6 +24,7 @@ public:
 
 private:
     void mousePressEvent( kvs::MouseEvent* event );
+    void mouseMoveEvent( kvs::MouseEvent* event );
     void mouseReleaseEvent( kvs::MouseEvent* event );
     void mouseDoubleClickEvent( kvs::MouseEvent* event );
     void keyPressEvent( kvs::KeyEvent* event );
