@@ -69,6 +69,13 @@ int main( int argc, char** argv )
         timer.stop();
         std::cout << "Rendering cubic images: " << timer.sec() << " [sec]" << std::endl;
 
+        kvs::ColorImage right = cubic_images.rightImage(); right.write("output_right.bmp");
+        kvs::ColorImage left = cubic_images.leftImage(); left.write("output_left.bmp");
+        kvs::ColorImage top = cubic_images.topImage(); top.write("output_top.bmp");
+        kvs::ColorImage bottom = cubic_images.bottomImage(); bottom.write("output_bottom.bmp");
+        kvs::ColorImage back = cubic_images.backImage(); back.write("output_back.bmp");
+        kvs::ColorImage front = cubic_images.frontImage(); front.write("output_front.bmp");
+
         timer.start();
         kvs::ColorImage cube = cubic_images.cubeMapImage();
         timer.stop();
