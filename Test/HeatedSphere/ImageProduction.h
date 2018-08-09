@@ -9,7 +9,7 @@
 #include <kvs/Timer>
 #include <cfloat>
 #include <vector>
-#include <KVS.osmesa/Lib/Screen.h>
+#include <kvs/osmesa/Screen>
 
 class ImageProduction
 {
