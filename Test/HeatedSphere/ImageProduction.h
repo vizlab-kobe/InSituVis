@@ -1,5 +1,4 @@
 #pragma once
-#include <KVS.mpi/Lib/Communicator.h>
 #include "Input.h"
 #include <kvs/VolumeObjectBase>
 #include <kvs/FieldViewData>
@@ -7,15 +6,36 @@
 #include <kvs/ValueArray>
 #include <kvs/ColorImage>
 #include <kvs/Timer>
+#include <kvs/osmesa/Screen>
+#include <KVS.mpi/Lib/Communicator.h>
 #include <cfloat>
 #include <vector>
-#include <kvs/osmesa/Screen>
+
 
 class ImageProduction
 {
+public:
+
+    struct ProcessingTimes
+    {
+        float reading;
+        float importing;
+        float mapping;
+        float rendering;
+        float readback;
+        float composition;
+    };
+
+    typedef kvs::FieldViewData Data;
+    typedef kvs::VolumeObjectBase Volume;
+    typedef std::vector<Volume*> VolumeList;
+    typedef kvs::ColorImage Image;
+
 private:
     int m_rank;
     int m_nnodes;
+    ProcessingTimes m_processing_times;
+
     kvs::Vec3 m_min_ext;
     kvs::Vec3 m_max_ext;
     kvs::Real32 m_min_value;
@@ -23,17 +43,19 @@ private:
 
 public:
     ImageProduction( const int rank, const int nnodes ):
-     m_rank( rank ),
-     m_nnodes( nnodes ) {}
+        m_rank( rank ),
+        m_nnodes( nnodes ) {}
 
-    kvs::FieldViewData read( const Input& input, kvs::Timer& timer );
-    std::vector<kvs::VolumeObjectBase*> import( const Input& input, kvs::Timer& timer, const kvs::FieldViewData& data );
-    kvs::ColorImage render( const Input& input, kvs::Timer& timer, const std::vector<kvs::VolumeObjectBase*>& volumes, double& composition_time, double& projcetion_time, double& readback_time, double& averaging_time );
+    const ProcessingTimes& processingTimes() const { return m_processing_times; }
+
+    Data read( const Input& input );
+    VolumeList import( const Input& input, const Data& data );
+    Image render( const Input& input, const VolumeList& volumes );
 
 private:
-    kvs::VolumeObjectBase* import_volume( const kvs::FieldViewData& data, const int gindex );
-    void calculate_min_max( const kvs::FieldViewData& data );
-    void draw_isosurface(kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input, double& projection_time );
-    void draw_sliceplane(kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input, double& projection_time );
-    void draw_externalfaces(kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input, double& projection_time );
+    Volume* import_volume( const Data& data, const int gindex );
+    void calculate_min_max( const Data& data );
+    void draw_isosurface( kvs::osmesa::Screen& screen, const VolumeList& volumes, Input& input );
+    void draw_sliceplane( kvs::osmesa::Screen& screen, const VolumeList& volumes, Input& input );
+    void draw_externalfaces( kvs::osmesa::Screen& screen, const VolumeList& volumes, Input& input );
 };
