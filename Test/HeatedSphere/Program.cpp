@@ -31,6 +31,10 @@ int Program::exec( int argc, char** argv )
     local::Process::Data data = proc.read( input );
     local::Process::VolumeList volumes = proc.import( input, data );
     local::Process::Image image = proc.render( input, volumes );
+    if ( rank == master_rank )
+    {
+        image.write( "output.bmp" );
+    }
 
     const float read_time = proc.processingTimes().reading;
     const float import_time = proc.processingTimes().importing;

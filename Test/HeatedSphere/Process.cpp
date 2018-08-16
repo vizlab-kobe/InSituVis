@@ -100,7 +100,7 @@ Process::Image Process::render( const local::Input& input, const Process::Volume
     return kvs::ColorImage( input.width, input.height, pixels );
 }
 
-kvs::VolumeObjectBase* Process::import_volume( const kvs::FieldViewData& data, const int gindex )
+Process::Volume* Process::import_volume( const Process::Data& data, const int gindex )
 {
     if ( gindex == 76 || gindex == 91 ) return NULL;
     if ( gindex >= 256 ) return NULL;
@@ -118,7 +118,7 @@ kvs::VolumeObjectBase* Process::import_volume( const kvs::FieldViewData& data, c
     return NULL;
 }
 
-void Process::calculate_min_max( const kvs::FieldViewData& data )
+void Process::calculate_min_max( const Process::Data& data )
 {
     m_min_ext = kvs::Vec3::All( FLT_MAX );
     m_max_ext = kvs::Vec3::All( FLT_MIN );
@@ -152,7 +152,7 @@ void Process::calculate_min_max( const kvs::FieldViewData& data )
     }
 }
 
-void Process::draw_isosurface( InSituVis::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, const local::Input& input )
+void Process::draw_isosurface( InSituVis::Screen& screen, const Process::VolumeList& volumes, const local::Input& input )
 {
     const double iso_level = ( m_max_value - m_min_value ) * 0.2 + m_min_value;
     kvs::PolygonObject::NormalType n = kvs::PolygonObject::PolygonNormal;
@@ -174,7 +174,7 @@ void Process::draw_isosurface( InSituVis::Screen& screen, const std::vector<kvs:
     }
 }
 
-void Process::draw_sliceplane( InSituVis::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, const local::Input& input )
+void Process::draw_sliceplane( InSituVis::Screen& screen, const Process::VolumeList& volumes, const local::Input& input )
 {
     const kvs::Vector3f c( ( m_min_ext + m_max_ext)  * 0.4f );
     const kvs::Vector3f p( c );
@@ -198,7 +198,7 @@ void Process::draw_sliceplane( InSituVis::Screen& screen, const std::vector<kvs:
     }
 }
 
-void Process::draw_externalfaces( InSituVis::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, const local::Input& input )
+void Process::draw_externalfaces( InSituVis::Screen& screen, const Process::VolumeList& volumes, const local::Input& input )
 {
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
