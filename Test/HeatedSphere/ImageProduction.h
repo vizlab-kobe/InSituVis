@@ -7,9 +7,10 @@
 #include <kvs/ColorImage>
 #include <kvs/Timer>
 #include <kvs/osmesa/Screen>
-#include <KVS.mpi/Lib/Communicator.h>
 #include <cfloat>
 #include <vector>
+#include <KVS.mpi/Lib/Communicator.h>
+#include <InSituVis/Lib/Screen.h>
 
 
 class ImageProduction
@@ -48,14 +49,14 @@ public:
 
     const ProcessingTimes& processingTimes() const { return m_processing_times; }
 
-    Data read( const Input& input );
-    VolumeList import( const Input& input, const Data& data );
-    Image render( const Input& input, const VolumeList& volumes );
+    Data read( const local::Input& input );
+    VolumeList import( const local::Input& input, const Data& data );
+    Image render( const local::Input& input, const VolumeList& volumes );
 
 private:
     Volume* import_volume( const Data& data, const int gindex );
     void calculate_min_max( const Data& data );
-    void draw_isosurface( kvs::osmesa::Screen& screen, const VolumeList& volumes, Input& input );
-    void draw_sliceplane( kvs::osmesa::Screen& screen, const VolumeList& volumes, Input& input );
-    void draw_externalfaces( kvs::osmesa::Screen& screen, const VolumeList& volumes, Input& input );
+    void draw_isosurface( InSituVis::Screen& screen, const VolumeList& volumes, local::Input& input );
+    void draw_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes, local::Input& input );
+    void draw_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes, local::Input& input );
 };

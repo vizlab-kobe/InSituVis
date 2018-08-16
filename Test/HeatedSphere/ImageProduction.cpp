@@ -1,20 +1,19 @@
 #include "ImageProduction.h"
 #include <kvs/RGBFormulae>
-#include <kvs/OpenGL>
+#include <kvs/Camera>
 #include <kvs/UnstructuredVolumeImporter>
 #include <kvs/Isosurface>
 #include <kvs/SlicePlane>
-#include <kvs/Camera>
 #include <kvs/ExternalFaces>
 #include <kvs/Timer>
 #include <ParallelImageComposition/Lib/ImageCompositor.h>
 
 
-kvs::FieldViewData ImageProduction::read( const Input& input )
+ImageProduction::Data ImageProduction::read( const local::Input& input )
 {
     kvs::Timer timer( kvs::Timer::Start );
 
-    kvs::FieldViewData data( input.filename );
+    Data data( input.filename );
 
     timer.stop();
     m_processing_times.reading = timer.sec();
@@ -22,18 +21,18 @@ kvs::FieldViewData ImageProduction::read( const Input& input )
     return data;
 }
 
-std::vector<kvs::VolumeObjectBase*> ImageProduction::import( const Input& input, const kvs::FieldViewData& data )
+ImageProduction::VolumeList ImageProduction::import( const local::Input& input, const ImageProduction::Data& data )
 {
     kvs::Timer timer( kvs::Timer::Start );
 
     this->calculate_min_max( data );
-    std::vector<kvs::VolumeObjectBase*> volumes;
+    VolumeList volumes;
     const int nregions = input.regions;
     for ( int i = 0; i < nregions; i++ )
     {
         const int gindex = m_rank + m_nnodes * i;
         //const int gindex = m_rank * nregions + i ;
-        kvs::VolumeObjectBase* volume = this->import_volume( data, gindex );
+        Volume* volume = this->import_volume( data, gindex );
         if ( volume )
         {
             volume->setMinMaxValues( m_min_value, m_max_value );
@@ -48,15 +47,15 @@ std::vector<kvs::VolumeObjectBase*> ImageProduction::import( const Input& input,
     return volumes;
 }
 
-kvs::ColorImage ImageProduction::render( const Input& input, const std::vector<kvs::VolumeObjectBase*>& volumes )
+ImageProduction::Image ImageProduction::render( const local::Input& input, const ImageProduction::VolumeList& volumes )
 {
     // NOTE: A set of particles will be generated for each repeat
     // with the repetition level of 1 in the current implementation.
     // Therefore, the input.repetitions used for rendering image will
     // be forcibily set to 1 here.
-    Input temp_input = input;
+    local::Input temp_input = input;
 
-    kvs::osmesa::Screen screen;
+    InSituVis::Screen screen;
     screen.setBackgroundColor( kvs::RGBColor::White() );
     screen.setGeometry( 0, 0, input.width, input.height );
     screen.scene()->camera()->setWindowSize( input.width, input.height );
@@ -154,7 +153,7 @@ void ImageProduction::calculate_min_max( const kvs::FieldViewData& data )
     }
 }
 
-void ImageProduction::draw_isosurface( kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input )
+void ImageProduction::draw_isosurface( InSituVis::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, local::Input& input )
 {
     const double iso_level = ( m_max_value - m_min_value ) * 0.2 + m_min_value;
     kvs::PolygonObject::NormalType n = kvs::PolygonObject::PolygonNormal;
@@ -176,7 +175,7 @@ void ImageProduction::draw_isosurface( kvs::osmesa::Screen& screen, const std::v
     }
 }
 
-void ImageProduction::draw_sliceplane( kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input )
+void ImageProduction::draw_sliceplane( InSituVis::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, local::Input& input )
 {
     const kvs::Vector3f c( ( m_min_ext + m_max_ext)  * 0.4f );
     const kvs::Vector3f p( c );
@@ -200,7 +199,7 @@ void ImageProduction::draw_sliceplane( kvs::osmesa::Screen& screen, const std::v
     }
 }
 
-void ImageProduction::draw_externalfaces( kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input )
+void ImageProduction::draw_externalfaces( InSituVis::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, local::Input& input )
 {
     for ( size_t i = 0; i < volumes.size(); i++ )
     {

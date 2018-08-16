@@ -4,6 +4,9 @@
 #include <kvs/Indent>
 
 
+namespace local
+{
+
 struct Input
 {
 private:
@@ -20,3 +23,5 @@ public:
     bool parse();
     void print( std::ostream& os, const kvs::Indent& indent ) const;
 };
+
+} // end of namespace local

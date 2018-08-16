@@ -1,6 +1,8 @@
 #include "Input.h"
 
 
+namespace local
+{
 
 Input::Input( int argc, char** argv ):
     regions( 1 ),
@@ -36,3 +38,5 @@ void Input::print( std::ostream& os, const kvs::Indent& indent ) const
     os << indent << "Screen width: " << width << std::endl;
     os << indent << "Screen height: " << height << std::endl;
 }
+
+} // end of namespace local
