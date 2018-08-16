@@ -13,7 +13,10 @@
 #include <InSituVis/Lib/Screen.h>
 
 
-class ImageProduction
+namespace local
+{
+
+class Process
 {
 public:
 
@@ -43,7 +46,7 @@ private:
     kvs::Real32 m_max_value;
 
 public:
-    ImageProduction( const int rank, const int nnodes ):
+    Process( const int rank, const int nnodes ):
         m_rank( rank ),
         m_nnodes( nnodes ) {}
 
@@ -56,7 +59,9 @@ public:
 private:
     Volume* import_volume( const Data& data, const int gindex );
     void calculate_min_max( const Data& data );
-    void draw_isosurface( InSituVis::Screen& screen, const VolumeList& volumes, local::Input& input );
-    void draw_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes, local::Input& input );
-    void draw_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes, local::Input& input );
+    void draw_isosurface( InSituVis::Screen& screen, const VolumeList& volumes, const local::Input& input );
+    void draw_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes, const local::Input& input );
+    void draw_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes, const local::Input& input );
 };
+
+} // end of namespace local

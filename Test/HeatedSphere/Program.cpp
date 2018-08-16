@@ -1,6 +1,6 @@
 #include "Program.h"
 #include "Input.h"
-#include "ImageProduction.h"
+#include "Process.h"
 #include <KVS.mpi/Lib/Environment.h>
 #include <KVS.mpi/Lib/Communicator.h>
 #include <InSituVis/Lib/Logger.h>
@@ -27,10 +27,10 @@ int Program::exec( int argc, char** argv )
     }
 
     // Parallel processing
-    ImageProduction proc( rank, nnodes );
-    ImageProduction::Data data = proc.read( input );
-    ImageProduction::VolumeList volumes = proc.import( input, data );
-    ImageProduction::Image image = proc.render( input, volumes );
+    local::Process proc( rank, nnodes );
+    local::Process::Data data = proc.read( input );
+    local::Process::VolumeList volumes = proc.import( input, data );
+    local::Process::Image image = proc.render( input, volumes );
 
     const float read_time = proc.processingTimes().reading;
     const float import_time = proc.processingTimes().importing;
