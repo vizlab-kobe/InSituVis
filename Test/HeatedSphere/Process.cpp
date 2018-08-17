@@ -15,14 +15,39 @@ namespace local
 
 Process::ProcessingTimes Process::ProcessingTimes::reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank ) const
 {
-    ProcessingTimes max_times;
-    comm.reduce( rank, this->reading, max_times.reading, op );
-    comm.reduce( rank, this->importing, max_times.importing, op );
-    comm.reduce( rank, this->mapping, max_times.mapping, op );
-    comm.reduce( rank, this->rendering, max_times.rendering, op );
-    comm.reduce( rank, this->readback, max_times.readback, op );
-    comm.reduce( rank, this->composition, max_times.composition, op );
-    return max_times;
+    ProcessingTimes times;
+    comm.reduce( rank, this->reading, times.reading, op );
+    comm.reduce( rank, this->importing, times.importing, op );
+    comm.reduce( rank, this->mapping, times.mapping, op );
+    comm.reduce( rank, this->rendering, times.rendering, op );
+    comm.reduce( rank, this->readback, times.readback, op );
+    comm.reduce( rank, this->composition, times.composition, op );
+    return times;
+}
+
+std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather( kvs::mpi::Communicator& comm, const int rank ) const
+{
+    kvs::ValueArray<float> readings; comm.gather( rank, this->reading, readings );
+    kvs::ValueArray<float> importings; comm.gather( rank, this->importing, importings );
+    kvs::ValueArray<float> mappings; comm.gather( rank, this->mapping, mappings );
+    kvs::ValueArray<float> renderings; comm.gather( rank, this->rendering, renderings );
+    kvs::ValueArray<float> readbacks; comm.gather( rank, this->readback, readbacks );
+    kvs::ValueArray<float> compositions; comm.gather( rank, this->composition, compositions );
+
+    std::vector<ProcessingTimes> times_list;
+    for ( size_t i = 0; i < readings.size(); i++ )
+    {
+        ProcessingTimes times;
+        times.reading = readings[i];
+        times.importing = importings[i];
+        times.mapping = mappings[i];
+        times.rendering = renderings[i];
+        times.readback = readbacks[i];
+        times.composition = compositions[i];
+        times_list.push_back( times );
+    }
+
+    return times_list;
 }
 
 void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& indent ) const
@@ -81,12 +106,19 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     screen.setGeometry( 0, 0, m_input.width, m_input.height );
     screen.scene()->camera()->setWindowSize( m_input.width, m_input.height );
 
-    // Mapping.
+    // Mapping parameters.
     kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
+    if ( !m_input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( m_input.tf_filename ); }
+
+    // Mapping.
     kvs::Timer timer( kvs::Timer::Start );
-    this->mapping_isosurface( screen, volumes, tfunc );
-    //this->mapping_sliceplane( screen, volumes );
-    //this->mapping_externalfaces( screen, volumes );
+    switch ( m_input.mapping )
+    {
+    case 0: this->mapping_isosurface( screen, volumes, tfunc ); break;
+    case 1: this->mapping_sliceplane( screen, volumes, tfunc ); break;
+    case 2: this->mapping_externalfaces( screen, volumes, tfunc ); break;
+    default: break;
+    }
     timer.stop();
     m_processing_times.mapping = timer.sec();
 
@@ -217,7 +249,8 @@ void Process::mapping_isosurface(
 
 void Process::mapping_sliceplane(
     InSituVis::Screen& screen,
-    const Process::VolumeList& volumes )
+    const Process::VolumeList& volumes,
+    const kvs::TransferFunction& tfunc )
 {
     const kvs::Vector3f c( ( m_min_ext + m_max_ext)  * 0.4f );
     const kvs::Vector3f p( c );
@@ -228,9 +261,6 @@ void Process::mapping_sliceplane(
         const kvs::VolumeObjectBase* input_volume = volumes[i];
         if ( input_volume )
         {
-            kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
-            if ( !m_input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( m_input.tf_filename ); }
-
             kvs::PolygonObject* slice = new kvs::SlicePlane( input_volume, p, n, tfunc  );
             slice->setMinMaxObjectCoords( m_min_ext, m_max_ext );
             slice->setMinMaxExternalCoords( m_min_ext, m_max_ext );
@@ -243,16 +273,14 @@ void Process::mapping_sliceplane(
 
 void Process::mapping_externalfaces(
     InSituVis::Screen& screen,
-    const Process::VolumeList& volumes )
+    const Process::VolumeList& volumes,
+    const kvs::TransferFunction& tfunc )
 {
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
         const kvs::VolumeObjectBase* input_volume = volumes[i];
         if ( input_volume )
         {
-            kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
-            if ( !m_input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( m_input.tf_filename ); }
-
             kvs::PolygonObject* face = new kvs::ExternalFaces( input_volume );
             face->setMinMaxObjectCoords( m_min_ext, m_max_ext);
             face->setMinMaxExternalCoords( m_min_ext, m_max_ext);

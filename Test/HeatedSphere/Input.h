@@ -13,11 +13,12 @@ private:
     kvs::CommandLine m_commandline;
 
 public:
-    size_t regions;
+    size_t regions; ///< number of regions
+    int mapping; ///< mapping method
     std::string filename; ///< input filename
-    std::string tf_filename;
-    int width;
-    int height;
+    std::string tf_filename; ///< input transfer function filename
+    int width; ///< screen width
+    int height; ///< screen height
 
     Input( int argc, char** argv );
     bool parse();
