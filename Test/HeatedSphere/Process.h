@@ -1,13 +1,13 @@
 #pragma once
 #include "Input.h"
+#include <kvs/Indent>
 #include <kvs/VolumeObjectBase>
 #include <kvs/FieldViewData>
 #include <kvs/Vector3>
 #include <kvs/ValueArray>
 #include <kvs/ColorImage>
 #include <kvs/Timer>
-#include <kvs/osmesa/Screen>
-#include <cfloat>
+#include <kvs/TransferFunction>
 #include <vector>
 #include <KVS.mpi/Lib/Communicator.h>
 #include <InSituVis/Lib/Screen.h>
@@ -19,7 +19,6 @@ namespace local
 class Process
 {
 public:
-
     struct ProcessingTimes
     {
         float reading;
@@ -28,6 +27,9 @@ public:
         float rendering;
         float readback;
         float composition;
+
+        ProcessingTimes reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank = 0 ) const;
+        void print( std::ostream& os, const kvs::Indent& indent ) const;
     };
 
     struct FrameBuffer
@@ -66,7 +68,7 @@ public:
 private:
     Volume* import_volume( const Data& data, const int gindex );
     void calculate_min_max( const Data& data );
-    void mapping_isosurface( InSituVis::Screen& screen, const VolumeList& volumes );
+    void mapping_isosurface( InSituVis::Screen& screen, const VolumeList& volumes, const kvs::TransferFunction& tfunc );
     void mapping_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes );
     void mapping_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes );
 };

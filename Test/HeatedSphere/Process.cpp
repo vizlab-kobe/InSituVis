@@ -7,10 +7,33 @@
 #include <kvs/ExternalFaces>
 #include <kvs/Timer>
 #include <ParallelImageComposition/Lib/ImageCompositor.h>
+#include <cfloat>
 
 
 namespace local
 {
+
+Process::ProcessingTimes Process::ProcessingTimes::reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank ) const
+{
+    ProcessingTimes max_times;
+    comm.reduce( rank, this->reading, max_times.reading, op );
+    comm.reduce( rank, this->importing, max_times.importing, op );
+    comm.reduce( rank, this->mapping, max_times.mapping, op );
+    comm.reduce( rank, this->rendering, max_times.rendering, op );
+    comm.reduce( rank, this->readback, max_times.readback, op );
+    comm.reduce( rank, this->composition, max_times.composition, op );
+    return max_times;
+}
+
+void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& indent ) const
+{
+    os << indent << "Reading time: " << this->reading << " [sec]" << std::endl;
+    os << indent << "Importing time: " << this->importing << " [sec]" << std::endl;
+    os << indent << "Mapping time: " << this->mapping << " [sec]" << std::endl;
+    os << indent << "Rendering time: " << this->rendering << " [sec]" << std::endl;
+    os << indent << "Readback time: " << this->readback << " [sec]" << std::endl;
+    os << indent << "Composition time: " << this->composition << " [sec]" << std::endl;
+}
 
 Process::Data Process::read()
 {
@@ -35,7 +58,6 @@ Process::VolumeList Process::import( const Process::Data& data )
     for ( int i = 0; i < nregions; i++ )
     {
         const int gindex = rank + nnodes * i;
-        //const int gindex = m_rank * nregions + i ;
         Volume* volume = this->import_volume( data, gindex );
         if ( volume )
         {
@@ -53,25 +75,28 @@ Process::VolumeList Process::import( const Process::Data& data )
 
 Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
 {
+    // Initialize rendering screen.
     InSituVis::Screen screen;
     screen.setBackgroundColor( kvs::RGBColor::White() );
     screen.setGeometry( 0, 0, m_input.width, m_input.height );
     screen.scene()->camera()->setWindowSize( m_input.width, m_input.height );
 
-    // you choose isosurface or sliceplane rendering function
+    // Mapping.
+    kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
     kvs::Timer timer( kvs::Timer::Start );
-    this->mapping_isosurface( screen, volumes );
+    this->mapping_isosurface( screen, volumes, tfunc );
     //this->mapping_sliceplane( screen, volumes );
     //this->mapping_externalfaces( screen, volumes );
     timer.stop();
     m_processing_times.mapping = timer.sec();
 
+    // Rendering.
     timer.start();
     screen.draw();
     timer.stop();
     m_processing_times.rendering = timer.sec();
 
-    // Readback pixels.
+    // Readback.
     timer.start();
     FrameBuffer frame_buffer;
     frame_buffer.color_buffer = screen.readbackColorBuffer();
@@ -166,7 +191,10 @@ void Process::calculate_min_max( const Process::Data& data )
     }
 }
 
-void Process::mapping_isosurface( InSituVis::Screen& screen, const Process::VolumeList& volumes )
+void Process::mapping_isosurface(
+    InSituVis::Screen& screen,
+    const Process::VolumeList& volumes,
+    const kvs::TransferFunction& tfunc )
 {
     const double iso_level = ( m_max_value - m_min_value ) * 0.2 + m_min_value;
     kvs::PolygonObject::NormalType n = kvs::PolygonObject::PolygonNormal;
@@ -177,7 +205,6 @@ void Process::mapping_isosurface( InSituVis::Screen& screen, const Process::Volu
         const kvs::VolumeObjectBase* input_volume = volumes[i];
         if ( input_volume )
         {
-            kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
             kvs::PolygonObject* surface = new kvs::Isosurface( input_volume, iso_level, n, d, tfunc );
             surface->setMinMaxObjectCoords( m_min_ext, m_max_ext);
             surface->setMinMaxExternalCoords( m_min_ext, m_max_ext);
@@ -188,7 +215,9 @@ void Process::mapping_isosurface( InSituVis::Screen& screen, const Process::Volu
     }
 }
 
-void Process::mapping_sliceplane( InSituVis::Screen& screen, const Process::VolumeList& volumes )
+void Process::mapping_sliceplane(
+    InSituVis::Screen& screen,
+    const Process::VolumeList& volumes )
 {
     const kvs::Vector3f c( ( m_min_ext + m_max_ext)  * 0.4f );
     const kvs::Vector3f p( c );
@@ -212,7 +241,9 @@ void Process::mapping_sliceplane( InSituVis::Screen& screen, const Process::Volu
     }
 }
 
-void Process::mapping_externalfaces( InSituVis::Screen& screen, const Process::VolumeList& volumes )
+void Process::mapping_externalfaces(
+    InSituVis::Screen& screen,
+    const Process::VolumeList& volumes )
 {
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
