@@ -30,14 +30,20 @@ public:
         float composition;
     };
 
+    struct FrameBuffer
+    {
+        kvs::ValueArray<kvs::UInt8> color_buffer;
+        kvs::ValueArray<kvs::Real32> depth_buffer;
+    };
+
     typedef kvs::FieldViewData Data;
     typedef kvs::VolumeObjectBase Volume;
     typedef std::vector<Volume*> VolumeList;
     typedef kvs::ColorImage Image;
 
 private:
-    int m_rank;
-    int m_nnodes;
+    const local::Input& m_input;
+    kvs::mpi::Communicator& m_communicator;
     ProcessingTimes m_processing_times;
 
     kvs::Vec3 m_min_ext;
@@ -46,22 +52,23 @@ private:
     kvs::Real32 m_max_value;
 
 public:
-    Process( const int rank, const int nnodes ):
-        m_rank( rank ),
-        m_nnodes( nnodes ) {}
+    Process( const local::Input& input, kvs::mpi::Communicator& communicator ):
+        m_input( input ),
+        m_communicator( communicator ) {}
 
     const ProcessingTimes& processingTimes() const { return m_processing_times; }
 
-    Data read( const local::Input& input );
-    VolumeList import( const local::Input& input, const Data& data );
-    Image render( const local::Input& input, const VolumeList& volumes );
+    Data read();
+    VolumeList import( const Data& data );
+    FrameBuffer render( const VolumeList& volumes );
+    Image compose( const FrameBuffer& frame_buffer );
 
 private:
     Volume* import_volume( const Data& data, const int gindex );
     void calculate_min_max( const Data& data );
-    void draw_isosurface( InSituVis::Screen& screen, const VolumeList& volumes, const local::Input& input );
-    void draw_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes, const local::Input& input );
-    void draw_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes, const local::Input& input );
+    void mapping_isosurface( InSituVis::Screen& screen, const VolumeList& volumes );
+    void mapping_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes );
+    void mapping_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes );
 };
 
 } // end of namespace local

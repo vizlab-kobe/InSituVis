@@ -12,28 +12,29 @@
 namespace local
 {
 
-Process::Data Process::read( const local::Input& input )
+Process::Data Process::read()
 {
     kvs::Timer timer( kvs::Timer::Start );
-
-    Data data( input.filename );
-
+    Data data( m_input.filename );
     timer.stop();
     m_processing_times.reading = timer.sec();
 
     return data;
 }
 
-Process::VolumeList Process::import( const local::Input& input, const Process::Data& data )
+Process::VolumeList Process::import( const Process::Data& data )
 {
+    const int rank = m_communicator.rank();
+    const int nnodes = m_communicator.size();
+
     kvs::Timer timer( kvs::Timer::Start );
 
     this->calculate_min_max( data );
     VolumeList volumes;
-    const int nregions = input.regions;
+    const int nregions = m_input.regions;
     for ( int i = 0; i < nregions; i++ )
     {
-        const int gindex = m_rank + m_nnodes * i;
+        const int gindex = rank + nnodes * i;
         //const int gindex = m_rank * nregions + i ;
         Volume* volume = this->import_volume( data, gindex );
         if ( volume )
@@ -50,45 +51,58 @@ Process::VolumeList Process::import( const local::Input& input, const Process::D
     return volumes;
 }
 
-Process::Image Process::render( const local::Input& input, const Process::VolumeList& volumes )
+Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
 {
-    local::Input temp_input = input;
-
     InSituVis::Screen screen;
     screen.setBackgroundColor( kvs::RGBColor::White() );
-    screen.setGeometry( 0, 0, input.width, input.height );
-    screen.scene()->camera()->setWindowSize( input.width, input.height );
+    screen.setGeometry( 0, 0, m_input.width, m_input.height );
+    screen.scene()->camera()->setWindowSize( m_input.width, m_input.height );
 
     // you choose isosurface or sliceplane rendering function
     kvs::Timer timer( kvs::Timer::Start );
+    this->mapping_isosurface( screen, volumes );
+    //this->mapping_sliceplane( screen, volumes );
+    //this->mapping_externalfaces( screen, volumes );
+    timer.stop();
+    m_processing_times.mapping = timer.sec();
 
-    this->draw_isosurface( screen, volumes, temp_input );
-    //this->draw_sliceplane( screen, volumes, temp_input );
-    //this->draw_externalfaces( screen, volumes, temp_input );
-
+    timer.start();
     screen.draw();
-
     timer.stop();
     m_processing_times.rendering = timer.sec();
 
     // Readback pixels.
     timer.start();
-    kvs::ValueArray<kvs::UInt8> color_buffer = screen.readbackColorBuffer();
-    kvs::ValueArray<kvs::Real32> depth_buffer = screen.readbackDepthBuffer();
+    FrameBuffer frame_buffer;
+    frame_buffer.color_buffer = screen.readbackColorBuffer();
+    frame_buffer.depth_buffer = screen.readbackDepthBuffer();
     timer.stop();
     m_processing_times.readback = timer.sec();
 
+    return frame_buffer;
+}
+
+Process::Image Process::compose( const FrameBuffer& frame_buffer )
+{
+    // MPI parameters.
+    const int rank = m_communicator.rank();
+    const int nnodes = m_communicator.size();
+    const MPI_Comm& comm = m_communicator.handler();
+
     // Image composition.
     const bool depth_testing = true;
-    ParallelImageComposition::ImageCompositor compositor( m_rank, m_nnodes, MPI_COMM_WORLD );
-    compositor.initialize( input.width, input.height, depth_testing );
-    timer.start();
+    ParallelImageComposition::ImageCompositor compositor( rank, nnodes, comm );
+    compositor.initialize( m_input.width, m_input.height, depth_testing );
+
+    kvs::Timer timer( kvs::Timer::Start );
+    kvs::ValueArray<kvs::UInt8> color_buffer = frame_buffer.color_buffer;
+    kvs::ValueArray<kvs::Real32> depth_buffer = frame_buffer.depth_buffer;
     compositor.run( color_buffer, depth_buffer );
     timer.stop();
     m_processing_times.composition = timer.sec();
 
     // Output image.
-    const size_t npixels = input.width * input.height;
+    const size_t npixels = m_input.width * m_input.height;
     kvs::ValueArray<kvs::UInt8> pixels( npixels * 3 );
     for ( size_t i = 0; i < npixels; i++ )
     {
@@ -97,7 +111,7 @@ Process::Image Process::render( const local::Input& input, const Process::Volume
         pixels[ 3 * i + 2 ] = kvs::Math::Clamp( kvs::Math::Round( color_buffer[ 4 * i + 2 ] ), 0, 255 );
     }
 
-    return kvs::ColorImage( input.width, input.height, pixels );
+    return kvs::ColorImage( m_input.width, m_input.height, pixels );
 }
 
 Process::Volume* Process::import_volume( const Process::Data& data, const int gindex )
@@ -132,7 +146,7 @@ void Process::calculate_min_max( const Process::Data& data )
         const size_t gindex = i;
         const kvs::FieldViewData::Grid& grid = data.grid( gindex );
         const size_t nelements = grid.nelements[etype];
-        if ( nelements > 0 && grid.nelements[1]<=0)
+        if ( nelements > 0 && grid.nelements[1] <= 0 )
         {
             const size_t vindex = 3;
             const size_t nnodes = grid.nodes.size();
@@ -152,7 +166,7 @@ void Process::calculate_min_max( const Process::Data& data )
     }
 }
 
-void Process::draw_isosurface( InSituVis::Screen& screen, const Process::VolumeList& volumes, const local::Input& input )
+void Process::mapping_isosurface( InSituVis::Screen& screen, const Process::VolumeList& volumes )
 {
     const double iso_level = ( m_max_value - m_min_value ) * 0.2 + m_min_value;
     kvs::PolygonObject::NormalType n = kvs::PolygonObject::PolygonNormal;
@@ -174,7 +188,7 @@ void Process::draw_isosurface( InSituVis::Screen& screen, const Process::VolumeL
     }
 }
 
-void Process::draw_sliceplane( InSituVis::Screen& screen, const Process::VolumeList& volumes, const local::Input& input )
+void Process::mapping_sliceplane( InSituVis::Screen& screen, const Process::VolumeList& volumes )
 {
     const kvs::Vector3f c( ( m_min_ext + m_max_ext)  * 0.4f );
     const kvs::Vector3f p( c );
@@ -186,7 +200,7 @@ void Process::draw_sliceplane( InSituVis::Screen& screen, const Process::VolumeL
         if ( input_volume )
         {
             kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
-            if ( !input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( input.tf_filename ); }
+            if ( !m_input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( m_input.tf_filename ); }
 
             kvs::PolygonObject* slice = new kvs::SlicePlane( input_volume, p, n, tfunc  );
             slice->setMinMaxObjectCoords( m_min_ext, m_max_ext );
@@ -198,7 +212,7 @@ void Process::draw_sliceplane( InSituVis::Screen& screen, const Process::VolumeL
     }
 }
 
-void Process::draw_externalfaces( InSituVis::Screen& screen, const Process::VolumeList& volumes, const local::Input& input )
+void Process::mapping_externalfaces( InSituVis::Screen& screen, const Process::VolumeList& volumes )
 {
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
@@ -206,9 +220,9 @@ void Process::draw_externalfaces( InSituVis::Screen& screen, const Process::Volu
         if ( input_volume )
         {
             kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
-            if ( !input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( input.tf_filename ); }
+            if ( !m_input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( m_input.tf_filename ); }
 
-            kvs::PolygonObject* face = new kvs::ExternalFaces(input_volume );
+            kvs::PolygonObject* face = new kvs::ExternalFaces( input_volume );
             face->setMinMaxObjectCoords( m_min_ext, m_max_ext);
             face->setMinMaxExternalCoords( m_min_ext, m_max_ext);
             face->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
