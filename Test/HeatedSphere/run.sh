@@ -2,8 +2,10 @@
 PROGRAM=${PWD##*/}
 MPIEXEC=mpiexec
 
-NPROCS=4
+NPROCS=4 # Number of processes
 NREGIONS=64 # Number of regions
+#NPROCS=1 # Number of processes
+#NREGIONS=256 # Number of regions
 MAPPING=0 # 0: Isosurface, 1: Slice Plane, 2: External Face (Not supported)
 DATA=~/Work/Data/HeatedSphere/sphere_muto_160615/heatSphere_euler_50050.fv
 WIDTH=512

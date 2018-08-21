@@ -35,6 +35,8 @@ public:
 
     struct FrameBuffer
     {
+        int width; ///< buffer width
+        int height; ///< buffer height
         kvs::ValueArray<kvs::UInt8> color_buffer; ///< color frame buffer
         kvs::ValueArray<kvs::Real32> depth_buffer; ///< depth frame buffer
     };

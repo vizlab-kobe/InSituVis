@@ -131,6 +131,8 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     // Readback.
     timer.start();
     FrameBuffer frame_buffer;
+    frame_buffer.width = m_input.width;
+    frame_buffer.height = m_input.height;
     frame_buffer.color_buffer = screen.readbackColorBuffer();
     frame_buffer.depth_buffer = screen.readbackDepthBuffer();
     timer.stop();
@@ -154,12 +156,12 @@ Process::Image Process::compose( const FrameBuffer& frame_buffer )
     kvs::Timer timer( kvs::Timer::Start );
     kvs::ValueArray<kvs::UInt8> color_buffer = frame_buffer.color_buffer;
     kvs::ValueArray<kvs::Real32> depth_buffer = frame_buffer.depth_buffer;
-    compositor.run( color_buffer, depth_buffer );
+    if ( nnodes > 1 ) { compositor.run( color_buffer, depth_buffer ); }
     timer.stop();
     m_processing_times.composition = timer.sec();
 
     // Output image.
-    const size_t npixels = m_input.width * m_input.height;
+    const size_t npixels = frame_buffer.width * frame_buffer.height;
     kvs::ValueArray<kvs::UInt8> pixels( npixels * 3 );
     for ( size_t i = 0; i < npixels; i++ )
     {
@@ -168,7 +170,7 @@ Process::Image Process::compose( const FrameBuffer& frame_buffer )
         pixels[ 3 * i + 2 ] = kvs::Math::Clamp( kvs::Math::Round( color_buffer[ 4 * i + 2 ] ), 0, 255 );
     }
 
-    return kvs::ColorImage( m_input.width, m_input.height, pixels );
+    return kvs::ColorImage( frame_buffer.width, frame_buffer.height, pixels );
 }
 
 Process::Volume* Process::import_volume( const Process::Data& data, const int gindex )
