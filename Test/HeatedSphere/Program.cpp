@@ -6,6 +6,9 @@
 #include <InSituVis/Lib/Logger.h>
 
 
+namespace local
+{
+
 int Program::exec( int argc, char** argv )
 {
     // Initialize MPI
@@ -52,3 +55,5 @@ int Program::exec( int argc, char** argv )
 
     return 0;
 }
+
+} // end of namespace local
