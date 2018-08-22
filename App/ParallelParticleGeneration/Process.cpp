@@ -1,13 +1,17 @@
 #include "Process.h"
+#include <cmath>
+#include <cfloat>
 #include <kvs/RGBFormulae>
 #include <kvs/Camera>
+#include <kvs/PointObject>
 #include <kvs/UnstructuredVolumeImporter>
-#include <kvs/Isosurface>
-#include <kvs/SlicePlane>
-#include <kvs/ExternalFaces>
-#include <kvs/Timer>
+#include <kvs/CellByCellUniformSampling>
+#include <kvs/CellByCellMetropolisSampling>
+#include <kvs/CellByCellRejectionSampling>
+#include <kvs/CellByCellLayeredSampling>
 #include <ParallelImageComposition/Lib/ImageCompositor.h>
-#include <cfloat>
+#include <ParticleBasedRendering/Lib/CellByCellSubpixelPointSampling.h>
+#include <InSituVis/Lib/ParticleBasedRenderer.h>
 
 
 namespace local
@@ -22,9 +26,13 @@ Process::ProcessingTimes Process::ProcessingTimes::reduce(
     comm.reduce( rank, this->reading, times.reading, op );
     comm.reduce( rank, this->importing, times.importing, op );
     comm.reduce( rank, this->mapping, times.mapping, op );
+    comm.reduce( rank, this->mapping_generation, times.mapping_generation, op );
+    comm.reduce( rank, this->mapping_transmission, times.mapping_transmission, op );
     comm.reduce( rank, this->rendering, times.rendering, op );
+    comm.reduce( rank, this->rendering_creation, times.rendering_creation, op );
+    comm.reduce( rank, this->rendering_projection, times.rendering_projection, op );
+    comm.reduce( rank, this->rendering_ensemble, times.rendering_ensemble, op );
     comm.reduce( rank, this->readback, times.readback, op );
-    comm.reduce( rank, this->composition, times.composition, op );
     return times;
 }
 
@@ -35,9 +43,13 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     kvs::ValueArray<float> readings; comm.gather( rank, this->reading, readings );
     kvs::ValueArray<float> importings; comm.gather( rank, this->importing, importings );
     kvs::ValueArray<float> mappings; comm.gather( rank, this->mapping, mappings );
+    kvs::ValueArray<float> mappings_generation; comm.gather( rank, this->mapping_generation, mappings_generation );
+    kvs::ValueArray<float> mappings_transmission; comm.gather( rank, this->mapping_transmission, mappings_transmission );
     kvs::ValueArray<float> renderings; comm.gather( rank, this->rendering, renderings );
+    kvs::ValueArray<float> renderings_creation; comm.gather( rank, this->rendering_creation, renderings_creation );
+    kvs::ValueArray<float> renderings_projection; comm.gather( rank, this->rendering_projection, renderings_projection );
+    kvs::ValueArray<float> renderings_ensemble; comm.gather( rank, this->rendering_ensemble, renderings_ensemble );
     kvs::ValueArray<float> readbacks; comm.gather( rank, this->readback, readbacks );
-    kvs::ValueArray<float> compositions; comm.gather( rank, this->composition, compositions );
 
     std::vector<ProcessingTimes> times_list;
     for ( size_t i = 0; i < readings.size(); i++ )
@@ -46,9 +58,13 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
         times.reading = readings[i];
         times.importing = importings[i];
         times.mapping = mappings[i];
+        times.mapping_generation = mappings_generation[i];
+        times.mapping_transmission = mappings_transmission[i];
         times.rendering = renderings[i];
+        times.rendering_creation = renderings_creation[i];
+        times.rendering_projection = renderings_projection[i];
+        times.rendering_ensemble = renderings_ensemble[i];
         times.readback = readbacks[i];
-        times.composition = compositions[i];
         times_list.push_back( times );
     }
 
@@ -60,9 +76,13 @@ void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& inden
     os << indent << "Reading time: " << this->reading << " [sec]" << std::endl;
     os << indent << "Importing time: " << this->importing << " [sec]" << std::endl;
     os << indent << "Mapping time: " << this->mapping << " [sec]" << std::endl;
+    os << indent << "Mapping time (generation): " << this->mapping_generation << " [sec]" << std::endl;
+    os << indent << "Mapping time (transmission): " << this->mapping_transmission << " [sec]" << std::endl;
     os << indent << "Rendering time: " << this->rendering << " [sec]" << std::endl;
+    os << indent << "Rendering time (creation): " << this->rendering_creation << " [sec]" << std::endl;
+    os << indent << "Rendering time (projection): " << this->rendering_projection << " [sec]" << std::endl;
+    os << indent << "Rendering time (ensemble): " << this->rendering_ensemble << " [sec]" << std::endl;
     os << indent << "Readback time: " << this->readback << " [sec]" << std::endl;
-    os << indent << "Composition time: " << this->composition << " [sec]" << std::endl;
 }
 
 kvs::ColorImage Process::FrameBuffer::colorImage() const
@@ -139,7 +159,11 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     timer.start();
     screen.draw();
     timer.stop();
+    const InSituVis::ParticleBasedRenderer* renderer = InSituVis::ParticleBasedRenderer::DownCast( screen.scene()->renderer() );
     m_processing_times.rendering = timer.sec();
+    m_processing_times.rendering_creation = renderer->creationTime();
+    m_processing_times.rendering_projection = renderer->projectionTime();
+    m_processing_times.rendering_ensemble = renderer->ensembleTime();
 
     // Readback.
     timer.start();
@@ -152,29 +176,6 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     m_processing_times.readback = timer.sec();
 
     return frame_buffer;
-}
-
-Process::Image Process::compose( const FrameBuffer& frame_buffer )
-{
-    // MPI parameters.
-    const int rank = m_communicator.rank();
-    const int nnodes = m_communicator.size();
-    const MPI_Comm& comm = m_communicator.handler();
-
-    // Image composition.
-    const bool depth_testing = true;
-    ParallelImageComposition::ImageCompositor compositor( rank, nnodes, comm );
-    compositor.initialize( m_input.width, m_input.height, depth_testing );
-
-    kvs::Timer timer( kvs::Timer::Start );
-    kvs::ValueArray<kvs::UInt8> color_buffer = frame_buffer.color_buffer;
-    kvs::ValueArray<kvs::Real32> depth_buffer = frame_buffer.depth_buffer;
-    if ( nnodes > 1 ) { compositor.run( color_buffer, depth_buffer ); }
-    timer.stop();
-    m_processing_times.composition = timer.sec();
-
-    // Output image.
-    return frame_buffer.colorImage();
 }
 
 Process::Volume* Process::import_volume( const Process::Data& data, const int gindex )
@@ -231,84 +232,109 @@ void Process::calculate_min_max( const Process::Data& data )
 
 void Process::mapping(
     InSituVis::Screen& screen,
-    const VolumeList& volumes,
+    const Process::VolumeList& volumes,
     const kvs::TransferFunction& tfunc )
 {
-    switch ( m_input.mapping )
+    // Generate particles.
+    kvs::Timer timer( kvs::Timer::Start );
+    Particle* particles = this->generate_particle( volumes, tfunc );
+    timer.stop();
+    m_processing_times.mapping_generation = timer.sec();
+
+    // Gather particles to master rank node.
+    const int nnodes = m_communicator.size();
+    const int my_rank = m_communicator.rank();
+    const int master_rank = 0;
+    timer.start();
+    if ( my_rank != master_rank )
     {
-    case 0: this->mapping_isosurface( screen, volumes, tfunc ); break;
-    case 1: this->mapping_sliceplane( screen, volumes, tfunc ); break;
-    case 2: this->mapping_externalfaces( screen, volumes, tfunc ); break;
+        // Send particles to master rank
+        m_communicator.send( master_rank, my_rank+100, particles->coords() );
+        m_communicator.send( master_rank, my_rank+200, particles->colors() );
+        m_communicator.send( master_rank, my_rank+300, particles->normals() );
+        m_communicator.send( master_rank, my_rank+400, particles->sizes() );
+    }
+    else
+    {
+        // Receive particles from other nodes
+        for ( int j = 0; j < nnodes - 1; j++ )
+        {
+            const int rank = j + 1;
+            kvs::ValueArray<kvs::Real32> coords; m_communicator.receive( rank, rank + 100, coords );
+            kvs::ValueArray<kvs::UInt8> colors; m_communicator.receive( rank, rank + 200, colors );
+            kvs::ValueArray<kvs::Real32> normals; m_communicator.receive( rank, rank + 300, normals );
+            kvs::ValueArray<kvs::Real32> sizes; m_communicator.receive( rank, rank + 400, sizes );
+            kvs::PointObject receive_particles;
+            receive_particles.setCoords( coords );
+            receive_particles.setColors( colors );
+            receive_particles.setNormals( normals );
+            receive_particles.setSizes( sizes );
+            receive_particles.updateMinMaxCoords();
+            particles->add( receive_particles );
+        }
+    }
+    timer.stop();
+    m_processing_times.mapping_transmission = timer.sec();
+
+    // Setup particle renderer.
+    InSituVis::ParticleBasedRenderer* renderer = new InSituVis::ParticleBasedRenderer();
+    renderer->disableShading();
+    renderer->setRepetitionLevel( m_input.repetitions );
+    screen.registerObject( particles, renderer );
+}
+
+Process::Particle* Process::generate_particle( const Process::VolumeList& volumes, const kvs::TransferFunction& tfunc )
+{
+    kvs::PointObject* object = new kvs::PointObject();
+    for ( size_t i = 0; i < volumes.size(); i++ )
+    {
+        const kvs::VolumeObjectBase* volume = volumes[i];
+        if ( !volume ) { continue; }
+
+        Particle* particles = this->generate_particle( volume, tfunc );
+        if ( !particles ) { continue; }
+
+        particles->updateMinMaxCoords();
+        object->add( *particles );
+
+        delete particles;
+    }
+
+    if ( m_input.sampling_method == 4 )
+    {
+        object->setColor( kvs::RGBColor::Black() );
+    }
+
+    object->setMinMaxObjectCoords( m_min_ext, m_max_ext);
+    object->setMinMaxExternalCoords( m_min_ext, m_max_ext);
+
+    return object;
+}
+
+Process::Particle* Process::generate_particle( const Process::Volume* volume, const kvs::TransferFunction& tfunc )
+{
+    switch ( m_input.sampling_method )
+    {
+    case 0: return new kvs::CellByCellUniformSampling( volume, m_input.repetitions, m_input.step, tfunc );
+    case 1: return new kvs::CellByCellMetropolisSampling( volume, m_input.repetitions, m_input.step, tfunc );
+    case 2: return new kvs::CellByCellRejectionSampling( volume, m_input.repetitions, m_input.step, tfunc );
+    case 3: return new kvs::CellByCellLayeredSampling( volume, m_input.repetitions, m_input.step, tfunc );
+    case 4:
+    {
+        const size_t subpixel_level = std::sqrt( m_input.repetitions );
+        kvs::Camera* camera = new kvs::Camera();
+        camera->setWindowSize( m_input.width, m_input.height );
+        return new ParticleBasedRendering::CellByCellSubpixelPointSampling(
+            camera,
+            volume,
+            subpixel_level,
+            m_input.step,
+            m_input.base_opacity );
+    }
     default: break;
     }
-}
 
-void Process::mapping_isosurface(
-    InSituVis::Screen& screen,
-    const Process::VolumeList& volumes,
-    const kvs::TransferFunction& tfunc )
-{
-    const double iso_level = ( m_max_value - m_min_value ) * 0.2 + m_min_value;
-    kvs::PolygonObject::NormalType n = kvs::PolygonObject::PolygonNormal;
-    const bool d = true;
-
-    for ( size_t i = 0; i < volumes.size(); i++ )
-    {
-        const kvs::VolumeObjectBase* input_volume = volumes[i];
-        if ( input_volume )
-        {
-            kvs::PolygonObject* surface = new kvs::Isosurface( input_volume, iso_level, n, d, tfunc );
-            surface->setMinMaxObjectCoords( m_min_ext, m_max_ext);
-            surface->setMinMaxExternalCoords( m_min_ext, m_max_ext);
-            surface->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
-            surface->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationX( 20 ) ) );
-            screen.registerObject( surface );
-        }
-    }
-}
-
-void Process::mapping_sliceplane(
-    InSituVis::Screen& screen,
-    const Process::VolumeList& volumes,
-    const kvs::TransferFunction& tfunc )
-{
-    const kvs::Vector3f c( ( m_min_ext + m_max_ext)  * 0.4f );
-    const kvs::Vector3f p( c );
-    const kvs::Vector3f n( 1.0, 0.8, 1.0 );
-
-    for ( size_t i = 0; i < volumes.size(); i++ )
-    {
-        const kvs::VolumeObjectBase* input_volume = volumes[i];
-        if ( input_volume )
-        {
-            kvs::PolygonObject* slice = new kvs::SlicePlane( input_volume, p, n, tfunc  );
-            slice->setMinMaxObjectCoords( m_min_ext, m_max_ext );
-            slice->setMinMaxExternalCoords( m_min_ext, m_max_ext );
-            slice->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
-            slice->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationX( 20 ) ) );
-            screen.registerObject( slice );
-        }
-    }
-}
-
-void Process::mapping_externalfaces(
-    InSituVis::Screen& screen,
-    const Process::VolumeList& volumes,
-    const kvs::TransferFunction& tfunc )
-{
-    for ( size_t i = 0; i < volumes.size(); i++ )
-    {
-        const kvs::VolumeObjectBase* input_volume = volumes[i];
-        if ( input_volume )
-        {
-            kvs::PolygonObject* face = new kvs::ExternalFaces( input_volume );
-            face->setMinMaxObjectCoords( m_min_ext, m_max_ext);
-            face->setMinMaxExternalCoords( m_min_ext, m_max_ext);
-            face->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
-            face->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationX( 20 ) ) );
-            screen.registerObject( face );
-        }
-    }
+    return NULL;
 }
 
 } // end of namespace local

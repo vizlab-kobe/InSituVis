@@ -9,6 +9,7 @@
 #include <kvs/ColorImage>
 #include <kvs/Timer>
 #include <kvs/TransferFunction>
+#include <kvs/PointObject>
 #include <KVS.mpi/Lib/Communicator.h>
 #include <InSituVis/Lib/Screen.h>
 
@@ -23,10 +24,14 @@ public:
     {
         float reading; ///< rendering time
         float importing; ///< importing time
-        float mapping; ///< mappint time
-        float rendering; ///< rendering time
+        float mapping; ///< mapping time (total)
+        float mapping_generation; ///< mapping time (particle generation)
+        float mapping_transmission; ///< mapping time (particle transmission)
+        float rendering; ///< rendering time (total)
+        float rendering_projection; ///< rendering time (particle projection)
+        float rendering_creation; ///< rendering time (shader/vbo creation)
+        float rendering_ensemble; ///< rendering time (ensemble averaging)
         float readback; ///< readback time
-        float composition; ///< image composition time
 
         ProcessingTimes reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank = 0 ) const;
         std::vector<ProcessingTimes> gather( kvs::mpi::Communicator& comm, const int rank = 0 ) const;
@@ -45,6 +50,7 @@ public:
 
     typedef kvs::FieldViewData Data;
     typedef kvs::VolumeObjectBase Volume;
+    typedef kvs::PointObject Particle;
     typedef std::vector<Volume*> VolumeList;
     typedef kvs::ColorImage Image;
 
@@ -67,15 +73,13 @@ public:
     Data read();
     VolumeList import( const Data& data );
     FrameBuffer render( const VolumeList& volumes );
-    Image compose( const FrameBuffer& frame_buffer );
 
 private:
     Volume* import_volume( const Data& data, const int gindex );
     void calculate_min_max( const Data& data );
     void mapping( InSituVis::Screen& screen, const VolumeList& volumes, const kvs::TransferFunction& tfunc );
-    void mapping_isosurface( InSituVis::Screen& screen, const VolumeList& volumes, const kvs::TransferFunction& tfunc );
-    void mapping_sliceplane( InSituVis::Screen& screen, const VolumeList& volumes, const kvs::TransferFunction& tfunc );
-    void mapping_externalfaces( InSituVis::Screen& screen, const VolumeList& volumes, const kvs::TransferFunction& tfunc );
+    Particle* generate_particle( const VolumeList& volumes, const kvs::TransferFunction& tfunc );
+    Particle* generate_particle( const Volume* volume, const kvs::TransferFunction& tfunc );
 };
 
 } // end of namespace local

@@ -1,27 +1,8 @@
-/*****************************************************************************/
-/**
- *  @file   ParticleBasedRenderer.cpp
- *  @author Naohisa Sakamoto
- */
-/*----------------------------------------------------------------------------
- *
- *  Copyright (c) Visualization Laboratory, Kyoto University.
- *  All rights reserved.
- *  See http://www.viz.media.kyoto-u.ac.jp/kvs/copyright/ for details.
- *
- *  $Id$
- */
-/*****************************************************************************/
-#include "ParticleBasedRendererGLSL.h"
-#include <cmath>
+#include "ParticleBasedRenderer.h"
 #include <kvs/OpenGL>
-#include <kvs/PointObject>
-#include <kvs/Camera>
-#include <kvs/Light>
-#include <kvs/Assert>
-#include <kvs/Math>
-#include <kvs/MersenneTwister>
+#include <kvs/ParticleBasedRenderer>
 #include <kvs/Xorshift128>
+
 
 namespace
 {
@@ -60,11 +41,176 @@ kvs::ValueArray<T> ShuffleArray( const kvs::ValueArray<T>& values, kvs::UInt32 s
 
 }
 
-
-
-
-namespace local
+namespace InSituVis
 {
+
+namespace internal
+{
+
+/*===========================================================================*/
+/**
+ *  @brief  Constructs a new StochasticRendererBase class.
+ *  @param  engine [in] pointer to the stochastic rendering engine
+ */
+/*===========================================================================*/
+StochasticRendererBase::StochasticRendererBase( InSituVis::internal::StochasticRenderingEngine* engine ):
+    m_width( 0 ),
+    m_height( 0 ),
+    m_repetition_level( 1 ),
+    m_coarse_level( 1 ),
+    m_enable_lod( false ),
+    m_enable_refinement( false ),
+    m_shader( new kvs::Shader::Lambert() ),
+    m_engine( engine ),
+    m_creation_time( 0 ),
+    m_projection_time( 0 ),
+    m_ensemble_time( 0 )
+{
+}
+
+/*===========================================================================*/
+/**
+ *  @brief  Destroys the StochasticRendererBase class.
+ */
+/*===========================================================================*/
+StochasticRendererBase::~StochasticRendererBase()
+{
+    if ( m_shader ) delete m_shader;
+    if ( m_engine ) delete m_engine;
+}
+
+/*===========================================================================*/
+/**
+ *  @brief  Releases object resouces from GPU.
+ */
+/*===========================================================================*/
+void StochasticRendererBase::release()
+{
+    KVS_ASSERT( m_engine );
+
+    if ( m_engine->object() )
+    {
+        m_engine->detachObject();
+        m_engine->release();
+    }
+}
+
+/*===========================================================================*/
+/**
+ *  @brief  Executes the rendering process.
+ *  @param  object [in] pointer to the object
+ *  @param  camera [in] pointer to the camra
+ *  @param  light [in] pointer to the light
+ */
+/*===========================================================================*/
+void StochasticRendererBase::exec( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light )
+{
+    startTimer();
+    kvs::OpenGL::WithPushedAttrib p( GL_ALL_ATTRIB_BITS );
+
+    // Add: Timer.
+    kvs::Timer timer;
+    m_creation_time = 0;
+    m_projection_time = 0;
+    m_ensemble_time = 0;
+
+    const size_t width = camera->windowWidth();
+    const size_t height = camera->windowHeight();
+    const bool window_created = m_width == 0 && m_height == 0;
+    if ( window_created )
+    {
+        m_width = width;
+        m_height = height;
+        m_ensemble_buffer.create( width, height );
+        m_ensemble_buffer.clear();
+        m_modelview = kvs::OpenGL::ModelViewMatrix();
+        m_light_position = light->position();
+        m_engine->setShader( &shader() );
+        m_engine->setRepetitionLevel( m_repetition_level );
+        m_engine->setEnabledShading( kvs::RendererBase::isEnabledShading() );
+
+        // Add: VBO/shader craation time.
+        timer.start();
+        {
+            m_engine->create( object, camera, light );
+        }
+        timer.stop();
+        m_creation_time = timer.sec();
+    }
+
+    const bool window_resized = m_width != width || m_height != height;
+    if ( window_resized )
+    {
+        m_width = width;
+        m_height = height;
+        m_ensemble_buffer.release();
+        m_ensemble_buffer.create( width, height );
+        m_ensemble_buffer.clear();
+        m_engine->update( object, camera, light );
+    }
+
+    const bool object_changed = m_engine->object() != object;
+    if ( object_changed )
+    {
+        m_ensemble_buffer.clear();
+        m_engine->release();
+        m_engine->setShader( &shader() );
+        m_engine->setEnabledShading( kvs::RendererBase::isEnabledShading() );
+        m_engine->create( object, camera, light );
+    }
+
+    // LOD control.
+    size_t repetitions = m_repetition_level;
+    kvs::Vec3 light_position = light->position();
+    kvs::Mat4 modelview = kvs::OpenGL::ModelViewMatrix();
+    if ( m_light_position != light_position || m_modelview != modelview )
+    {
+        if ( m_enable_lod )
+        {
+            repetitions = m_coarse_level;
+        }
+        m_light_position = light_position;
+        m_modelview = modelview;
+        m_ensemble_buffer.clear();
+    }
+
+    // Setup engine.
+    const bool reset_count = !m_enable_refinement;
+    if ( reset_count ) m_engine->resetRepetitions();
+    m_engine->setup( object, camera, light );
+
+    // Ensemble rendering.
+    if ( reset_count ) m_ensemble_buffer.clear();
+    for ( size_t i = 0; i < repetitions; i++ )
+    {
+        m_ensemble_buffer.bind();
+
+        // Add: projection time.
+        timer.start();
+        {
+            m_engine->draw( object, camera, light );
+        }
+        timer.stop();
+        m_projection_time += timer.sec();
+
+        m_engine->countRepetitions();
+        m_ensemble_buffer.unbind();
+
+        // Add: ensemble time
+        timer.start();
+        {
+            m_ensemble_buffer.add();
+        }
+        timer.stop();
+        m_ensemble_time += timer.sec();
+    }
+    m_ensemble_buffer.draw();
+
+    kvs::OpenGL::Finish();
+    stopTimer();
+}
+
+} // end of namespace internal
 
 /*===========================================================================*/
 /**
@@ -72,7 +218,7 @@ namespace local
  */
 /*===========================================================================*/
 ParticleBasedRenderer::ParticleBasedRenderer():
-    StochasticRendererBase( new Engine() )
+    internal::StochasticRendererBase( new Engine() )
 {
 }
 
@@ -85,7 +231,7 @@ ParticleBasedRenderer::ParticleBasedRenderer():
  */
 /*===========================================================================*/
 ParticleBasedRenderer::ParticleBasedRenderer( const kvs::Mat4& m, const kvs::Mat4& p, const kvs::Vec4& v ):
-    StochasticRendererBase( new Engine( m, p, v ) )
+    internal::StochasticRendererBase( new Engine( m, p, v ) )
 {
 }
 
@@ -206,6 +352,7 @@ const kvs::Vec4& ParticleBasedRenderer::initialViewport() const
     return static_cast<const Engine&>( engine() ).initialViewport();
 }
 
+
 /*===========================================================================*/
 /**
  *  @brief  Constructs a new Engine class.
@@ -280,7 +427,6 @@ void ParticleBasedRenderer::Engine::release()
 /*===========================================================================*/
 void ParticleBasedRenderer::Engine::create( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light )
 {
-  
     kvs::PointObject* point = kvs::PointObject::DownCast( object );
     m_has_normal = point->normals().size() > 0;
     if ( !m_has_normal ) setEnabledShading( false );
@@ -361,7 +507,6 @@ void ParticleBasedRenderer::Engine::setup( kvs::ObjectBase* object, kvs::Camera*
 /*===========================================================================*/
 void ParticleBasedRenderer::Engine::draw( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light )
 {
-  
     kvs::PointObject* point = kvs::PointObject::DownCast( object );
 
     kvs::VertexBufferObject::Binder bind1( m_vbo[ repetitionCount() ] );
@@ -528,5 +673,4 @@ void ParticleBasedRenderer::Engine::create_buffer_object( const kvs::PointObject
     }
 }
 
-} // end of glsl
-
+} // end of namespace InSituVis
