@@ -1,6 +1,9 @@
 #include "Input.h"
 
 
+namespace local
+{
+
 std::string Input::MethodName( const Method method )
 {
     switch ( method )
@@ -9,7 +12,7 @@ std::string Input::MethodName( const Method method )
     case Metropolis: return "metoropolis";
     case Rejection: return "rejection";
     case Layered: return "layered";
-    case Point: return "point";
+    case Point: return "Point";
     default: return "unknown";
     }
 }
@@ -43,7 +46,7 @@ Input::Input( int argc, char** argv ):
     m_commandline.addOption( "regions","Number of regions (default: 1).", 1, false );
     m_commandline.addOption( "step","Sampling step (defualt: 0.5).", 1, false );
     m_commandline.addOption( "base_opacity","Base opacity (defualt: 0.5).", 1, false );
-    m_commandline.addOption( "sampling_method", "Sampling method [0:uniform, 1:metropolis, 2:rejection, 3:layered] (default: 0)", 1, false );
+    m_commandline.addOption( "sampling_method", "Sampling method [0:uniform, 1:metropolis, 2:rejection, 3:layered, 4:point] (default: 0)", 1, false );
     m_commandline.addOption( "sampling_version", "Sampling version [0:old, 1:new] (default: 0)", 1, false );
     m_commandline.addOption( "tf_filename", "input tf_filename [*.kvsml, *.fld, *.inp]", 1, false );
     m_commandline.addOption( "width", "Screen width( default: 512).", 1, false);
@@ -78,3 +81,5 @@ void Input::print( std::ostream& os, const kvs::Indent& indent ) const
     os << indent << "Screen width: " << width << std::endl;
     os << indent << "Screen height: " << height << std::endl;
 }
+
+} // end of namespace local

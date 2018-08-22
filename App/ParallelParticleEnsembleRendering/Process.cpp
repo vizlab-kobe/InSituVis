@@ -31,7 +31,7 @@ Process::ProcessingTimes Process::ProcessingTimes::reduce(
     comm.reduce( rank, this->rendering_projection, times.rendering_projection, op );
     comm.reduce( rank, this->rendering_ensemble, times.rendering_ensemble, op );
     comm.reduce( rank, this->readback, times.readback, op );
-    comm.reduce( rank, this->transmission, times.transmission, op );
+    comm.reduce( rank, this->composition, times.composition, op );
     return times;
 }
 
@@ -47,7 +47,8 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     kvs::ValueArray<float> renderings_projection; comm.gather( rank, this->rendering_projection, renderings_projection );
     kvs::ValueArray<float> renderings_ensemble; comm.gather( rank, this->rendering_ensemble, renderings_ensemble );
     kvs::ValueArray<float> readbacks; comm.gather( rank, this->readback, readbacks );
-    kvs::ValueArray<float> transmissions; comm.gather( rank, this->transmission, transmissions );
+    kvs::ValueArray<float> compositions; comm.gather( rank, this->composition, compositions );
+
     std::vector<ProcessingTimes> times_list;
     for ( size_t i = 0; i < readings.size(); i++ )
     {
@@ -60,7 +61,7 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
         times.rendering_projection = renderings_projection[i];
         times.rendering_ensemble = renderings_ensemble[i];
         times.readback = readbacks[i];
-        times.transmission = transmissions[i];
+        times.composition = compositions[i];
         times_list.push_back( times );
     }
 
@@ -77,21 +78,7 @@ void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& inden
     os << indent << indent << "projection: " << this->rendering_projection << " [sec]" << std::endl;
     os << indent << indent << "  ensemble: " << this->rendering_ensemble << " [sec]" << std::endl;
     os << indent << "Readback time: " << this->readback << " [sec]" << std::endl;
-    os << indent << "Ttransmission time: " << this->transmission << " [sec]" << std::endl;
-}
-
-kvs::ColorImage Process::FrameBuffer::colorImage() const
-{
-    const size_t npixels = this->width * this->height;
-    kvs::ValueArray<kvs::UInt8> pixels( npixels * 3 );
-    for ( size_t i = 0; i < npixels; i++ )
-    {
-        pixels[ 3 * i + 0 ] = kvs::Math::Clamp( kvs::Math::Round( this->color_buffer[ 4 * i + 0 ] ), 0, 255 );
-        pixels[ 3 * i + 1 ] = kvs::Math::Clamp( kvs::Math::Round( this->color_buffer[ 4 * i + 1 ] ), 0, 255 );
-        pixels[ 3 * i + 2 ] = kvs::Math::Clamp( kvs::Math::Round( this->color_buffer[ 4 * i + 2 ] ), 0, 255 );
-    }
-
-    return kvs::ColorImage( this->width, this->height, pixels );
+    os << indent << "Composition time: " << this->composition << " [sec]" << std::endl;
 }
 
 Process::Data Process::read()
@@ -132,7 +119,7 @@ Process::VolumeList Process::import( const Process::Data& data )
     return volumes;
 }
 
-Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
+Process::Image Process::render( const Process::VolumeList& volumes )
 {
     // Initialize rendering screen.
     InSituVis::Screen screen;
@@ -140,32 +127,95 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     screen.setGeometry( 0, 0, m_input.width, m_input.height );
     screen.scene()->camera()->setWindowSize( m_input.width, m_input.height );
 
-    // Mapping.
+    // Image composititor.
+    const int rank = m_communicator.rank();
+    const int nnodes = m_communicator.size();
+    const MPI_Comm& comm = m_communicator.handler();
+    const bool depth_testing = true;
+    ParallelImageComposition::ImageCompositor compositor( rank, nnodes, comm );
+    compositor.initialize( m_input.width, m_input.height, depth_testing );
+
+    // Ensemble averaging buffer.
+    kvs::ValueArray<kvs::Real32> ensemble_buffer( m_input.width * m_input.height * 3 );
+    ensemble_buffer.fill( 0.0f );
+
+    // Transfer function.
     kvs::TransferFunction tfunc = kvs::TransferFunction( kvs::RGBFormulae::Hot(256) );
     if ( !m_input.tf_filename.empty() ) { tfunc = kvs::TransferFunction( m_input.tf_filename ); }
-    this->mapping( screen, volumes, tfunc );
 
-    // Rendering.
-    kvs::Timer timer( kvs::Timer::Start );
-    screen.draw();
-    timer.stop();
-    const InSituVis::ParticleBasedRenderer* renderer = InSituVis::ParticleBasedRenderer::DownCast( screen.scene()->renderer() );
-    m_processing_times.rendering = timer.sec();
-    m_processing_times.rendering_creation = renderer->creationTime();
-    m_processing_times.rendering_projection = renderer->projectionTime();
-    m_processing_times.rendering_ensemble = renderer->ensembleTime();
+    // Ensemble averaging process.
+    float mapping = 0;
+    float rendering = 0;
+    float rendering_creation = 0;
+    float rendering_projection = 0;
+    float rendering_ensemble = 0;
+    float readback = 0;
+    float composition = 0;
+    const size_t nrepeats = m_input.repetitions;
+    for ( size_t i = 0; i < nrepeats; i++ )
+    {
+        // Mapping.
+        this->mapping( screen, volumes, tfunc );
+        mapping += m_processing_times.mapping;
 
-    // Readback.
-    timer.start();
-    FrameBuffer frame_buffer;
-    frame_buffer.width = m_input.width;
-    frame_buffer.height = m_input.height;
-    frame_buffer.color_buffer = screen.readbackColorBuffer();
-    frame_buffer.depth_buffer = screen.readbackDepthBuffer();
-    timer.stop();
-    m_processing_times.readback = timer.sec();
+        // Rendering.
+        kvs::Timer timer( kvs::Timer::Start );
+        screen.draw();
+        timer.stop();
+        const InSituVis::ParticleBasedRenderer* renderer = InSituVis::ParticleBasedRenderer::DownCast( screen.scene()->renderer() );
+        rendering += timer.sec();
+        rendering_creation += renderer->creationTime();
+        rendering_projection += renderer->projectionTime();
 
-    return frame_buffer;
+        // Readback.
+        timer.start();
+        kvs::ValueArray<kvs::UInt8> color_buffer = screen.readbackColorBuffer();
+        kvs::ValueArray<kvs::Real32> depth_buffer = screen.readbackDepthBuffer();
+        timer.stop();
+        readback += timer.sec();
+
+        // Composition.
+        timer.start();
+        if ( nnodes > 1 ) { compositor.run( color_buffer, depth_buffer ); }
+        timer.stop();
+        composition += timer.sec();
+
+        // Ensemble averaging.
+        timer.start();
+        const float a = 1.0f / ( i + 1 );
+        const int npixels = depth_buffer.size();
+        for ( int j = 0; j < npixels; j++ )
+        {
+            const float r = kvs::Real32( color_buffer[ 4 * j + 0 ] );
+            const float g = kvs::Real32( color_buffer[ 4 * j + 1 ] );
+            const float b = kvs::Real32( color_buffer[ 4 * j + 2 ] );
+            ensemble_buffer[ 3 * j + 0 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 0 ], r, a );
+            ensemble_buffer[ 3 * j + 1 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 1 ], g, a );
+            ensemble_buffer[ 3 * j + 2 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 2 ], b, a );
+        }
+        timer.stop();
+        rendering_ensemble += timer.sec();
+        rendering += timer.sec();
+    }
+
+    // Processing times.
+    m_processing_times.mapping = mapping;
+    m_processing_times.rendering = rendering;
+    m_processing_times.rendering_creation = rendering_creation;
+    m_processing_times.rendering_projection = rendering_projection;
+    m_processing_times.rendering_ensemble = rendering_ensemble;
+    m_processing_times.readback = readback;
+    m_processing_times.composition = composition;
+
+    // Output image.
+    kvs::ValueArray<kvs::UInt8> pixels( m_input.width * m_input.height * 3 );
+    for ( size_t i = 0; i < pixels.size(); i++ )
+    {
+        const int p = kvs::Math::Round( ensemble_buffer[i] );
+        pixels[i] = kvs::Math::Clamp( p, 0 , 255 );
+    }
+
+    return Image( m_input.width, m_input.height, pixels );
 }
 
 Process::Volume* Process::import_volume( const Process::Data& data, const int gindex )
@@ -225,51 +275,15 @@ void Process::mapping(
     const Process::VolumeList& volumes,
     const kvs::TransferFunction& tfunc )
 {
-    // Particle generation.
+    // Generate particles.
     kvs::Timer timer( kvs::Timer::Start );
     Particle* particles = this->generate_particle( volumes, tfunc );
     timer.stop();
     m_processing_times.mapping = timer.sec();
 
-    // Particle transmission.
-    const int nnodes = m_communicator.size();
-    const int my_rank = m_communicator.rank();
-    const int master_rank = 0;
-    timer.start();
-    if ( my_rank != master_rank )
-    {
-        // Send particles to master rank
-        m_communicator.send( master_rank, my_rank+100, particles->coords() );
-        m_communicator.send( master_rank, my_rank+200, particles->colors() );
-        m_communicator.send( master_rank, my_rank+300, particles->normals() );
-        m_communicator.send( master_rank, my_rank+400, particles->sizes() );
-    }
-    else
-    {
-        // Receive particles from other nodes
-        for ( int j = 0; j < nnodes - 1; j++ )
-        {
-            const int rank = j + 1;
-            kvs::ValueArray<kvs::Real32> coords; m_communicator.receive( rank, rank + 100, coords );
-            kvs::ValueArray<kvs::UInt8> colors; m_communicator.receive( rank, rank + 200, colors );
-            kvs::ValueArray<kvs::Real32> normals; m_communicator.receive( rank, rank + 300, normals );
-            kvs::ValueArray<kvs::Real32> sizes; m_communicator.receive( rank, rank + 400, sizes );
-            kvs::PointObject receive_particles;
-            receive_particles.setCoords( coords );
-            receive_particles.setColors( colors );
-            receive_particles.setNormals( normals );
-            receive_particles.setSizes( sizes );
-            receive_particles.updateMinMaxCoords();
-            particles->add( receive_particles );
-        }
-    }
-    timer.stop();
-    m_processing_times.transmission = timer.sec();
-
     // Setup particle renderer.
     InSituVis::ParticleBasedRenderer* renderer = new InSituVis::ParticleBasedRenderer();
     renderer->disableShading();
-    renderer->setRepetitionLevel( m_input.repetitions );
     screen.registerObject( particles, renderer );
 }
 

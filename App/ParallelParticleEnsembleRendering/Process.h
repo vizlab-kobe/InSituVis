@@ -30,21 +30,11 @@ public:
         float rendering_creation; ///< rendering time (shader/vbo creation time)
         float rendering_ensemble; ///< rendering time (ensemble averaging time)
         float readback; ///< readback time
-        float transmission; ///< transmition time (particle transmission time)
+        float composition; ///< image composition time
 
         ProcessingTimes reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank = 0 ) const;
         std::vector<ProcessingTimes> gather( kvs::mpi::Communicator& comm, const int rank = 0 ) const;
         void print( std::ostream& os, const kvs::Indent& indent ) const;
-    };
-
-    struct FrameBuffer
-    {
-        int width; ///< buffer width
-        int height; ///< buffer height
-        kvs::ValueArray<kvs::UInt8> color_buffer; ///< color frame buffer
-        kvs::ValueArray<kvs::Real32> depth_buffer; ///< depth frame buffer
-
-        kvs::ColorImage colorImage() const;
     };
 
     typedef kvs::FieldViewData Data;
@@ -71,7 +61,7 @@ public:
 
     Data read();
     VolumeList import( const Data& data );
-    FrameBuffer render( const VolumeList& volumes );
+    Image render( const VolumeList& volumes );
 
 private:
     Volume* import_volume( const Data& data, const int gindex );
