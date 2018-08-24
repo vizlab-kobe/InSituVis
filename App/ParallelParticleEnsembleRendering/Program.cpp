@@ -43,12 +43,12 @@ int Program::exec( int argc, char** argv )
     }
 
     // Processing times.
-    std::vector<local::Process::ProcessingTimes> all_times = proc.processingTimes().gather( world, master_rank );
-    local::Process::ProcessingTimes max_times = proc.processingTimes().reduce( world, MPI_MAX, master_rank );
-    local::Process::ProcessingTimes min_times = proc.processingTimes().reduce( world, MPI_MIN, master_rank );
+    std::vector<local::Process::Times> all_times = proc.times().gather( world, master_rank );
+    local::Process::Times max_times = proc.times().reduce( world, MPI_MAX, master_rank );
+    local::Process::Times min_times = proc.times().reduce( world, MPI_MIN, master_rank );
     if ( my_rank == master_rank )
     {
-        proc.processingTimes().print( stdout() << "PROCESSING TIMES (Rank " << my_rank << ")" << std::endl, indent );
+        proc.times().print( stdout() << "PROCESSING TIMES (Rank " << my_rank << ")" << std::endl, indent );
         min_times.print( stdout() << "PROCESSING TIMES (Min)" << std::endl, indent );
         max_times.print( stdout() << "PROCESSING TIMES (Max)" << std::endl, indent );
     }

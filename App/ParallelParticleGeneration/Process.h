@@ -20,7 +20,7 @@ namespace local
 class Process
 {
 public:
-    struct ProcessingTimes
+    struct Times
     {
         float reading; ///< rendering time
         float importing; ///< importing time
@@ -32,8 +32,8 @@ public:
         float readback; ///< readback time
         float transmission; ///< transmition time (particle transmission time)
 
-        ProcessingTimes reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank = 0 ) const;
-        std::vector<ProcessingTimes> gather( kvs::mpi::Communicator& comm, const int rank = 0 ) const;
+        Times reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank = 0 ) const;
+        std::vector<Times> gather( kvs::mpi::Communicator& comm, const int rank = 0 ) const;
         void print( std::ostream& os, const kvs::Indent& indent ) const;
     };
 
@@ -56,7 +56,7 @@ public:
 private:
     const local::Input& m_input; ///< input parameters
     kvs::mpi::Communicator& m_communicator; ///< MPI communicator
-    ProcessingTimes m_processing_times; ////< processing times
+    Times m_times; ////< processing times
     kvs::Vec3 m_min_ext; ///< min. external coords
     kvs::Vec3 m_max_ext; ///< max. external coords
     kvs::Real32 m_min_value; ///< min. value
@@ -67,7 +67,7 @@ public:
         m_input( input ),
         m_communicator( communicator ) {}
 
-    const ProcessingTimes& processingTimes() const { return m_processing_times; }
+    const Times& times() const { return m_times; }
 
     Data read();
     VolumeList import( const Data& data );

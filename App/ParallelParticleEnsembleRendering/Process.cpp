@@ -17,12 +17,12 @@
 namespace local
 {
 
-Process::ProcessingTimes Process::ProcessingTimes::reduce(
+Process::Times Process::Times::reduce(
     kvs::mpi::Communicator& comm,
     const MPI_Op op,
     const int rank ) const
 {
-    ProcessingTimes times;
+    Times times;
     comm.reduce( rank, this->reading, times.reading, op );
     comm.reduce( rank, this->importing, times.importing, op );
     comm.reduce( rank, this->mapping, times.mapping, op );
@@ -35,7 +35,7 @@ Process::ProcessingTimes Process::ProcessingTimes::reduce(
     return times;
 }
 
-std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
+std::vector<Process::Times> Process::Times::gather(
     kvs::mpi::Communicator& comm,
     const int rank ) const
 {
@@ -49,10 +49,10 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     kvs::ValueArray<float> readbacks; comm.gather( rank, this->readback, readbacks );
     kvs::ValueArray<float> compositions; comm.gather( rank, this->composition, compositions );
 
-    std::vector<ProcessingTimes> times_list;
+    std::vector<Times> times_list;
     for ( size_t i = 0; i < readings.size(); i++ )
     {
-        ProcessingTimes times;
+        Times times;
         times.reading = readings[i];
         times.importing = importings[i];
         times.mapping = mappings[i];
@@ -68,7 +68,7 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     return times_list;
 }
 
-void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& indent ) const
+void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
 {
     os << indent << "Reading time: " << this->reading << " [sec]" << std::endl;
     os << indent << "Importing time: " << this->importing << " [sec]" << std::endl;
@@ -86,7 +86,7 @@ Process::Data Process::read()
     kvs::Timer timer( kvs::Timer::Start );
     Data data( m_input.filename );
     timer.stop();
-    m_processing_times.reading = timer.sec();
+    m_times.reading = timer.sec();
 
     return data;
 }
@@ -114,7 +114,7 @@ Process::VolumeList Process::import( const Process::Data& data )
     }
 
     timer.stop();
-    m_processing_times.importing = timer.sec();
+    m_times.importing = timer.sec();
 
     return volumes;
 }
@@ -156,7 +156,7 @@ Process::Image Process::render( const Process::VolumeList& volumes )
     {
         // Mapping.
         this->mapping( screen, volumes, tfunc );
-        mapping += m_processing_times.mapping;
+        mapping += m_times.mapping;
 
         // Rendering.
         kvs::Timer timer( kvs::Timer::Start );
@@ -199,13 +199,13 @@ Process::Image Process::render( const Process::VolumeList& volumes )
     }
 
     // Processing times.
-    m_processing_times.mapping = mapping;
-    m_processing_times.rendering = rendering;
-    m_processing_times.rendering_creation = rendering_creation;
-    m_processing_times.rendering_projection = rendering_projection;
-    m_processing_times.rendering_ensemble = rendering_ensemble;
-    m_processing_times.readback = readback;
-    m_processing_times.composition = composition;
+    m_times.mapping = mapping;
+    m_times.rendering = rendering;
+    m_times.rendering_creation = rendering_creation;
+    m_times.rendering_projection = rendering_projection;
+    m_times.rendering_ensemble = rendering_ensemble;
+    m_times.readback = readback;
+    m_times.composition = composition;
 
     // Output image.
     kvs::ValueArray<kvs::UInt8> pixels( m_input.width * m_input.height * 3 );
@@ -279,7 +279,7 @@ void Process::mapping(
     kvs::Timer timer( kvs::Timer::Start );
     Particle* particles = this->generate_particle( volumes, tfunc );
     timer.stop();
-    m_processing_times.mapping = timer.sec();
+    m_times.mapping = timer.sec();
 
     // Setup particle renderer.
     InSituVis::ParticleBasedRenderer* renderer = new InSituVis::ParticleBasedRenderer();

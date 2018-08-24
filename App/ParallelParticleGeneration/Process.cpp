@@ -17,12 +17,12 @@
 namespace local
 {
 
-Process::ProcessingTimes Process::ProcessingTimes::reduce(
+Process::Times Process::Times::reduce(
     kvs::mpi::Communicator& comm,
     const MPI_Op op,
     const int rank ) const
 {
-    ProcessingTimes times;
+    Times times;
     comm.reduce( rank, this->reading, times.reading, op );
     comm.reduce( rank, this->importing, times.importing, op );
     comm.reduce( rank, this->mapping, times.mapping, op );
@@ -35,7 +35,7 @@ Process::ProcessingTimes Process::ProcessingTimes::reduce(
     return times;
 }
 
-std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
+std::vector<Process::Times> Process::Times::gather(
     kvs::mpi::Communicator& comm,
     const int rank ) const
 {
@@ -48,10 +48,10 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     kvs::ValueArray<float> renderings_ensemble; comm.gather( rank, this->rendering_ensemble, renderings_ensemble );
     kvs::ValueArray<float> readbacks; comm.gather( rank, this->readback, readbacks );
     kvs::ValueArray<float> transmissions; comm.gather( rank, this->transmission, transmissions );
-    std::vector<ProcessingTimes> times_list;
+    std::vector<Times> times_list;
     for ( size_t i = 0; i < readings.size(); i++ )
     {
-        ProcessingTimes times;
+        Times times;
         times.reading = readings[i];
         times.importing = importings[i];
         times.mapping = mappings[i];
@@ -67,7 +67,7 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     return times_list;
 }
 
-void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& indent ) const
+void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
 {
     os << indent << "Reading time: " << this->reading << " [sec]" << std::endl;
     os << indent << "Importing time: " << this->importing << " [sec]" << std::endl;
@@ -99,7 +99,7 @@ Process::Data Process::read()
     kvs::Timer timer( kvs::Timer::Start );
     Data data( m_input.filename );
     timer.stop();
-    m_processing_times.reading = timer.sec();
+    m_times.reading = timer.sec();
 
     return data;
 }
@@ -127,7 +127,7 @@ Process::VolumeList Process::import( const Process::Data& data )
     }
 
     timer.stop();
-    m_processing_times.importing = timer.sec();
+    m_times.importing = timer.sec();
 
     return volumes;
 }
@@ -150,10 +150,10 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     screen.draw();
     timer.stop();
     const InSituVis::ParticleBasedRenderer* renderer = InSituVis::ParticleBasedRenderer::DownCast( screen.scene()->renderer() );
-    m_processing_times.rendering = timer.sec();
-    m_processing_times.rendering_creation = renderer->creationTime();
-    m_processing_times.rendering_projection = renderer->projectionTime();
-    m_processing_times.rendering_ensemble = renderer->ensembleTime();
+    m_times.rendering = timer.sec();
+    m_times.rendering_creation = renderer->creationTime();
+    m_times.rendering_projection = renderer->projectionTime();
+    m_times.rendering_ensemble = renderer->ensembleTime();
 
     // Readback.
     timer.start();
@@ -163,7 +163,7 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     frame_buffer.color_buffer = screen.readbackColorBuffer();
     frame_buffer.depth_buffer = screen.readbackDepthBuffer();
     timer.stop();
-    m_processing_times.readback = timer.sec();
+    m_times.readback = timer.sec();
 
     return frame_buffer;
 }
@@ -229,7 +229,7 @@ void Process::mapping(
     kvs::Timer timer( kvs::Timer::Start );
     Particle* particles = this->generate_particle( volumes, tfunc );
     timer.stop();
-    m_processing_times.mapping = timer.sec();
+    m_times.mapping = timer.sec();
 
     // Particle transmission.
     const int nnodes = m_communicator.size();
@@ -264,7 +264,7 @@ void Process::mapping(
         }
     }
     timer.stop();
-    m_processing_times.transmission = timer.sec();
+    m_times.transmission = timer.sec();
 
     // Setup particle renderer.
     InSituVis::ParticleBasedRenderer* renderer = new InSituVis::ParticleBasedRenderer();
