@@ -13,12 +13,12 @@
 namespace local
 {
 
-Process::ProcessingTimes Process::ProcessingTimes::reduce(
+Process::Times Process::Times::reduce(
     kvs::mpi::Communicator& comm,
     const MPI_Op op,
     const int rank ) const
 {
-    ProcessingTimes times;
+    Times times;
     comm.reduce( rank, this->reading, times.reading, op );
     comm.reduce( rank, this->importing, times.importing, op );
     comm.reduce( rank, this->mapping, times.mapping, op );
@@ -28,7 +28,7 @@ Process::ProcessingTimes Process::ProcessingTimes::reduce(
     return times;
 }
 
-std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
+std::vector<Process::Times> Process::Times::gather(
     kvs::mpi::Communicator& comm,
     const int rank ) const
 {
@@ -39,10 +39,10 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     kvs::ValueArray<float> readbacks; comm.gather( rank, this->readback, readbacks );
     kvs::ValueArray<float> compositions; comm.gather( rank, this->composition, compositions );
 
-    std::vector<ProcessingTimes> times_list;
+    std::vector<Times> times_list;
     for ( size_t i = 0; i < readings.size(); i++ )
     {
-        ProcessingTimes times;
+        Times times;
         times.reading = readings[i];
         times.importing = importings[i];
         times.mapping = mappings[i];
@@ -55,7 +55,7 @@ std::vector<Process::ProcessingTimes> Process::ProcessingTimes::gather(
     return times_list;
 }
 
-void Process::ProcessingTimes::print( std::ostream& os, const kvs::Indent& indent ) const
+void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
 {
     os << indent << "Reading time: " << this->reading << " [sec]" << std::endl;
     os << indent << "Importing time: " << this->importing << " [sec]" << std::endl;
@@ -84,7 +84,7 @@ Process::Data Process::read()
     kvs::Timer timer( kvs::Timer::Start );
     Data data( m_input.filename );
     timer.stop();
-    m_processing_times.reading = timer.sec();
+    m_times.reading = timer.sec();
 
     return data;
 }
@@ -112,7 +112,7 @@ Process::VolumeList Process::import( const Process::Data& data )
     }
 
     timer.stop();
-    m_processing_times.importing = timer.sec();
+    m_times.importing = timer.sec();
 
     return volumes;
 }
@@ -133,13 +133,13 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     kvs::Timer timer( kvs::Timer::Start );
     this->mapping( screen, volumes, tfunc );
     timer.stop();
-    m_processing_times.mapping = timer.sec();
+    m_times.mapping = timer.sec();
 
     // Rendering.
     timer.start();
     screen.draw();
     timer.stop();
-    m_processing_times.rendering = timer.sec();
+    m_times.rendering = timer.sec();
 
     // Readback.
     timer.start();
@@ -149,7 +149,7 @@ Process::FrameBuffer Process::render( const Process::VolumeList& volumes )
     frame_buffer.color_buffer = screen.readbackColorBuffer();
     frame_buffer.depth_buffer = screen.readbackDepthBuffer();
     timer.stop();
-    m_processing_times.readback = timer.sec();
+    m_times.readback = timer.sec();
 
     return frame_buffer;
 }
@@ -171,7 +171,7 @@ Process::Image Process::compose( const FrameBuffer& frame_buffer )
     kvs::ValueArray<kvs::Real32> depth_buffer = frame_buffer.depth_buffer;
     if ( nnodes > 1 ) { compositor.run( color_buffer, depth_buffer ); }
     timer.stop();
-    m_processing_times.composition = timer.sec();
+    m_times.composition = timer.sec();
 
     // Output image.
     return frame_buffer.colorImage();
