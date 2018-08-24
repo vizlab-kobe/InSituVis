@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 #include <kvs/PointObject>
 #include <kvs/VolumeObjectBase>
@@ -11,3 +12,4 @@ namespace local
   kvs::PointObject* ParticleGenerator( const Input& input, const kvs::VolumeObjectBase* volume, kvs::TransferFunction& tfunc , kvs::Camera* camera);
 
 } // end of namespace local
+#endif

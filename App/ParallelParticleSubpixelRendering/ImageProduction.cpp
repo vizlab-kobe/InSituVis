@@ -1,3 +1,4 @@
+#if 0
 #include "ImageProduction.h"
 #include "ParticleGenerator.h"
 #include <kvs/PointObject>
@@ -179,3 +180,4 @@ void ImageProduction::draw_image( kvs::osmesa::Screen& screen, const std::vector
       screen.capture().write("output.bmp");
   }
 }
+#endif

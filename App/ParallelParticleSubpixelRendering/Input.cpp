@@ -1,6 +1,9 @@
 #include "Input.h"
 
 
+namespace local
+{
+
 std::string Input::MethodName( const Method method )
 {
     switch ( method )
@@ -9,7 +12,7 @@ std::string Input::MethodName( const Method method )
     case Metropolis: return "metoropolis";
     case Rejection: return "rejection";
     case Layered: return "layered";
-    case Point: return "point";
+    case Point: return "Point";
     default: return "unknown";
     }
 }
@@ -25,7 +28,7 @@ std::string Input::VersionName( const Version version )
 }
 
 Input::Input( int argc, char** argv ):
-    sublevel( 1 ),
+    subpixels( 1 ),
     regions( 1 ),
     step( 0.5f ),
     base_opacity( 0.5f ),
@@ -39,11 +42,11 @@ Input::Input( int argc, char** argv ):
     m_commandline = kvs::CommandLine( argc, argv );
     m_commandline.addHelpOption();
     m_commandline.addValue( "input filename [*.fv]" );
-    m_commandline.addOption( "sublevel","Number of subpixellevel (default: 1).", 1, false );
+    m_commandline.addOption( "subpixels","Subpixel level (default: 1).", 1, false );
     m_commandline.addOption( "regions","Number of regions (default: 1).", 1, false );
     m_commandline.addOption( "step","Sampling step (defualt: 0.5).", 1, false );
     m_commandline.addOption( "base_opacity","Base opacity (defualt: 0.5).", 1, false );
-    m_commandline.addOption( "sampling_method", "Sampling method [0:uniform, 1:metropolis, 2:rejection, 3:layered] (default: 0)", 1, false );
+    m_commandline.addOption( "sampling_method", "Sampling method [0:uniform, 1:metropolis, 2:rejection, 3:layered, 4:point] (default: 0)", 1, false );
     m_commandline.addOption( "sampling_version", "Sampling version [0:old, 1:new] (default: 0)", 1, false );
     m_commandline.addOption( "tf_filename", "input tf_filename [*.kvsml, *.fld, *.inp]", 1, false );
     m_commandline.addOption( "width", "Screen width( default: 512).", 1, false);
@@ -54,7 +57,7 @@ bool Input::parse()
 {
     if ( !m_commandline.parse() ) { return false; }
     filename = m_commandline.value<std::string>();
-    if ( m_commandline.hasOption("sublevel") ) sublevel = m_commandline.optionValue<size_t>("sublevel");
+    if ( m_commandline.hasOption("subpixels") ) subpixels = m_commandline.optionValue<size_t>("subpixels");
     if ( m_commandline.hasOption("regions") ) regions = m_commandline.optionValue<size_t>("regions");
     if ( m_commandline.hasOption("step") ) step = m_commandline.optionValue<float>("step");
     if ( m_commandline.hasOption("base_opacity") ) base_opacity = m_commandline.optionValue<float>("base_opacity");
@@ -68,7 +71,7 @@ bool Input::parse()
 
 void Input::print( std::ostream& os, const kvs::Indent& indent ) const
 {
-    os << indent << "Number of subpixel level: " << sublevel << std::endl;
+    os << indent << "Subpixel level: " << subpixels << std::endl;
     os << indent << "Number of regions: " << regions << std::endl;
     os << indent << "Sampling step: " << step << std::endl;
     os << indent << "Base opacity: " << base_opacity << std::endl;
@@ -78,3 +81,5 @@ void Input::print( std::ostream& os, const kvs::Indent& indent ) const
     os << indent << "Screen width: " << width << std::endl;
     os << indent << "Screen height: " << height << std::endl;
 }
+
+} // end of namespace local

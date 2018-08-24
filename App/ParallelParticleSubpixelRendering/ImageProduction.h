@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 #include <KVS.mpi/Lib/Communicator.h>
 #include "Input.h"
@@ -35,3 +36,4 @@ private:
     void calculate_min_max( const kvs::FieldViewData& data );
     void draw_image(kvs::osmesa::Screen& screen, const std::vector<kvs::VolumeObjectBase*>& volumes, Input& input, double& particle_time, double& num_particle, double& composition_time, double& render_time );
 };
+#endif

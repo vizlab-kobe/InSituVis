@@ -1,3 +1,4 @@
+#if 0
 #include "ParticleGenerator.h"
 #include <kvs/CellByCellUniformSampling>
 #include <kvs/CellByCellMetropolisSampling>
@@ -44,3 +45,4 @@ namespace local
 }
 
 } // end of namespace local
+#endif
