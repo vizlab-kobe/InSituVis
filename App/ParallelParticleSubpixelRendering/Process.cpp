@@ -144,13 +144,14 @@ Process::Image Process::render( const Process::VolumeList& volumes )
     m_processing_times.rendering_projection = timer.sec();
     m_processing_times.rendering = m_processing_times.rendering_projection;
 
-    // Readback.
+    // Subpixel buffers.
     timer.start();
     local::ParticleBasedRenderer* renderer = local::ParticleBasedRenderer::DownCast( screen.scene()->renderer() );
     kvs::ValueArray<kvs::UInt8> subpixelized_color_buffer = renderer->subpixelizedColorBuffer();
     kvs::ValueArray<kvs::Real32> subpixelized_depth_buffer = renderer->subpixelizedDepthBuffer();
     timer.stop();
-    m_processing_times.readback = timer.sec();
+    m_processing_times.rendering_subpixel = timer.sec();
+    m_processing_times.rendering += m_processing_times.rendering_subpixel;
 
     // Composition.
     timer.start();
@@ -164,7 +165,7 @@ Process::Image Process::render( const Process::VolumeList& volumes )
         subpixelized_color_buffer,
         subpixelized_depth_buffer );
     timer.stop();
-    m_processing_times.rendering_subpixel = timer.sec();
+    m_processing_times.rendering_subpixel += timer.sec();
     m_processing_times.rendering += m_processing_times.rendering_subpixel;
 
     // Draw image
