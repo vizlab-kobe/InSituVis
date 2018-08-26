@@ -26,8 +26,8 @@ public:
         float importing; ///< importing time
         float mapping; ///< mapping time (particle generation time)
         float rendering; ///< rendering time (total time)
-        float rendering_projection; ///< rendering time (particle projection time)
         float rendering_creation; ///< rendering time (shader/vbo creation time)
+        float rendering_projection; ///< rendering time (particle projection time)
         float rendering_ensemble; ///< rendering time (ensemble averaging time)
         float readback; ///< readback time
         float composition; ///< image composition time

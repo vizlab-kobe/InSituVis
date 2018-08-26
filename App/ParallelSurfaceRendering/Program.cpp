@@ -64,7 +64,7 @@ int Program::exec( int argc, char** argv )
 
     // Logger.
     InSituVis::Logger log_stdout;
-    InSituVis::Logger log_file( "output_times.log" );
+    InSituVis::Logger log_times( "output_times.log" );
     kvs::Indent indent(4);
 
     // Input parameters.
@@ -87,6 +87,8 @@ int Program::exec( int argc, char** argv )
     log_stdout( is_master ) << indent  << "Rendering ... " << std::flush;
     local::Process::FrameBuffer frame = proc.render( volumes );
     log_stdout( is_master ) << "done." << std::endl;
+
+    // Output particle image.
     frame.colorImage().write( "output_image_" + ::ToString( my_rank, 3 ) + ".bmp" );
 
     log_stdout( is_master ) << indent << "Composition ... " << std::flush;
@@ -98,7 +100,7 @@ int Program::exec( int argc, char** argv )
 
     // Processing times.
     std::vector<local::Process::Times> all_times = proc.times().gather( world, master_rank );
-    ::WriteLog( log_file( is_master ), all_times );
+    ::WriteLog( log_times( is_master ), all_times );
 
     local::Process::Times max_times = proc.times().reduce( world, MPI_MAX, master_rank );
     local::Process::Times min_times = proc.times().reduce( world, MPI_MIN, master_rank );
