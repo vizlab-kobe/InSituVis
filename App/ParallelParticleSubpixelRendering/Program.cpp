@@ -22,8 +22,15 @@ inline std::string ToString( int n, int w, char c = '0' )
 
 void WriteLog(
     std::ostream& os,
-    const std::vector<local::Process::Times>& all_times )
+    const local::Input& input,
+    const std::vector<local::Process::Times>& all_times,
+    const std::vector<local::Process::Stats>& all_stats )
 {
+    os << "Number of processes," << all_times.size() << "," << std::endl;
+    os << "Image width," << input.width << "," << std::endl;
+    os << "Image height," << input.height << "," << std::endl;
+    os << "Subpixels," << input.subpixels << "," << std::endl;
+
     // Header.
     os << "Rank,"
        << "Reading time,"
@@ -34,12 +41,16 @@ void WriteLog(
        << "Rendering time (subpixel),"
        << "Readback time,"
        << "Composition time,"
+       << "Number of regions,"
+       << "Number of cells,"
+       << "Number of particles,"
        << std::endl;
 
     // Body.
     for ( size_t i = 0; i < all_times.size(); i++ )
     {
         const local::Process::Times& times = all_times[i];
+        const local::Process::Stats& stats = all_stats[i];
         os << i << ","
            << times.reading << ","
            << times.importing << ","
@@ -48,7 +59,11 @@ void WriteLog(
            << times.rendering_projection << ","
            << times.rendering_subpixel << ","
            << times.readback << ","
-           << times.composition << "," << std::endl;
+           << times.composition << ","
+           << stats.nregions << ","
+           << stats.ncells << ","
+           << stats.nparticles << ","
+           << std::endl;
     }
 }
 
@@ -68,43 +83,47 @@ int Program::exec( int argc, char** argv )
     const bool is_master = ( my_rank == master_rank );
 
     // Logger.
-    InSituVis::Logger log_stdout;
-    InSituVis::Logger log_times( "output_times.log" );
+    InSituVis::Logger log_cout;
+    InSituVis::Logger log_file( "output_log.csv" );
     kvs::Indent indent(4);
 
     // Input parameters.
     local::Input input( argc, argv );
     if ( !input.parse() ) { return 1; }
-    input.print( log_stdout( is_master ) << "INPUT PARAMETERS" << std::endl, indent );
+    input.print( log_cout( is_master ) << "INPUT PARAMETERS" << std::endl, indent );
 
     // Parallel processing.
-    log_stdout( is_master ) << "PROCESSING" << std::endl;
+    log_cout( is_master ) << "PROCESSING" << std::endl;
     local::Process proc( input, world );
 
-    log_stdout( is_master ) << indent << "Reading ... " << std::flush;
+    log_cout( is_master ) << indent << "Reading ... " << std::flush;
     local::Process::Data data = proc.read();
-    log_stdout( is_master ) << "done." << std::endl;
+    log_cout( is_master ) << "done." << std::endl;
 
-    log_stdout( is_master ) << indent << "Importing ... " << std::flush;
+    log_cout( is_master ) << indent << "Importing ... " << std::flush;
     local::Process::VolumeList volumes = proc.import( data );
-    log_stdout( is_master ) << "done." << std::endl;
+    log_cout( is_master ) << "done." << std::endl;
 
-    log_stdout( is_master ) << indent  << "Rendering ... " << std::flush;
+    log_cout( is_master ) << indent  << "Rendering ... " << std::flush;
     local::Process::Image image = proc.render( volumes );
-    log_stdout( is_master ) << "done." << std::endl;
+    log_cout( is_master ) << "done." << std::endl;
 
     // Output final image.
     if ( is_master ) { image.write( "output_image.bmp" ); }
 
     // Processing times.
     std::vector<local::Process::Times> all_times = proc.times().gather( world, master_rank );
-    ::WriteLog( log_times( is_master ), all_times );
+    std::vector<local::Process::Stats> all_stats = proc.stats().gather( world, master_rank );
+    ::WriteLog( log_file( is_master ), input, all_times, all_stats );
 
+    local::Process::Stats sum_stats = proc.stats().reduce( world, MPI_SUM, master_rank );
     local::Process::Times max_times = proc.times().reduce( world, MPI_MAX, master_rank );
     local::Process::Times min_times = proc.times().reduce( world, MPI_MIN, master_rank );
-    proc.times().print( log_stdout( is_master ) << "TIMES (Rank " << my_rank << ")" << std::endl, indent );
-    min_times.print( log_stdout( is_master ) << "TIMES (Min)" << std::endl, indent );
-    max_times.print( log_stdout( is_master ) << "TIMES (Max)" << std::endl, indent );
+    proc.stats().print( log_cout( is_master ) << "STATS (Rank " << my_rank << ")" << std::endl, indent );
+    proc.times().print( log_cout( is_master ) << "TIMES (Rank " << my_rank << ")" << std::endl, indent );
+    sum_stats.print( log_cout( is_master ) << "STATS (Total)" << std::endl, indent );
+    min_times.print( log_cout( is_master ) << "TIMES (Min)" << std::endl, indent );
+    max_times.print( log_cout( is_master ) << "TIMES (Max)" << std::endl, indent );
 
     return 0;
 }

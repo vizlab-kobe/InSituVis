@@ -68,9 +68,6 @@ void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
 Process::Stats Process::Stats::reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank ) const
 {
     Stats stats;
-    stats.nprocs = this->nprocs;
-    stats.width = this->width;
-    stats.height = this->height;
     comm.reduce( rank, this->nregions, stats.nregions, op );
     comm.reduce( rank, this->ncells, stats.ncells, op );
     comm.reduce( rank, this->npolygons, stats.npolygons, op );
@@ -79,20 +76,14 @@ Process::Stats Process::Stats::reduce( kvs::mpi::Communicator& comm, const MPI_O
 
 std::vector<Process::Stats> Process::Stats::gather( kvs::mpi::Communicator& comm, const int rank ) const
 {
-    kvs::ValueArray<int> nprocs; comm.gather( rank, this->nprocs, nprocs );
-    kvs::ValueArray<int> width; comm.gather( rank, this->width, width );
-    kvs::ValueArray<int> height; comm.gather( rank, this->height, height );
     kvs::ValueArray<int> nregions; comm.gather( rank, this->nregions, nregions );
     kvs::ValueArray<int> ncells; comm.gather( rank, this->ncells, ncells );
     kvs::ValueArray<int> npolygons; comm.gather( rank, this->npolygons, npolygons );
 
     std::vector<Stats> stats_list;
-    for ( size_t i = 0; i < nprocs.size(); i++ )
+    for ( size_t i = 0; i < nregions.size(); i++ )
     {
         Stats stats;
-        stats.nprocs = nprocs[i];
-        stats.width = width[i];
-        stats.height = height[i];
         stats.nregions = nregions[i];
         stats.ncells = ncells[i];
         stats.npolygons = npolygons[i];
@@ -104,9 +95,6 @@ std::vector<Process::Stats> Process::Stats::gather( kvs::mpi::Communicator& comm
 
 void Process::Stats::print( std::ostream& os, const kvs::Indent& indent ) const
 {
-    os << indent << "Number of processes: " << this->nprocs << std::endl;
-    os << indent << "Image width: " << this->width << std::endl;
-    os << indent << "Image height: " << this->height << std::endl;
     os << indent << "Number of regions: " << this->nregions << std::endl;
     os << indent << "Number of cells: " << this->ncells <<std::endl;
     os << indent << "Number of polygons: " << this->npolygons << std::endl;
@@ -130,9 +118,6 @@ Process::Process( const local::Input& input, kvs::mpi::Communicator& communicato
     m_input( input ),
     m_communicator( communicator )
 {
-    m_stats.nprocs = communicator.size();
-    m_stats.width = input.width;
-    m_stats.height = input.height;
     m_stats.nregions = input.regions;
 }
 

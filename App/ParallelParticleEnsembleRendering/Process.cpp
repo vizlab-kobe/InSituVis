@@ -81,6 +81,48 @@ void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
     os << indent << "Composition time: " << this->composition << " [sec]" << std::endl;
 }
 
+Process::Stats Process::Stats::reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank ) const
+{
+    Stats stats;
+    comm.reduce( rank, this->nregions, stats.nregions, op );
+    comm.reduce( rank, this->ncells, stats.ncells, op );
+    comm.reduce( rank, this->nparticles, stats.nparticles, op );
+    return stats;
+}
+
+std::vector<Process::Stats> Process::Stats::gather( kvs::mpi::Communicator& comm, const int rank ) const
+{
+    kvs::ValueArray<int> nregions; comm.gather( rank, this->nregions, nregions );
+    kvs::ValueArray<int> ncells; comm.gather( rank, this->ncells, ncells );
+    kvs::ValueArray<int> nparticles; comm.gather( rank, this->nparticles, nparticles );
+
+    std::vector<Stats> stats_list;
+    for ( size_t i = 0; i < nregions.size(); i++ )
+    {
+        Stats stats;
+        stats.nregions = nregions[i];
+        stats.ncells = ncells[i];
+        stats.nparticles = nparticles[i];
+        stats_list.push_back( stats );
+    }
+
+    return stats_list;
+}
+
+void Process::Stats::print( std::ostream& os, const kvs::Indent& indent ) const
+{
+    os << indent << "Number of regions: " << this->nregions << std::endl;
+    os << indent << "Number of cells: " << this->ncells <<std::endl;
+    os << indent << "Number of particles: " << this->nparticles << std::endl;
+}
+
+Process::Process( const local::Input& input, kvs::mpi::Communicator& communicator ):
+    m_input( input ),
+    m_communicator( communicator )
+{
+    m_stats.nregions = input.regions;
+}
+
 Process::Data Process::read()
 {
     kvs::Timer timer( kvs::Timer::Start );
@@ -100,6 +142,7 @@ Process::VolumeList Process::import( const Process::Data& data )
 
     this->calculate_min_max( data );
     VolumeList volumes;
+    size_t ncells = 0;
     const int nregions = m_input.regions;
     for ( int i = 0; i < nregions; i++ )
     {
@@ -110,11 +153,14 @@ Process::VolumeList Process::import( const Process::Data& data )
             volume->setMinMaxValues( m_min_value, m_max_value );
             volume->setMinMaxExternalCoords( m_min_ext, m_max_ext );
             volumes.push_back( volume );
+
+            ncells += volume->numberOfCells();
         }
     }
 
     timer.stop();
     m_times.importing = timer.sec();
+    m_stats.ncells = ncells;
 
     return volumes;
 }
@@ -280,6 +326,7 @@ void Process::mapping(
     Particle* particles = this->generate_particle( volumes, tfunc );
     timer.stop();
     m_times.mapping = timer.sec();
+    m_stats.nparticles = particles->coords().size() / 3;
 
     // Setup particle renderer.
     InSituVis::ParticleBasedRenderer* renderer = new InSituVis::ParticleBasedRenderer();
@@ -292,7 +339,7 @@ Process::Particle* Process::generate_particle( const Process::VolumeList& volume
     kvs::PointObject* object = new kvs::PointObject();
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
-        const kvs::VolumeObjectBase* volume = volumes[i];
+        const Volume* volume = volumes[i];
         if ( !volume ) { continue; }
 
         Particle* particles = this->generate_particle( volume, tfunc );

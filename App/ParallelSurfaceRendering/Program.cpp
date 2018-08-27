@@ -28,9 +28,9 @@ void WriteLog(
     os << "Number of processes," << all_times.size() << "," << std::endl;
     os << "Image width," << input.width << "," << std::endl;
     os << "Image height," << input.height << "," << std::endl;
-    os << "Processing times [sec]," << std::endl;
 
     // Header.
+    os << "Processing times [sec]," << std::endl;
     os << "Rank,"
        << "Reading time,"
        << "Importing time,"
@@ -57,7 +57,8 @@ void WriteLog(
            << times.composition << ","
            << stats.nregions << ","
            << stats.ncells << ","
-           << stats.npolygons << "," << std::endl;
+           << stats.npolygons << ","
+           << std::endl;
     }
 }
 

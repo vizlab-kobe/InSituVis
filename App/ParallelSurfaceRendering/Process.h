@@ -35,9 +35,6 @@ public:
 
     struct Stats
     {
-        int nprocs; ///< number of processes
-        int width; ///< image width
-        int height; ///< image height
         int nregions; ///< number of regions
         int ncells; ///< number of cells
         int npolygons; ///< number of polygons
