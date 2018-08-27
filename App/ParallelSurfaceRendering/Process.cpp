@@ -65,6 +65,53 @@ void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
     os << indent << "Composition time: " << this->composition << " [sec]" << std::endl;
 }
 
+Process::Stats Process::Stats::reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank ) const
+{
+    Stats stats;
+    stats.nprocs = this->nprocs;
+    stats.width = this->width;
+    stats.height = this->height;
+    comm.reduce( rank, this->nregions, stats.nregions, op );
+    comm.reduce( rank, this->ncells, stats.ncells, op );
+    comm.reduce( rank, this->npolygons, stats.npolygons, op );
+    return stats;
+}
+
+std::vector<Process::Stats> Process::Stats::gather( kvs::mpi::Communicator& comm, const int rank ) const
+{
+    kvs::ValueArray<int> nprocs; comm.gather( rank, this->nprocs, nprocs );
+    kvs::ValueArray<int> width; comm.gather( rank, this->width, width );
+    kvs::ValueArray<int> height; comm.gather( rank, this->height, height );
+    kvs::ValueArray<int> nregions; comm.gather( rank, this->nregions, nregions );
+    kvs::ValueArray<int> ncells; comm.gather( rank, this->ncells, ncells );
+    kvs::ValueArray<int> npolygons; comm.gather( rank, this->npolygons, npolygons );
+
+    std::vector<Stats> stats_list;
+    for ( size_t i = 0; i < nprocs.size(); i++ )
+    {
+        Stats stats;
+        stats.nprocs = nprocs[i];
+        stats.width = width[i];
+        stats.height = height[i];
+        stats.nregions = nregions[i];
+        stats.ncells = ncells[i];
+        stats.npolygons = npolygons[i];
+        stats_list.push_back( stats );
+    }
+
+    return stats_list;
+}
+
+void Process::Stats::print( std::ostream& os, const kvs::Indent& indent ) const
+{
+    os << indent << "Number of processes: " << this->nprocs << std::endl;
+    os << indent << "Image width: " << this->width << std::endl;
+    os << indent << "Image height: " << this->height << std::endl;
+    os << indent << "Number of regions: " << this->nregions << std::endl;
+    os << indent << "Number of cells: " << this->ncells <<std::endl;
+    os << indent << "Number of polygons: " << this->npolygons << std::endl;
+}
+
 kvs::ColorImage Process::FrameBuffer::colorImage() const
 {
     const size_t npixels = this->width * this->height;
@@ -77,6 +124,16 @@ kvs::ColorImage Process::FrameBuffer::colorImage() const
     }
 
     return kvs::ColorImage( this->width, this->height, pixels );
+}
+
+Process::Process( const local::Input& input, kvs::mpi::Communicator& communicator ):
+    m_input( input ),
+    m_communicator( communicator )
+{
+    m_stats.nprocs = communicator.size();
+    m_stats.width = input.width;
+    m_stats.height = input.height;
+    m_stats.nregions = input.regions;
 }
 
 Process::Data Process::read()
@@ -98,6 +155,7 @@ Process::VolumeList Process::import( const Process::Data& data )
 
     this->calculate_min_max( data );
     VolumeList volumes;
+    size_t ncells = 0;
     const int nregions = m_input.regions;
     for ( int i = 0; i < nregions; i++ )
     {
@@ -108,11 +166,14 @@ Process::VolumeList Process::import( const Process::Data& data )
             volume->setMinMaxValues( m_min_value, m_max_value );
             volume->setMinMaxExternalCoords( m_min_ext, m_max_ext );
             volumes.push_back( volume );
+
+            ncells += volume->numberOfCells();
         }
     }
 
     timer.stop();
     m_times.importing = timer.sec();
+    m_stats.ncells = ncells;
 
     return volumes;
 }
@@ -252,6 +313,7 @@ void Process::mapping_isosurface(
     kvs::PolygonObject::NormalType n = kvs::PolygonObject::PolygonNormal;
     const bool d = true;
 
+    size_t npolygons = 0;
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
         const kvs::VolumeObjectBase* input_volume = volumes[i];
@@ -263,8 +325,13 @@ void Process::mapping_isosurface(
             surface->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
             surface->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationX( 20 ) ) );
             screen.registerObject( surface );
+
+            if ( surface->connections().size() == 0 ) { npolygons += surface->coords().size() / 3; }
+            else { npolygons += surface->numberOfConnections(); }
         }
     }
+
+    m_stats.npolygons = npolygons;
 }
 
 void Process::mapping_sliceplane(
@@ -276,6 +343,7 @@ void Process::mapping_sliceplane(
     const kvs::Vector3f p( c );
     const kvs::Vector3f n( 1.0, 0.8, 1.0 );
 
+    size_t npolygons = 0;
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
         const kvs::VolumeObjectBase* input_volume = volumes[i];
@@ -287,8 +355,13 @@ void Process::mapping_sliceplane(
             slice->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
             slice->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationX( 20 ) ) );
             screen.registerObject( slice );
+
+            if ( slice->connections().size() == 0 ) { npolygons += slice->coords().size() / 3; }
+            else { npolygons += slice->numberOfConnections(); }
         }
     }
+
+    m_stats.npolygons = npolygons;
 }
 
 void Process::mapping_externalfaces(
@@ -296,6 +369,7 @@ void Process::mapping_externalfaces(
     const Process::VolumeList& volumes,
     const kvs::TransferFunction& tfunc )
 {
+    size_t npolygons = 0;
     for ( size_t i = 0; i < volumes.size(); i++ )
     {
         const kvs::VolumeObjectBase* input_volume = volumes[i];
@@ -307,8 +381,13 @@ void Process::mapping_externalfaces(
             face->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationY( -30 ) ) );
             face->multiplyXform( kvs::Xform::Rotation( kvs::Mat3::RotationX( 20 ) ) );
             screen.registerObject( face );
+
+            if ( face->connections().size() == 0 ) { npolygons += face->coords().size() / 3; }
+            else { npolygons += face->numberOfConnections(); }
         }
     }
+
+    m_stats.npolygons = npolygons;
 }
 
 } // end of namespace local

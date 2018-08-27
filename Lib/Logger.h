@@ -11,17 +11,13 @@ namespace InSituVis
 namespace internal
 {
 
-class NullBuffer : public std::streambuf
-{
-public:
-    int overflow( int c ) { return c; }
-};
-
 class NullStream : public std::ostream
 {
-    NullBuffer m_null_buffer;
+    class Buffer : public std::streambuf { public: int overflow( int c ) { return c; } };
+    Buffer m_buffer;
+
 public:
-    NullStream() : std::ostream( &m_null_buffer ) {}
+    NullStream() : std::ostream( &m_buffer ) {}
 };
 
 } // end of namespace internal

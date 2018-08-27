@@ -2,7 +2,7 @@
 #include "Input.h"
 #include <vector>
 #include <kvs/Indent>
-#include <kvs/VolumeObjectBase>
+#include <kvs/UnstructuredVolumeObject>
 #include <kvs/FieldViewData>
 #include <kvs/Vector3>
 #include <kvs/ValueArray>
@@ -33,6 +33,20 @@ public:
         void print( std::ostream& os, const kvs::Indent& indent ) const;
     };
 
+    struct Stats
+    {
+        int nprocs; ///< number of processes
+        int width; ///< image width
+        int height; ///< image height
+        int nregions; ///< number of regions
+        int ncells; ///< number of cells
+        int npolygons; ///< number of polygons
+
+        Stats reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank = 0 ) const;
+        std::vector<Stats> gather( kvs::mpi::Communicator& comm, const int rank = 0 ) const;
+        void print( std::ostream& os, const kvs::Indent& indent ) const;
+    };
+
     struct FrameBuffer
     {
         int width; ///< buffer width
@@ -44,7 +58,7 @@ public:
     };
 
     typedef kvs::FieldViewData Data;
-    typedef kvs::VolumeObjectBase Volume;
+    typedef kvs::UnstructuredVolumeObject Volume;
     typedef std::vector<Volume*> VolumeList;
     typedef kvs::ColorImage Image;
 
@@ -52,17 +66,17 @@ private:
     const local::Input& m_input; ///< input parameters
     kvs::mpi::Communicator& m_communicator; ///< MPI communicator
     Times m_times; ///< processing times
+    Stats m_stats; ///< processing stats
     kvs::Vec3 m_min_ext; ///< min. external coords
     kvs::Vec3 m_max_ext; ///< max. external coords
     kvs::Real32 m_min_value; ///< min. value
     kvs::Real32 m_max_value; ///< max. value
 
 public:
-    Process( const local::Input& input, kvs::mpi::Communicator& communicator ):
-        m_input( input ),
-        m_communicator( communicator ) {}
+    Process( const local::Input& input, kvs::mpi::Communicator& communicator );
 
     const Times& times() const { return m_times; }
+    const Stats& stats() const { return m_stats; }
 
     Data read();
     VolumeList import( const Data& data );
