@@ -20,6 +20,18 @@ inline std::string ToString( int n, int w, char c = '0' )
     return s.str();
 }
 
+std::string BaseName(
+    const std::string& prefix,
+    const local::Input& input,
+    const kvs::mpi::Communicator& comm )
+{
+    const std::string nprocs = ToString( comm.size(), 4 );
+    const std::string width = ToString( input.width, 4 );
+    const std::string height = ToString( input.height, 4 );
+    const std::string subpixels = ToString( input.subpixels, 4 );
+    return prefix + "_" + nprocs + "_" + width + "x" + height + "_" + subpixels;
+}
+
 void WriteLog(
     std::ostream& os,
     const local::Input& input,
@@ -31,7 +43,12 @@ void WriteLog(
     os << "Image height," << input.height << "," << std::endl;
     os << "Subpixels," << input.subpixels << "," << std::endl;
 
+    size_t nparticles = 0;
+    for ( size_t i = 0; i < all_stats.size(); i++ ) { nparticles += all_stats[i].nparticles; }
+    os << "Total number of particles," << nparticles << "," << std::endl;
+
     // Header.
+    os << "Processing times [sec]," << std::endl;
     os << "Rank,"
        << "Reading time,"
        << "Importing time,"
@@ -74,6 +91,10 @@ namespace local
 
 int Program::exec( int argc, char** argv )
 {
+    // Input parameters.
+    local::Input input( argc, argv );
+    if ( !input.parse() ) { return 1; }
+
     // Initialize MPI
     kvs::mpi::Environment env( argc, argv );
     kvs::mpi::Communicator world( MPI_COMM_WORLD );
@@ -83,13 +104,11 @@ int Program::exec( int argc, char** argv )
     const bool is_master = ( my_rank == master_rank );
 
     // Logger.
+    const kvs::Indent indent(4);
+    const std::string basename = ::BaseName( "output", input, world );
+    InSituVis::Logger log_file( basename + "_log.csv" );
     InSituVis::Logger log_cout;
-    InSituVis::Logger log_file( "output_log.csv" );
-    kvs::Indent indent(4);
 
-    // Input parameters.
-    local::Input input( argc, argv );
-    if ( !input.parse() ) { return 1; }
     input.print( log_cout( is_master ) << "INPUT PARAMETERS" << std::endl, indent );
 
     // Parallel processing.
@@ -109,7 +128,7 @@ int Program::exec( int argc, char** argv )
     log_cout( is_master ) << "done." << std::endl;
 
     // Output final image.
-    if ( is_master ) { image.write( "output_image.bmp" ); }
+    if ( is_master ) { image.write( basename + "_image.bmp" ); }
 
     // Processing times.
     std::vector<local::Process::Times> all_times = proc.times().gather( world, master_rank );
