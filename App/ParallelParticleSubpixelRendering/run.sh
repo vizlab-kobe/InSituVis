@@ -11,12 +11,15 @@ WIDTH=512
 HEIGHT=512
 
 if [ $# = 1 ] && [ $1 = "multi" ]; then
-    for NPROCS in 1 2 4
+    for SUBPIXELS in 1
     do
-	NREGIONS=$[256/$NPROCS]
-	$MPIEXEC --oversubscribe -np $NPROCS ./$PROGRAM $DATA -sampling_method $SAMPLING_METHOD -regions $NREGIONS -subpixels $SUBPIXELS -width $WIDTH -height $HEIGHT
+	for NPROCS in 1 2 4
+	do
+	    NREGIONS=$[256/$NPROCS]
+	    $MPIEXEC --oversubscribe -np $NPROCS ./$PROGRAM $DATA -sampling_method $SAMPLING_METHOD -regions $NREGIONS -subpixels $SUBPIXELS -width $WIDTH -height $HEIGHT
+	    echo ""
+	done
     done
 else
     $MPIEXEC --oversubscribe -np $NPROCS ./$PROGRAM $DATA -sampling_method $SAMPLING_METHOD -regions $NREGIONS -subpixels $SUBPIXELS -width $WIDTH -height $HEIGHT
 fi
-

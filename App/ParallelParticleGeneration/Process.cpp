@@ -77,7 +77,7 @@ void Process::Times::print( std::ostream& os, const kvs::Indent& indent ) const
     os << indent << indent << "projection: " << this->rendering_projection << " [sec]" << std::endl;
     os << indent << indent << "  ensemble: " << this->rendering_ensemble << " [sec]" << std::endl;
     os << indent << "Readback time: " << this->readback << " [sec]" << std::endl;
-    os << indent << "Ttransmission time: " << this->transmission << " [sec]" << std::endl;
+    os << indent << "Transmission time: " << this->transmission << " [sec]" << std::endl;
 }
 
 Process::Stats Process::Stats::reduce( kvs::mpi::Communicator& comm, const MPI_Op op, const int rank ) const

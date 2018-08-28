@@ -14,6 +14,7 @@ if [ $# = 1 ] && [ $1 = "multi" ]; then
     do
 	NREGIONS=$[256/$NPROCS]
 	$MPIEXEC --oversubscribe -np $NPROCS ./$PROGRAM $DATA -regions $NREGIONS -mapping $MAPPING -width $WIDTH -height $HEIGHT
+	echo ""
     done
 else
     $MPIEXEC --oversubscribe -np $NPROCS ./$PROGRAM $DATA -regions $NREGIONS -mapping $MAPPING -width $WIDTH -height $HEIGHT
