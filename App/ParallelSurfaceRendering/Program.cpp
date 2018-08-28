@@ -19,6 +19,17 @@ inline std::string ToString( int n, int w, char c = '0' )
     return s.str();
 }
 
+std::string BaseName(
+    const std::string& prefix,
+    const local::Input& input,
+    const kvs::mpi::Communicator& comm )
+{
+    const std::string nprocs = ToString( comm.size(), 4 );
+    const std::string width = ToString( input.width, 4 );
+    const std::string height = ToString( input.height, 4 );
+    return prefix + "_" + nprocs + "_" + width + "x" + height;
+}
+
 void WriteLog(
     std::ostream& os,
     const local::Input& input,
@@ -69,6 +80,10 @@ namespace local
 
 int Program::exec( int argc, char** argv )
 {
+    // Input parameters.
+    local::Input input( argc, argv );
+    if ( !input.parse() ) { return 1; }
+
     // Initialize MPI
     kvs::mpi::Environment env( argc, argv );
     kvs::mpi::Communicator world( MPI_COMM_WORLD );
@@ -78,13 +93,11 @@ int Program::exec( int argc, char** argv )
     const bool is_master = ( my_rank == master_rank );
 
     // Logger.
+    const kvs::Indent indent(4);
+    const std::string basename = ::BaseName( "output", input, world );
+    InSituVis::Logger log_file( basename + "_log.csv" );
     InSituVis::Logger log_cout;
-    InSituVis::Logger log_file( "output_log.csv" );
-    kvs::Indent indent(4);
 
-    // Input parameters.
-    local::Input input( argc, argv );
-    if ( !input.parse() ) { return 1; }
     input.print( log_cout( is_master ) << "INPUT PARAMETERS" << std::endl, indent );
 
     // Parallel processing.
@@ -104,14 +117,14 @@ int Program::exec( int argc, char** argv )
     log_cout( is_master ) << "done." << std::endl;
 
     // Output particle image.
-    frame.colorImage().write( "output_image_" + ::ToString( my_rank, 3 ) + ".bmp" );
+    frame.colorImage().write( basename + "_image_" + ::ToString( my_rank, 4 ) + ".bmp" );
 
     log_cout( is_master ) << indent << "Composition ... " << std::flush;
     local::Process::Image image = proc.compose( frame );
     log_cout( is_master ) << "done." << std::endl;
 
     // Output final image.
-    if ( is_master ) { image.write( "output_image.bmp" ); }
+    if ( is_master ) { image.write( basename + "_image.bmp" ); }
 
     // Processing times and stats.
     std::vector<local::Process::Times> all_times = proc.times().gather( world, master_rank );
