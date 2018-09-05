@@ -353,17 +353,17 @@ Process::Particle* Process::generate_particle( const Process::VolumeList& volume
 
 Process::Particle* Process::generate_particle( const Process::Volume* volume, const kvs::TransferFunction& tfunc )
 {
+    kvs::Camera* camera = new kvs::Camera();
+    camera->setWindowSize( m_input.width, m_input.height );
     switch ( m_input.sampling_method )
     {
-    case 0: return new kvs::CellByCellUniformSampling( volume, m_input.repetitions, m_input.step, tfunc );
-    case 1: return new kvs::CellByCellMetropolisSampling( volume, m_input.repetitions, m_input.step, tfunc );
-    case 2: return new kvs::CellByCellRejectionSampling( volume, m_input.repetitions, m_input.step, tfunc );
-    case 3: return new kvs::CellByCellLayeredSampling( volume, m_input.repetitions, m_input.step, tfunc );
+    case 0: return new kvs::CellByCellUniformSampling( camera, volume, m_input.repetitions, m_input.step, tfunc );
+    case 1: return new kvs::CellByCellMetropolisSampling( camera, volume, m_input.repetitions, m_input.step, tfunc );
+    case 2: return new kvs::CellByCellRejectionSampling( camera, volume, m_input.repetitions, m_input.step, tfunc );
+    case 3: return new kvs::CellByCellLayeredSampling( camera, volume, m_input.repetitions, m_input.step, tfunc );
     case 4:
     {
         const size_t subpixel_level = std::sqrt( m_input.repetitions );
-        kvs::Camera* camera = new kvs::Camera();
-        camera->setWindowSize( m_input.width, m_input.height );
         return new ParticleBasedRendering::CellByCellSubpixelPointSampling(
             camera,
             volume,
