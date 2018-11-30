@@ -167,12 +167,6 @@ Process::VolumeList Process::import( const Process::Data& data )
 
 Process::Image Process::render( const Process::VolumeList& volumes )
 {
-    // Initialize rendering screen.
-    InSituVis::Screen screen;
-    screen.setBackgroundColor( kvs::RGBColor::White() );
-    screen.setGeometry( 0, 0, m_input.width, m_input.height );
-    screen.scene()->camera()->setWindowSize( m_input.width, m_input.height );
-
     // Image composititor.
     const int rank = m_communicator.rank();
     const int nnodes = m_communicator.size();
@@ -200,6 +194,12 @@ Process::Image Process::render( const Process::VolumeList& volumes )
     const size_t nrepeats = m_input.repetitions;
     for ( size_t i = 0; i < nrepeats; i++ )
     {
+        // Initialize rendering screen.
+        InSituVis::Screen screen;
+        screen.setBackgroundColor( kvs::RGBColor::White() );
+        screen.setGeometry( 0, 0, m_input.width, m_input.height );
+        screen.scene()->camera()->setWindowSize( m_input.width, m_input.height );
+
         // Mapping.
         this->mapping( screen, volumes, tfunc );
         mapping += m_times.mapping;
@@ -232,13 +232,13 @@ Process::Image Process::render( const Process::VolumeList& volumes )
         const int npixels = depth_buffer.size();
         for ( int j = 0; j < npixels; j++ )
         {
-            const float r = kvs::Real32( color_buffer[ 4 * j + 0 ] );
-            const float g = kvs::Real32( color_buffer[ 4 * j + 1 ] );
-            const float b = kvs::Real32( color_buffer[ 4 * j + 2 ] );
-            ensemble_buffer[ 3 * j + 0 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 0 ], r, a );
-            ensemble_buffer[ 3 * j + 1 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 1 ], g, a );
-            ensemble_buffer[ 3 * j + 2 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 2 ], b, a );
-        }
+	   const float r = kvs::Real32( color_buffer[ 4 * j + 0 ] );
+	   const float g = kvs::Real32( color_buffer[ 4 * j + 1 ] );
+	   const float b = kvs::Real32( color_buffer[ 4 * j + 2 ] );
+	   ensemble_buffer[ 3 * j + 0 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 0 ], r, a );
+	   ensemble_buffer[ 3 * j + 1 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 1 ], g, a );
+	   ensemble_buffer[ 3 * j + 2 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 2 ], b, a );	 
+	}
         timer.stop();
         rendering_ensemble += timer.sec();
         rendering += timer.sec();
@@ -367,17 +367,18 @@ Process::Particle* Process::generate_particle( const Process::VolumeList& volume
 
 Process::Particle* Process::generate_particle( const Process::Volume* volume, const kvs::TransferFunction& tfunc )
 {
+    kvs::Camera* camera = new kvs::Camera();
+    camera->setWindowSize( m_input.width, m_input.height );
+
     switch ( m_input.sampling_method )
     {
-    case 0: return new kvs::CellByCellUniformSampling( volume, m_input.repetitions, m_input.step, tfunc );
-    case 1: return new kvs::CellByCellMetropolisSampling( volume, m_input.repetitions, m_input.step, tfunc );
-    case 2: return new kvs::CellByCellRejectionSampling( volume, m_input.repetitions, m_input.step, tfunc );
-    case 3: return new kvs::CellByCellLayeredSampling( volume, m_input.repetitions, m_input.step, tfunc );
+    case 0: return new kvs::CellByCellUniformSampling( camera, volume, 1, m_input.step, tfunc );
+    case 1: return new kvs::CellByCellMetropolisSampling( camera, volume, 1, m_input.step, tfunc );
+    case 2: return new kvs::CellByCellRejectionSampling( camera, volume, 1, m_input.step, tfunc );
+    case 3: return new kvs::CellByCellLayeredSampling( camera, volume, 1, m_input.step, tfunc );
     case 4:
     {
-        const size_t subpixel_level = std::sqrt( m_input.repetitions );
-        kvs::Camera* camera = new kvs::Camera();
-        camera->setWindowSize( m_input.width, m_input.height );
+        const size_t subpixel_level = std::sqrt( 1 );
         return new ParticleBasedRendering::CellByCellSubpixelPointSampling(
             camera,
             volume,
