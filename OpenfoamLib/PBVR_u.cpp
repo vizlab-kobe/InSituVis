@@ -14,9 +14,14 @@
 #include <kvs/PolygonImporter>
 #include <kvs/StochasticPolygonRenderer>
 #include <kvs/StochasticRenderingCompositor>
+#include <kvs/Timer>
 
 void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value )
 {
+  float conversion_time = 0.0;
+  float vis_time = 0.0;
+  float output_time = 0.0;
+  kvs::Timer timer;
   int rank, nrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
@@ -51,6 +56,8 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
  
   int nonode_count = 0;
   int nocell_count = 0;
+
+  timer.start();
   for ( int i = 0; i < ncells; i++ )
     {
       if( label[ 8 * i + 0 ] < 0 ){
@@ -103,6 +110,8 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   volume->updateMinMaxCoords();
   volume->updateMinMaxValues();
   volume->setMinMaxValues( min_value, max_value );
+  timer.stop();
+  conversion_time = timer.sec();
 
   const size_t width = 512;
   const size_t height = 512;
@@ -113,7 +122,7 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   ParallelImageComposition::ImageCompositor compositor( rank, nrank, MPI_COMM_WORLD );
   compositor.initialize( width, height, depth_testing );
 
-  const size_t repetitions = 20;
+  const size_t repetitions = 50;
   const float step = 0.5f;
 
   kvs::TransferFunction tfunc( 256 );
@@ -134,9 +143,12 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   kvs::PolygonObject* poly_object = new kvs::PolygonImporter("/home/ubuntu/realistic-cfd3.stl");
   poly_object->setOpacity( 30 );
   //poly_object->setMinMaxExternalCoords( poly_object->minExternalCoord()*0.1, poly_object->maxExternalCoord()*0.1 );
-  poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );  
+  poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
+  //poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 2.6 ) );  
   poly_object->setName("Polygon");
-  
+
+
+  timer.start();
   for( size_t i = 0; i < repetitions; i++)
     {
       kvs::Camera* camera = new kvs::Camera();
@@ -146,7 +158,8 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       object->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
       object->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
       object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
-
+      //object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 2.6 ) );
+      
       kvs::PolygonObject* replace_poly_object = new kvs::PolygonObject();
       replace_poly_object->deepCopy( *poly_object );
       replace_poly_object->setName("Polygon");
@@ -179,7 +192,9 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
 	  ensemble_buffer[ 3 * j + 2 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 2 ], b, a );
 	}
     }
-      
+  timer.stop();
+  vis_time = timer.sec();
+  
   delete volume;
   delete poly_object;
   std::vector<kvs::UInt32>().swap(tmp_connection);
@@ -197,9 +212,25 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       std::ostringstream ss;
       ss << std::setw(5) << std::setfill('0') << time;
       std::string num = ss.str();
-      std::string name = "./output_result_mix_pbvr_u_" +num +".bmp";
+      std::string name = "./Output/output_result_mix_pbvr_u_" +num +".bmp";
+      timer.start();
       image.write( name );
+      timer.stop();
+      output_time = timer.sec();
     }
+  
+  MPI_Allreduce( &conversion_time, &conversion_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+  MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+  MPI_Allreduce( &output_time, &output_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+
+  if( rank == 0)
+    {
+      std::cout << "conversion vis time : " << conversion_time << std::endl;
+      std::cout << "visualization time : " << vis_time << std::endl;
+      std::cout << "output image time : " << output_time << std::endl;
+    }
+  
+  
   
 }
 
