@@ -144,7 +144,6 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   poly_object->setOpacity( 30 );
   //poly_object->setMinMaxExternalCoords( poly_object->minExternalCoord()*0.1, poly_object->maxExternalCoord()*0.1 );
   poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
-  //poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 2.6 ) );  
   poly_object->setName("Polygon");
 
 
@@ -158,8 +157,7 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       object->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
       object->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
       object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
-      //object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 2.6 ) );
-      
+        
       kvs::PolygonObject* replace_poly_object = new kvs::PolygonObject();
       replace_poly_object->deepCopy( *poly_object );
       replace_poly_object->setName("Polygon");
@@ -229,8 +227,6 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       std::cout << "visualization time : " << vis_time << std::endl;
       std::cout << "output image time : " << output_time << std::endl;
     }
-  
-  
   
 }
 

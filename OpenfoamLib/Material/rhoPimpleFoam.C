@@ -77,23 +77,20 @@ int main(int argc, char *argv[])
   kvs::ValueArray<float> old_hist;
   kvs::ValueArray<float> new_hist;
   int count = 0;
-  int vis_skip = 2;
-  const int volume_size = 5;
+  int vis_skip = 1;
+  const int volume_size = 3;
   kvs::python::Interpreter interpreter;
   const char* script_file_name = "distribution"; 
   kvs::python::Module module( script_file_name );
   kvs::python::Dict dict = module.dict();
-  
   const char* func_name = "main"; 
   kvs::python::Callable func( dict.find( func_name ) );
-
   kvs::Timer sim_timer;
   kvs::Timer vis_timer;
   kvs::Timer distribution_timer;
   float sim_time = 0.0;
   float vis_time = 0.0;
   float distribution_time = 0.0;
-  
   //
   
     Info<< "\nStarting time loop\n" << endl;

@@ -204,7 +204,7 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
       std::ostringstream ss;
       ss << std::setw(5) << std::setfill('0') << time;
       std::string num = ss.str();
-      std::string name = "./output_result_mix_pbvr_p_" +num +".bmp";
+      std::string name = "./Output/output_result_mix_pbvr_p_" +num +".bmp";
       image.write( name );
     }
   

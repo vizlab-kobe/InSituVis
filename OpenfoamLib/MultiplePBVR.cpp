@@ -250,7 +250,7 @@ void MultiplePBVR( const std::vector<float> &p_values, const std::vector<float> 
       std::ostringstream ss;
       ss << std::setw(5) << std::setfill('0') << time;
       std::string num = ss.str();
-      std::string name = "./output_result_multiple_pbvr_" +num +".bmp";
+      std::string name = "./Output/output_result_multiple_pbvr_" +num +".bmp";
       image.write( name );
     }
   

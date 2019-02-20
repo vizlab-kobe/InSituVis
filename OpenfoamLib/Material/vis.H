@@ -1,19 +1,19 @@
 
-const int time = static_cast<int>(atof(runTime.timeName().c_str())/runTime.deltaT().value());
-const int step = 20;
+const int now_time = static_cast<int>(atof(runTime.timeName().c_str())/runTime.deltaT().value());
+const int step = 5;
 const int start_time = static_cast<int>( runTime.startTimeIndex() );
 
-if( time -1 == start_time ){
-    std::vector<float> first_uValues;
-    forAll( mesh.cellPoints(), i )
-      {
-	first_uValues.push_back( static_cast<float>( mag(U[i]) ) );
-	old_hist = kvs::ValueArray<float>( first_uValues );
-      }
-    std::vector<float>().swap(first_uValues);
+if( now_time -1 == start_time ){
+  std::vector<float> first_uValues;
+  forAll( mesh.cellPoints(), i )
+    {
+      first_uValues.push_back( static_cast<float>( mag(U[i]) ) );
+      old_hist = kvs::ValueArray<float>( first_uValues );
+    }
+  std::vector<float>().swap(first_uValues);
  }
 
-if( time % step == 0 ){
+if( now_time % step == 0 ){
 #include <PBVR_u.h>
   std::vector<float> pValues;
   std::vector<float> pointCoords;
@@ -21,7 +21,6 @@ if( time % step == 0 ){
   std::vector<int> cellPoints;
   std::vector<float> uValues;
   //std::vector<float> uVector;
-
 
   vis_timer.start();
   forAll( mesh.cellPoints(), i )
@@ -34,7 +33,6 @@ if( time % step == 0 ){
       //uVector.push_back( static_cast<float>( U[i].x() ) );
       //uVector.push_back( static_cast<float>( U[i].y() ) );
       //uVector.push_back( static_cast<float>( U[i].z() ) );
-   
       if( mesh.cellPoints()[i].size() == 8 && mesh.cells()[i].size() == 6 )
 	{
 	  for(auto itr = mesh.cellPoints()[i].begin(); itr != mesh.cellPoints()[i].end(); itr++)
@@ -55,8 +53,7 @@ if( time % step == 0 ){
     {
       pointCoords.push_back( static_cast<float>( mesh.points()[k].x() ) );
       pointCoords.push_back( static_cast<float>( mesh.points()[k].y() ) );
-      pointCoords.push_back( static_cast<float>( mesh.points()[k].z() ) );
-      
+      pointCoords.push_back( static_cast<float>( mesh.points()[k].z() ) );  
     }
 
   vis_timer.stop();
@@ -83,11 +80,8 @@ if( time % step == 0 ){
 	    {
 	      for( size_t i = 0; i < data_set.size(); i++)
 		{
-		  std::cout << "vis num " << time/step - ( volume_size - i -1 ) << std::endl;
-		  //PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - ( volume_size - i -1 ) , 3 , 45 );
-		  //PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - ( volume_size - i -1 ) , 15, 50 );
+		  PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - ( volume_size - i -1 ) , 15, 50 );
 		}
-	     
 	    }
 	  else
 	    {
@@ -95,25 +89,19 @@ if( time % step == 0 ){
 		{
 		  for( size_t j = 0; j < int(data_set.size()/2); j++)
 		    {
-		      std::cout << "vis num " << time/step - ( volume_size - j -1 ) << std::endl;
-		      //PBVR_u( data_set[j], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - (volume_size -j -1), 3 , 45 );
-		      //PBVR_u( data_set[j], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - (volume_size -j -1),  15, 50);
+		      PBVR_u( data_set[j], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - (volume_size -j -1),  15, 50);
 		    }
 		  for( size_t k = int(data_set.size()/2) + vis_skip; k <data_set.size(); k+= vis_skip)
 		    {
-		      std::cout << "vis num " << time/step - ( volume_size - k -1 ) << std::endl;
-		      //PBVR_u( data_set[k], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - (volume_size -k -1), 3 , 45 );
-		      // PBVR_u( data_set[k], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - (volume_size -k -1), 15, 50 );
+		      PBVR_u( data_set[k], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - (volume_size -k -1), 15, 50 );
 		    }
-		  //PBVR_u( uValues, mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step, 1, 50 );
 		}      
 	      else
 		{
 		  for( size_t i = vis_skip-1; i < data_set.size(); i += vis_skip)
 		    {
-		      std::cout << "vis num " << time/step - ( volume_size - i -1 ) << std::endl;
-		      //PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - (volume_size -i -1), 3 , 45 );
-		      //PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step - (volume_size -i -1), 15, 50 );
+		      std::cout << "vis num " << now_time/step - ( volume_size - i -1 ) << std::endl;
+		      PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - (volume_size -i -1), 15, 50 );
 		    }
 		}
 	    }
@@ -130,13 +118,11 @@ if( time % step == 0 ){
       old_hist = new_hist;           
     }
   
+  std::vector<float>().swap(uValues);
+  std::vector<float>().swap(pValues);
+  std::vector<float>().swap(pointCoords);
+  std::vector<float>().swap(cellCoords);
+  std::vector<int>().swap(cellPoints);
   
-  //MultiplePBVR( pValues, uValues, mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, time/step, 99998.0, 100002.0, 3, 45 );
-std::vector<float>().swap(uValues);
-std::vector<float>().swap(pValues);
-std::vector<float>().swap(pointCoords);
-std::vector<float>().swap(cellCoords);
-std::vector<int>().swap(cellPoints);
-
  }
 
