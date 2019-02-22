@@ -33,6 +33,7 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   float global_maxy = vertex_coords[1];
   float global_maxz = vertex_coords[2];
 
+  //各領域ごとに最小値最大値の計算
   for( int i = 0; i < nnodes; i++ )
     {
       if( global_minx > vertex_coords[3*i+0])
@@ -53,10 +54,11 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
 
   local::InverseDistanceWeighting<kvs::Real32> idw(nnodes);
   std::vector<kvs::UInt32> tmp_connection;
- 
-  int nonode_count = 0;
-  int nocell_count = 0;
 
+  //六面体以外の頂点数とセル数を数えるカウント
+  int nonode_count = 0; 
+  int nocell_count = 0;
+  
   timer.start();
   for ( int i = 0; i < ncells; i++ )
     {
@@ -84,7 +86,8 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       }
     }
   kvs::ValueArray<kvs::Real32> vertex_values = idw.serialize();
-  
+
+  //ポリゴンデータとのスケールが違うのでスケールを合わせるために1000倍する
   kvs::ValueArray<float> coords = kvs::ValueArray<float>( nnodes * 3 );
   for( int i = 0; i < nnodes; i++)
     {

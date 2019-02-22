@@ -66,19 +66,21 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
   //vis
+  //変化量を書き出すためのcsvファイル
   std::string filename = "entropy.csv";
   std::ofstream writing_file;
   writing_file.open(filename, std::ios::app);
   int my_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-  float threshold = 0.0;
+  float threshold = 0.0; //閾値
   float pre_entropy  = 0.0;
   std::vector<std::vector<float>> data_set;
-  kvs::ValueArray<float> old_hist;
-  kvs::ValueArray<float> new_hist;
+  kvs::ValueArray<float> old_hist; //現在の分布情報
+  kvs::ValueArray<float> new_hist; //前の時刻の分布情報
   int count = 0;
-  int vis_skip = 1;
-  const int volume_size = 3;
+  int vis_skip = 1;  //粗さの粒度R
+  const int volume_size = 3; //ボリュームデータの保存サイズL
+  //pythonを呼び出すための設定
   kvs::python::Interpreter interpreter;
   const char* script_file_name = "distribution"; 
   kvs::python::Module module( script_file_name );
@@ -131,11 +133,11 @@ int main(int argc, char *argv[])
 	sim_time = sim_timer.sec();
         runTime.write();
 	{
-	  fenv_t curr_excepts;
+	  fenv_t curr_excepts; //ゼロ割り(floating exception)を無視するための関数,osmesa内でゼロ割が起こっているため
 	  feholdexcept( &curr_excepts );
 	  MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
 	  Info << "Simulation Solver time : " << sim_time << endl; 
-	  #include "vis.H"
+          #include "vis.H"  //in-situ可視化を行うためのコード
 	  Info << "Conversion sim time : " << vis_time << endl;
 	  Info << "Distribution time : " << distribution_time << endl;
 	}

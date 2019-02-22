@@ -1,6 +1,6 @@
 
 const int now_time = static_cast<int>(atof(runTime.timeName().c_str())/runTime.deltaT().value());
-const int step = 5;
+const int step = 5; //細かく可視化するときの可視化間隔(Δt')
 const int start_time = static_cast<int>( runTime.startTimeIndex() );
 
 if( now_time -1 == start_time ){
@@ -15,12 +15,12 @@ if( now_time -1 == start_time ){
 
 if( now_time % step == 0 ){
 #include <PBVR_u.h>
-  std::vector<float> pValues;
-  std::vector<float> pointCoords;
-  std::vector<float> cellCoords;
-  std::vector<int> cellPoints;
-  std::vector<float> uValues;
-  //std::vector<float> uVector;
+  std::vector<float> pValues; //圧力
+  std::vector<float> pointCoords; //頂点の座標値
+  std::vector<float> cellCoords; //要素中心の座標値
+  std::vector<int> cellPoints; //中心から頂点への接続情報
+  std::vector<float> uValues; //速度の絶対値
+  //std::vector<float> uVector; //速度のベクトル値
 
   vis_timer.start();
   forAll( mesh.cellPoints(), i )
@@ -33,6 +33,7 @@ if( now_time % step == 0 ){
       //uVector.push_back( static_cast<float>( U[i].x() ) );
       //uVector.push_back( static_cast<float>( U[i].y() ) );
       //uVector.push_back( static_cast<float>( U[i].z() ) );
+      //六面体のみを抜き出すための処理
       if( mesh.cellPoints()[i].size() == 8 && mesh.cells()[i].size() == 6 )
 	{
 	  for(auto itr = mesh.cellPoints()[i].begin(); itr != mesh.cellPoints()[i].end(); itr++)
@@ -76,7 +77,7 @@ if( now_time % step == 0 ){
 	  entropy = kvs::python::Float( func.call( args ) );
 	  MPI_Allreduce( &entropy, &entropy, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
 	  distribution_timer.stop();  
-	  if( entropy >= threshold )
+	  if( entropy >= threshold ) //パターンB(細かい可視化)
 	    {
 	      for( size_t i = 0; i < data_set.size(); i++)
 		{
@@ -85,7 +86,7 @@ if( now_time % step == 0 ){
 	    }
 	  else
 	    {
-	      if( pre_entropy >= threshold )
+	      if( pre_entropy >= threshold ) //パターンC(細かい可視化から粗い可視化)
 		{
 		  for( size_t j = 0; j < int(data_set.size()/2); j++)
 		    {
@@ -96,7 +97,7 @@ if( now_time % step == 0 ){
 		      PBVR_u( data_set[k], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - (volume_size -k -1), 15, 50 );
 		    }
 		}      
-	      else
+	      else //パターンA(粗い可視化)
 		{
 		  for( size_t i = vis_skip-1; i < data_set.size(); i += vis_skip)
 		    {
