@@ -3,7 +3,7 @@
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/Isosurface>
 #include <kvs/PointObject>
-#include <kvs/CellByCellMetropolisSampling>
+#include "CellByCellMetropolisSampling.h"
 #include <kvs/ParticleBasedRenderer>
 #include <kvs/TransferFunction>
 #include <kvs/osmesa/Screen>
@@ -16,16 +16,16 @@
 #include <kvs/StochasticRenderingCompositor>
 #include <kvs/Timer>
 
-void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value )
+void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value,   std::string stlpath, int cameraposx, int cameraposy, int cameraposz, const size_t repetitions )
 {
   float conversion_time = 0.0;
   float vis_time = 0.0;
   float output_time = 0.0;
-  kvs::Timer timer;
+  float composition_time = 0.0;
+  kvs::Timer timer,m_comp_timer;
   int rank, nrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
-
   float global_minx = vertex_coords[0];
   float global_miny = vertex_coords[1];
   float global_minz = vertex_coords[2];
@@ -49,16 +49,14 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       if( global_maxz < vertex_coords[3*i+2])
 	global_maxz = vertex_coords[3*i+2];              
     }
-
   CalculateMinMax( global_minx, global_miny, global_minz, global_maxx, global_maxy, global_maxz );
 
   local::InverseDistanceWeighting<kvs::Real32> idw(nnodes);
   std::vector<kvs::UInt32> tmp_connection;
-
+  
   //六面体以外の頂点数とセル数を数えるカウント
   int nonode_count = 0; 
   int nocell_count = 0;
-  
   timer.start();
   for ( int i = 0; i < ncells; i++ )
     {
@@ -86,7 +84,6 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       }
     }
   kvs::ValueArray<kvs::Real32> vertex_values = idw.serialize();
-
   //ポリゴンデータとのスケールが違うのでスケールを合わせるために1000倍する
   kvs::ValueArray<float> coords = kvs::ValueArray<float>( nnodes * 3 );
   for( int i = 0; i < nnodes; i++)
@@ -100,11 +97,13 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
 	}
     }
 
+
+
   kvs::ValueArray<kvs::UInt32> real_connections = kvs::ValueArray<kvs::UInt32>(tmp_connection);
   kvs::UnstructuredVolumeObject* volume = new kvs::UnstructuredVolumeObject();
+  kvs::Vec3 pos(cameraposx,cameraposy,cameraposz);
   volume->setCellTypeToHexahedra();
   volume->setVeclen( 1 );
-  //volume->setNumberOfNodes( nnodes - nonode_count );
   volume->setNumberOfNodes( nnodes );
   volume->setNumberOfCells( ncells - nocell_count );
   volume->setValues( vertex_values );
@@ -115,7 +114,6 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   volume->setMinMaxValues( min_value, max_value );
   timer.stop();
   conversion_time = timer.sec();
-
   const size_t width = 512;
   const size_t height = 512;
   const size_t npixels = width * height;
@@ -125,9 +123,7 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   ParallelImageComposition::ImageCompositor compositor( rank, nrank, MPI_COMM_WORLD );
   compositor.initialize( width, height, depth_testing );
 
-  const size_t repetitions = 50;
   const float step = 0.5f;
-
   kvs::TransferFunction tfunc( 256 );
   tfunc.setRange( min_value, max_value );
 
@@ -136,18 +132,22 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   screen.setBackgroundColor( kvs::RGBColor::White() );
   screen.setGeometry( 0, 0, width, height );
   screen.scene()->camera()->setWindowSize( width, height );
+  screen.scene()->camera()->setPosition( pos );
+  
   const kvs::Mat3 R = kvs::Mat3::RotationX( 230 ) * kvs::Mat3::RotationY( 0 )* kvs::Mat3::RotationZ( 10 );
   screen.setEvent(&rendering_compositor );
   screen.create();
   kvs::Light::SetModelTwoSide( true );
-  
   kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();
   kvs::StochasticPolygonRenderer* poly_renderer = new kvs::StochasticPolygonRenderer();
-  kvs::PolygonObject* poly_object = new kvs::PolygonImporter("/home/ubuntu/realistic-cfd3.stl");
+  kvs::PolygonObject* poly_object = new kvs::PolygonImporter(stlpath);
   poly_object->setOpacity( 30 );
   //poly_object->setMinMaxExternalCoords( poly_object->minExternalCoord()*0.1, poly_object->maxExternalCoord()*0.1 );
   poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
   poly_object->setName("Polygon");
+
+  float estimation_time = 0;
+  float generation_time = 0;
 
 
   timer.start();
@@ -155,12 +155,15 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
     {
       kvs::Camera* camera = new kvs::Camera();
       camera->setWindowSize( width, height );
-      kvs::PointObject* object = new kvs::CellByCellMetropolisSampling( camera, volume, 1, step, tfunc );
+      float e_time = 0;
+      float g_time = 0;
+      kvs::PointObject* object = new local::CellByCellMetropolisSampling( camera, volume, 1, step, tfunc, e_time, g_time );
+      estimation_time+=e_time;
+      generation_time+=g_time;
       object->setName("Particle");
       object->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
       object->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
       object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
-        
       kvs::PolygonObject* replace_poly_object = new kvs::PolygonObject();
       replace_poly_object->deepCopy( *poly_object );
       replace_poly_object->setName("Polygon");
@@ -178,10 +181,13 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
       //screen.draw();
       rendering_compositor.update();
       
+      
       kvs::ValueArray<kvs::UInt8> color_buffer = screen.readbackColorBuffer();
       kvs::ValueArray<kvs::Real32> depth_buffer = screen.readbackDepthBuffer();
+      m_comp_timer.start();
       compositor.run( color_buffer, depth_buffer );
-      
+      m_comp_timer.stop();
+      composition_time += m_comp_timer.sec();
       const float a = 1.0f / ( i + 1 );      
       for ( size_t j = 0; j < npixels; j++ )
 	{
@@ -199,38 +205,55 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   delete volume;
   delete poly_object;
   std::vector<kvs::UInt32>().swap(tmp_connection);
-  
   kvs::ValueArray<kvs::UInt8> pixels( npixels * 3 );
   for ( size_t i = 0; i < pixels.size(); i++ )
     {
       const int p = kvs::Math::Round( ensemble_buffer[i] );
       pixels[i] = kvs::Math::Clamp( p, 0 , 255 );
     }
-  
   if( rank == 0 )
     {
       kvs::ColorImage image = kvs::ColorImage( width , height, pixels );
-      std::ostringstream ss;
+      std::ostringstream ss,sa,sb,sc;
       ss << std::setw(5) << std::setfill('0') << time;
+      sa << std::setw(2) << std::setfill('0') << cameraposx;
+      sb << std::setw(2) << std::setfill('0') << cameraposy;
+      sc << std::setw(2) << std::setfill('0') << cameraposz;
       std::string num = ss.str();
-      std::string name = "./Output/output_result_mix_pbvr_u_" +num +".bmp";
+      std::string numx = sa.str();
+      std::string numy = sb.str();
+      std::string numz = sc.str();
+      std::string name = "./Output/output_result_mix_pbvr_u_" + num + "_" + numx + "_" + numy + "_" + numz + ".bmp";
       timer.start();
       image.write( name );
       timer.stop();
       output_time = timer.sec();
     }
-  
   MPI_Allreduce( &conversion_time, &conversion_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
   MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
   MPI_Allreduce( &output_time, &output_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
 
+
   if( rank == 0)
     {
+      std::string timefilename = "time_from_pbvr_u_cpp.csv";
+
+      std::ofstream writing_file;
+      writing_file.open(timefilename, std::ios::app);
+      writing_file << conversion_time << std::endl;
+      writing_file << vis_time << std::endl;
+      writing_file << output_time << std::endl;
+      writing_file << estimation_time << std::endl;
+      writing_file << generation_time << std::endl;
+      writing_file << composition_time << std::endl;
+      
+
+
       std::cout << "conversion vis time : " << conversion_time << std::endl;
       std::cout << "visualization time : " << vis_time << std::endl;
       std::cout << "output image time : " << output_time << std::endl;
     }
-  
+    
 }
 
 void CalculateMinMax( float& min_x, float& min_y, float& min_z, float& max_x, float& max_y, float & max_z )
