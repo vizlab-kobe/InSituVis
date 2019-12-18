@@ -67,15 +67,7 @@ if(estimatethreshold==1){
   }
 
       
-  double inputentropy = 0;
-  double sorted_entropies[20000/presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
-  double ordered_entropies[20000/presim_number];
-  int presim_judgevis[20000/presim_number];
-  for(int shokika = 0; shokika < 20000/presim_number; shokika++){
-    sorted_entropies[shokika]=0;
-    ordered_entropies[shokika]=0;
-    presim_judgevis[shokika]=0;
-  }
+
 
   while ( ret = fscanf(fp, "%lf,", &inputentropy) != EOF){
     ordered_entropies[prei]=inputentropy;
@@ -87,7 +79,7 @@ if(estimatethreshold==1){
       }
     }
     prei++;
-    if(prei==20000/presim_number)
+    if(prei==20000/presim_number)//エラー回避
       break;
   }
   

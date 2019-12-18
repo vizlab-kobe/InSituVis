@@ -157,14 +157,16 @@ int main(int argc, char *argv[])
   float pre_entropy  = 0.0;//前の時刻のKL情報量
   float entropy = 0.0;//現時刻のKL情報量
   int KLpattern = 2;//KL情報量計算区間のregionパターン(A,B,C)を保存する変数
-  int saveKL = 0;//全体でKL情報量計算結果が何回分保存されているかの変数
   std::vector<std::vector<float>> data_set;//可視化するボリュームデータの保存用変数
   kvs::ValueArray<float> old_hist; //現在の分布情報
+  int saveKL = 0;//全体でKL情報量計算結果が何回分保存されているかの変数
   kvs::ValueArray<float> new_hist; //前の時刻の分布情報
   kvs::ValueArray<float> pre_hist[20];//プレシミュレーション用分布情報
   int minpresimulation = 0;
   //volume_sizeの回数分のデータがあるかどうかの判定のためのカウンタ
   int count = 0;
+  //presimulationの結果のデータのうちどれを読み込むかのためのカウンタ
+  int countpreKL = 0;
   //multi camera判定用の変数、配列および初期化
   int multicamerax = pow(2,ncamerax)+1;
   int multicameray = pow(2,ncameray)+1;
@@ -188,6 +190,15 @@ int main(int argc, char *argv[])
   /****python end***************************/
 
   /************プレシミュレーションによる初期閾値の推定**************/
+  double inputentropy = 0;
+  double sorted_entropies[20000/presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
+  double ordered_entropies[20000/presim_number];
+  int presim_judgevis[20000/presim_number];
+  for(int shokika = 0; shokika < 20000/presim_number; shokika++){
+    sorted_entropies[shokika]=0;
+    ordered_entropies[shokika]=0;
+    presim_judgevis[shokika]=0;
+  }
   if ( estimatethreshold == 1){
 #include "estimateThreshold.H"    
   }

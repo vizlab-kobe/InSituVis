@@ -34,7 +34,7 @@ if(( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulation
     new_hist = kvs::ValueArray<float>( uValues );
     if( old_hist.size() != 0)
       {
-	if(mode == 0){
+	if((mode == 0)&&(estimatethreshold == 0)){
 	  distribution_timer.start();	  
 #include "calculateKL.H"
 	  distribution_timer.stop();
@@ -42,7 +42,10 @@ if(( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulation
 	  timeswitch=3;
 #include "calculatetime.H"	  
 	  count=0;	
-	}else{
+	}else if((mode == 0)&&(estimatethreshold == 1)){
+	  KLpattern==presim_judgevis[countpreKL];
+	  countpreKL++;	  
+	}else{//mode == 1
 #include "presimulationcalculateKL.H"
 	}
       }
