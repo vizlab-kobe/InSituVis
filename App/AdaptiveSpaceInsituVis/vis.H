@@ -35,30 +35,29 @@ if(( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulation
     if( old_hist.size() != 0)
       {
 	if(mode == 0){
-	  distribution_timer.start();
-	}
+	  distribution_timer.start();	  
 #include "calculateKL.H"
-	if(mode == 0){
 	  distribution_timer.stop();
 	  distribution_time = distribution_timer.sec();	  
 	  timeswitch=3;
 #include "calculatetime.H"	  
-	  count=0;
+	  count=0;	
+	}else{
+#include "presimulationcalculateKL.H"
 	}
       }
-  }
  
   
-  //可視化の実行判定および処理
-  if(mode == 0){
+    //可視化の実行判定および処理
+    if(mode == 0){
       vis_timer.start();
-	if( KLpattern==2 ) //パターンB(細かい可視化)
-	  {
-	    for( size_t i = 0; i < data_set.size(); i++)
-	      {
-		
-		//PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - ( volume_size - i -1 ) , 15, 50, "./constant/triSurface/realistic-cfd3.stl",1,1,1,repetitions );
-		//PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, 62, 15, 50, "./constant/triSurface/realistic-cfd3.stl",-3,-3,10,100 );
+      if( KLpattern==2 ) //パターンB(細かい可視化)
+	{
+	  for( size_t i = 0; i < data_set.size(); i++)
+	    {
+	      
+	      //PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, now_time/step - ( volume_size - i -1 ) , 15, 50, "./constant/triSurface/realistic-cfd3.stl",1,1,1,repetitions );
+	      //PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, 62, 15, 50, "./constant/triSurface/realistic-cfd3.stl",-3,-3,10,100 );
 		
 		PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, 83, 15, 50, "./constant/triSurface/realistic-cfd3.stl",-2,-1,10,repetitions );
 		PBVR_u( data_set[i], mesh.nCells(), mesh.nPoints(), pointCoords, cellCoords, cellPoints, 84, 15, 50, "./constant/triSurface/realistic-cfd3.stl",-1,-1,10,repetitions );
@@ -106,16 +105,17 @@ if(( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulation
 
     
     
-  }else{//(mode==1)
-    data_set.clear();
+    }else{//(mode==1)
+      data_set.clear();
+    }
+    std::vector<float>().swap(uValues);
+    std::vector<float>().swap(pValues);
+    std::vector<float>().swap(pointCoords);
+    std::vector<float>().swap(cellCoords);
+    std::vector<int>().swap(cellPoints);
+  
+  
+  
+  
   }
-  std::vector<float>().swap(uValues);
-  std::vector<float>().swap(pValues);
-  std::vector<float>().swap(pointCoords);
-  std::vector<float>().swap(cellCoords);
-  std::vector<int>().swap(cellPoints);
-  
-  
-  
-
  }

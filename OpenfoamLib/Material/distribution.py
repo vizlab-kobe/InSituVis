@@ -8,7 +8,7 @@ def main( new_array , old_array ):
     new_kde = gaussian_kde(new_value)
     old_kde = gaussian_kde(old_value)
     
-    new_y = new_kde(np.linspace(3, 45)) #最小値最大値は手動で設定
+    new_y = new_kde(np.linspace(3, 45))
     old_y = old_kde(np.linspace(3, 45))
  
     en = entropy( new_y, old_y )
