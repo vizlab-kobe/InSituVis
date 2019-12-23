@@ -6,13 +6,12 @@ for(int numpre = 0; numpre < 20; numpre++){
     args.set( 0, kvs::python::Array( new_hist ) );
     args.set( 1, kvs::python::Array( pre_hist[numpre] ) );
     entropy = kvs::python::Float( func.call( args ) );
-    MPI_Allreduce( &entropy, &entropy, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );    
+    MPI_Allreduce( &entropy, &entropy, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
     if( my_rank == 0 ){
       std::cout << "entropy : " << entropy << std::endl;
       writing_file1[numpre] << "," << entropy << std::endl;
     }
   }
-  
  }
 
 minpresimulation++;

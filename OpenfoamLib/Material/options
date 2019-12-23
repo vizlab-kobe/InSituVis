@@ -6,12 +6,12 @@ EXE_INC = \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/sampling/lnInclude \
     -I$(LIB_SRC)/fvOptions/lnInclude \
-    -I${HOME}/Work/Github/InSituVis/OpenfoamLib \
-    -I${HOME}/local/kvs/include \
+    -I${HOME}/Work/GitHub/InSituVis/OpenfoamLib \
+    -I${HOME}/local/kvs.osmesa/include \
     -I${HOME}/local/osmesa_swr/include \
     $(shell python-config --includes) \
     -I$(shell python-config --prefix)/Extras/lib/python/numpy/core/include \
-    -I${HOME}/Work/Github
+    -I${HOME}/Work/GitHub
     
 
 EXE_LIBS = \
@@ -25,12 +25,10 @@ EXE_LIBS = \
     -lsampling \
     -lfvOptions \
     $(shell python-config --ldflags) \
-    -L${HOME}/Work/Github/KVS.py/Lib \
-    -lKVS.py `python-config --cflags` `python-config --ldflags` \
-    -L${HOME}/Work/Github/InSituVis/OpenfoamLib \
-    -L${HOME}/local/kvs/lib \
+    -L${HOME}/Work/GitHub/InSituVis/OpenfoamLib \
+    -L${HOME}/local/kvs.osmesa/lib \
     -L${HOME}/local/osmesa_swr/lib \
     -L${HOME}/local/234Compositor/lib \
-    -L${HOME}/Work/Github/ParallelImageComposition/Lib \
-    -lOpenFoamInsituVis -lParallelImageComposition -l234comp -lkvsSupportOSMesa -lkvsCore  -lgomp -lOSMesa32 -lz `~/local/llvm/bin/llvm-config --libs` `~/local/llvm/bin/llvm-config --ldflags` -lrt -lpthread
+    -L${HOME}/Work/GitHub/ParallelImageComposition/Lib \
+    -lOpenFoamInsituVis -lParallelImageComposition -l234comp -lkvsSupportOSMesa -lkvsCore -lkvsSupportPython -lgomp -lOSMesa32 -lz `~/local/llvm/bin/llvm-config --libs` `~/local/llvm/bin/llvm-config --ldflags` -lrt -lpthread
     
