@@ -76,7 +76,9 @@ int main(int argc, char *argv[])
   
   /*******************no change******************/
   int presimulationcount = 0;
-  int volume_size = noutperKL; //ボリュームデータの保存サイズL
+  float cameraposx = 0;//default:0
+  float cameraposy = 0;//default:0
+  float cameraposz = 5;//default:5
   //timer
   kvs::Timer sim_timer;//シミュレーション時間用タイマー
   kvs::Timer vis_timer;//可視化時間用タイマー
@@ -159,7 +161,6 @@ int main(int argc, char *argv[])
   int KLpattern = 2;//KL情報量計算区間のregionパターン(A,B,C)を保存する変数
   std::vector<std::vector<float>> data_set;//可視化するボリュームデータの保存用変数
   kvs::ValueArray<float> old_hist; //現在の分布情報
-  int saveKL = 0;//全体でKL情報量計算結果が何回分保存されているかの変数
   kvs::ValueArray<float> new_hist; //前の時刻の分布情報
   kvs::ValueArray<float> pre_hist[20];//プレシミュレーション用分布情報
   int minpresimulation = 0;
@@ -168,16 +169,26 @@ int main(int argc, char *argv[])
   //presimulationの結果のデータのうちどれを読み込むかのためのカウンタ
   int countpreKL = 0;
   //multi camera判定用の変数、配列および初期化
-  int multicamerax = pow(2,ncamerax)+1;
-  int multicameray = pow(2,ncameray)+1;
-  int multicameraz = pow(2,ncameraz)+1;
-  int judgemulticamera[multicamerax][multicameray][multicameraz];
-  for (int i = 0; i < multicamerax; i++){
-    for (int j = 0; j < multicameray; j++){
-      for (int k = 0; k < multicameraz; k++){
-	judgemulticamera[i][j][k] = 1;
-      }
-    }
+  float image1_x;
+  float image1_y;
+  float image1_z;
+  float image2_x;
+  float image2_y;
+  float image2_z;
+  const int nmulticamera_high = 1 + 2^depthmulti_high; //マルチカメラ時、KL情報量が閾値以上の場合、x,y,z方向にそれぞれ何台カメラを設置するか
+  const int nmulticamera_low = 1 + 2^depthmulti_low;//閾値未満の場合、同様
+  float camerainterval, maxcamerapos, mincamerapos;
+  int nmulticamera;
+  int judgevis;
+  int initialmulti;
+  float mthreefourminx;
+  float mthreefourminy;
+  float mthreefourminz;
+  float mthreefourmaxx;
+  float mthreefourmaxy;
+  float mthreefourmaxz;
+  if (multicamera == 1){//マルチカメラ時の初期設定
+    camerainterval = multicamera_posABS*2/(nmulticamera_high-1);
   }
   const int presimulationinterval = 10;//プレシミュレーション時の最小KL情報量計算間隔ΔT,mode=0の時はこの変数は使用しない
   /****pythonを呼び出すための設定***********/
@@ -194,12 +205,13 @@ int main(int argc, char *argv[])
   double sorted_entropies[20000/presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
   double ordered_entropies[20000/presim_number];
   int presim_judgevis[20000/presim_number];
-  for(int shokika = 0; shokika < 20000/presim_number; shokika++){
-    sorted_entropies[shokika]=0;
-    ordered_entropies[shokika]=0;
-    presim_judgevis[shokika]=0;
-  }
   if ( estimatethreshold == 1){
+    for(int shokika = 0; shokika < 20000/presim_number; shokika++){
+      sorted_entropies[shokika]=0;
+      ordered_entropies[shokika]=0;
+      presim_judgevis[shokika]=0;
+    }
+
 #include "estimateThreshold.H"    
   }
   /************プレシミュレーションによる初期閾値の推定終了**********/
@@ -229,7 +241,7 @@ int main(int argc, char *argv[])
       fenv_t curr_excepts; //ゼロ割り(floating exception)を無視するための関数,osmesa内でゼロ割が起こっているため
       feholdexcept( &curr_excepts );
       /*visualization code*/
-#include "vis.H"  //in-situ可視化を行うためのコード
+#include "preparevis.H"  //in-situ可視化を行うためのコード
       /*visualization code end*/
     }
     Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
@@ -238,9 +250,7 @@ int main(int argc, char *argv[])
   }
   if(mode == 1){//プレシミュレーション結果の出力
     time_writing_file4 << presimulationinterval << std::endl;      
-    Info<< "cd presimulation\n" << endl;
-    Info<< "cat usage.txt\n" << endl;
-    Info<< "./usepresimulationI or ./usepresimulationC \n" << endl;
+    Info<< "Rewrite the config.H (at least, mode = 0, estimatethreshold = 1) and do your simulation with visualization.\n" << endl;
   }
   Info<< "End\n" << endl;
   

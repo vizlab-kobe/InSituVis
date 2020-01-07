@@ -6,7 +6,7 @@ const int mode = 0; //実行モード,0:本番実行,1:プレシミュレーシ�
 /*mode = 0のときは、まず次の変数を設定してください*/
 const int step = 2; //細かく可視化するときの可視化間隔(Δt')/ボリュームデータ出力間隔
 int vis_skip = 1;  //粗さの粒度R
-int estimatethreshold = 1;//閾値を推定するかどうか,0:推定しない(手打ちで決める),1:presimulationにより推定する。
+int estimatethreshold = 0;//閾値を推定するかどうか,0:推定しない(手打ちで決める),1:presimulationにより推定する。
 const int multicamera = 0; //マルチカメラ設定,0:1台のカメラ,1:複数のカメラ。
 
 /*粒子レンダリングを使用する時は次の変数を設定してください*/
@@ -25,6 +25,6 @@ float C_R = 0;//可視化コスト削減割合C(0or0<C_R<=1で設定)
 
 
 /*multicamera=1のときは次の３つを設定してください。*/
-const int ncamerax = 3; //マルチカメラ時,x方向にカメラの台数を2^ncameras+1台設置する。ただし,0の時は1台設置する。
-const int ncameray = 3; //マルチカメラ時,y方向にカメラの台数を2^ncameras+1台設置する。ただし,0の時は1台設置する。
-const int ncameraz = 3; //マルチカメラ時,z方向にカメラの台数を2^ncameras+1台設置する。ただし,0の時は1台設置する。
+const int depthmulti_high = 3; //マルチカメラ時、KL情報量が閾値以上の場合、x,y,z,方向に何回まで分割して詳細化するか、1,2,3のいずれかに設定すること
+const int depthmulti_low = 2; //マルチカメラ時、KL情報量が閾値未満の場合、x,y,z方向に何回まで分割して詳細化するか、1,2,3のいずれかかつdepthmulti_high以下の数値にすること
+const float multicamera_posABS = 5.0; //マルチカメラ時、カメラポジションのx,y,z,方向の座標の最大値および最小値の絶対値
