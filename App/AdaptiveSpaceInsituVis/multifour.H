@@ -88,37 +88,80 @@ if( mdirection == 1 || mdirection == 2){
   image2_x = maxcamerapos;
   image1_y = mthreefourminy;
   image2_y = mthreefourmaxy;
-  image1_z = (mthreefourminz + mthreefourmaxz) / 2;
-  image2_z = (mthreefourminz + mthreefourmaxz) / 2;
+  image1_z = (mthreefourminz * 2 + mthreefourmaxz) / 3;
+  image2_z = (mthreefourminz * 2 + mthreefourmaxz) / 3;
 #include "judge.H"
   if(judgevis == 0){
     ;//cpコマンドを実行する
   }else{
     image1_x = maxcamerapos;
     image2_x = maxcamerapos;
-    image1_y = (mthreefourminy + mthreefourmaxy) / 2;
-    image2_y = (mthreefourminy + mthreefourmaxy) / 2;
+    image1_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+    image2_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
     image1_z = mthreefourminz;
     image2_z = mthreefourmaxz;
 #include "judge.H"
     if(judgevis == 0){
       ;//cpコマンドを実行する
-    }  
-    else{
+    }else{
       cameraposy = (mthreefourminy * 2 + mthreefourmaxy) / 3;
       cameraposz = (mthreefourminz * 2 + mthreefourmaxz) / 3;
 #include "vis.H"//中央
-      cameraposy = (mthreefourminy * 2 + mthreefourmaxy) / 3;
-      cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
-#include "vis.H"//中央
+    }
+    image1_x = maxcamerapos;
+    image2_x = maxcamerapos;
+    image1_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image2_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image1_z = mthreefourminz;
+    image2_z = mthreefourmaxz;
+#include "judge.H"
+    if(judgevis == 0){
+      ;
+    }else{
       cameraposy = (mthreefourminy + mthreefourmaxy * 2) / 3;
       cameraposz = (mthreefourminz * 2 + mthreefourmaxz) / 3;
 #include "vis.H"//中央
+    }
+  }
+  image1_x = maxcamerapos;
+  image2_x = maxcamerapos;
+  image1_y = mthreefourminy;
+  image2_y = mthreefourmaxy;
+  image1_z = (mthreefourminz + mthreefourmaxz * 2) / 3;
+  image2_z = (mthreefourminz + mthreefourmaxz * 2) / 3;
+#include "judge.H"
+  if(judgevis == 0){
+    ;//cpコマンドを実行する
+  }else{
+    image1_x = maxcamerapos;
+    image2_x = maxcamerapos;
+    image1_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+    image2_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+    image1_z = mthreefourminz;
+    image2_z = mthreefourmaxz;
+#include "judge.H"
+    if(judgevis == 0){
+      ;//cpコマンドを実行する
+    }else{
+      cameraposy = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+      cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
+#include "vis.H"//中央
+    }
+    image1_x = maxcamerapos;
+    image2_x = maxcamerapos;
+    image1_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image2_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image1_z = mthreefourminz;
+    image2_z = mthreefourmaxz;
+#include "judge.H"
+    if(judgevis == 0){
+      ;
+    }else{
       cameraposy = (mthreefourminy + mthreefourmaxy * 2) / 3;
       cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
 #include "vis.H"//中央
     }
-  }
+  }  
  }
 else if( mdirection == 3 || mdirection == 4){
    
@@ -211,43 +254,86 @@ else if( mdirection == 3 || mdirection == 4){
   image2_y = maxcamerapos;
   image1_x = mthreefourminx;
   image2_x = mthreefourmaxx;
-  image1_z = (mthreefourminz + mthreefourmaxz) / 2;
-  image2_z = (mthreefourminz + mthreefourmaxz) / 2;
+  image1_z = (mthreefourminz * 2 + mthreefourmaxz) / 3;
+  image2_z = (mthreefourminz * 2 + mthreefourmaxz) / 3;
 #include "judge.H"
   if(judgevis == 0){
     ;//cpコマンドを実行する
   }else{
-    //judge
     image1_y = maxcamerapos;
     image2_y = maxcamerapos;
-    image1_x = (mthreefourminx + mthreefourmaxx) / 2;
-    image2_x = (mthreefourminx + mthreefourmaxx) / 2;
+    image1_x = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+    image2_x = (mthreefourminx * 2 + mthreefourmaxx) / 3;
     image1_z = mthreefourminz;
     image2_z = mthreefourmaxz;
 #include "judge.H"
     if(judgevis == 0){
       ;//cpコマンドを実行する
     }else{
-    cameraposx = (mthreefourminx * 2 + mthreefourmaxx) / 3;
-    cameraposz = (mthreefourminz * 2 + mthreefourmaxz) / 3;
+      cameraposy = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+      cameraposz = (mthreefourminz * 2 + mthreefourmaxz) / 3;
 #include "vis.H"//中央
-    cameraposx = (mthreefourminx * 2+ mthreefourmaxx) / 3;
-    cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
-#include "vis.H"//中央
-    cameraposx = (mthreefourminx + mthreefourmaxx * 2) / 3;
-    cameraposz = (mthreefourminz * 2 + mthreefourmaxz) / 3;
-#include "vis.H"//中央
-    cameraposx = (mthreefourminx + mthreefourmaxx * 2) / 3;
-    cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
+    }
+    image1_y = maxcamerapos;
+    image2_y = maxcamerapos;
+    image1_x = (mthreefourminx + mthreefourmaxx * 2) / 3;
+    image2_x = (mthreefourminx + mthreefourmaxx * 2) / 3;
+    image1_z = mthreefourminz;
+    image2_z = mthreefourmaxz;
+#include "judge.H"
+    if(judgevis == 0){
+      ;
+    }else{
+      cameraposx = (mthreefourminx + mthreefourmaxx * 2) / 3;
+      cameraposz = (mthreefourminz * 2 + mthreefourmaxz) / 3;
 #include "vis.H"//中央
     }
   }
+  image1_y = maxcamerapos;
+  image2_y = maxcamerapos;
+  image1_x = mthreefourminx;
+  image2_x = mthreefourmaxx;
+  image1_z = (mthreefourminz + mthreefourmaxz * 2) / 3;
+  image2_z = (mthreefourminz + mthreefourmaxz * 2) / 3;
+#include "judge.H"
+  if(judgevis == 0){
+    ;//cpコマンドを実行する
+  }else{
+    image1_y = maxcamerapos;
+    image2_y = maxcamerapos;
+    image1_x = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+    image2_x = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+    image1_z = mthreefourminz;
+    image2_z = mthreefourmaxz;
+#include "judge.H"
+    if(judgevis == 0){
+      ;//cpコマンドを実行する
+    }else{
+      cameraposx = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+      cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
+#include "vis.H"//中央
+    }
+    image1_y = maxcamerapos;
+    image2_y = maxcamerapos;
+    image1_x = (mthreefourminx + mthreefourmaxx * 2) / 3;
+    image2_x = (mthreefourminx + mthreefourmaxx * 2) / 3;
+    image1_z = mthreefourminz;
+    image2_z = mthreefourmaxz;
+#include "judge.H"
+    if(judgevis == 0){
+      ;
+    }else{
+      cameraposx = (mthreefourminx + mthreefourmaxx * 2) / 3;
+      cameraposz = (mthreefourminz + mthreefourmaxz * 2) / 3;
+#include "vis.H"//中央
+    }
+  }  
  }
  else{//mdirection ==5 or 6
    if(mdirection == 5)
-    cameraposz = maxcamerapos;
-  else
-    cameraposz = maxcamerapos * -1;
+     cameraposz = maxcamerapos;
+   else
+     cameraposz = maxcamerapos * -1;
 
   mthreefourminx = mincamerapos + (tmpcounter1 % tmpcounter2) * (maxcamerapos * 2 / tmpcounter2);
   mthreefourmaxx = mthreefourminx + (maxcamerapos * 2 / tmpcounter2);
@@ -333,25 +419,78 @@ else if( mdirection == 3 || mdirection == 4){
   image2_z = maxcamerapos;
   image1_y = mthreefourminy;
   image2_y = mthreefourmaxy;
-  image1_x = (mthreefourminx + mthreefourmaxx) / 2;
-  image2_x = (mthreefourminx + mthreefourmaxx) / 2;
+  image1_x = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+  image2_x = (mthreefourminx * 2 + mthreefourmaxx) / 3;
 #include "judge.H"
   if(judgevis == 0){
     ;//cpコマンドを実行する
   }else{
     image1_z = maxcamerapos;
     image2_z = maxcamerapos;
-    image1_y = (mthreefourminy + mthreefourmaxy) / 2;
-    image2_y = (mthreefourminy + mthreefourmaxy) / 2;
+    image1_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+    image2_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
     image1_x = mthreefourminx;
     image2_x = mthreefourmaxx;
 #include "judge.H"
     if(judgevis == 0){
       ;//cpコマンドを実行する
-    }  
-    else{
-      cameraposy = (mthreefourminy + mthreefourmaxy) / 2;
-      cameraposx = (mthreefourminx + mthreefourmaxx) / 2;
+    }else{
+      cameraposy = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+      cameraposx = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+#include "vis.H"//中央
+    }
+    image1_z = maxcamerapos;
+    image2_z = maxcamerapos;
+    image1_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image2_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image1_x = mthreefourminx;
+    image2_x = mthreefourmaxx;
+#include "judge.H"
+    if(judgevis == 0){
+      ;
+    }else{
+      cameraposy = (mthreefourminy + mthreefourmaxy * 2) / 3;
+      cameraposx = (mthreefourminx * 2 + mthreefourmaxx) / 3;
+#include "vis.H"//中央
     }
   }
+  image1_z = maxcamerapos;
+  image2_z = maxcamerapos;
+  image1_y = mthreefourminy;
+  image2_y = mthreefourmaxy;
+  image1_x = (mthreefourminx + mthreefourmaxx * 2) / 3;
+  image2_x = (mthreefourminx + mthreefourmaxx * 2) / 3;
+#include "judge.H"
+  if(judgevis == 0){
+    ;//cpコマンドを実行する
+  }else{
+    image1_z = maxcamerapos;
+    image2_z = maxcamerapos;
+    image1_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+    image2_y = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+    image1_x = mthreefourminx;
+    image2_x = mthreefourmaxx;
+#include "judge.H"
+    if(judgevis == 0){
+      ;//cpコマンドを実行する
+    }else{
+      cameraposy = (mthreefourminy * 2 + mthreefourmaxy) / 3;
+      cameraposx = (mthreefourminx + mthreefourmaxx * 2) / 3;
+#include "vis.H"//中央
+    }
+    image1_z = maxcamerapos;
+    image2_z = maxcamerapos;
+    image1_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image2_y = (mthreefourminy + mthreefourmaxy * 2) / 3;
+    image1_x = mthreefourminx;
+    image2_x = mthreefourmaxx;
+#include "judge.H"
+    if(judgevis == 0){
+      ;
+    }else{
+      cameraposy = (mthreefourminy + mthreefourmaxy * 2) / 3;
+      cameraposx = (mthreefourminx + mthreefourmaxx * 2) / 3;
+#include "vis.H"//中央
+    }
+  }  
  }
