@@ -87,6 +87,7 @@ if(I_R==0){//コスト削減割合から閾値を決定
  else{//重要区間率から閾値を決定
    rating=prei*(1-I_R);
  }
+rating = rating * 2/3;//RegionC=1/2RegionB
 if(rating==0)rating++;//0のときは0を取るようにする
 threshold = sorted_entropies[rating-1];
 
