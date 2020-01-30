@@ -4,13 +4,13 @@ const int mode = 0; //実行モード,0:本番実行,1:プレシミュレーシ�
 /*mode = 1 のときは以降の設定は不要です*/
 
 /*mode = 0のときは、まず次の変数を設定してください*/
-const int step = 2; //細かく可視化するときの可視化間隔(Δt')/ボリュームデータ出力間隔
+const int step = 1; //細かく可視化するときの可視化間隔(Δt')/ボリュームデータ出力間隔
 int vis_skip = 1;  //粗さの粒度R
 int estimatethreshold = 0;//閾値を推定するかどうか,0:推定しない(手打ちで決める),1:presimulationにより推定する。
 const int multicamera = 0; //マルチカメラ設定,0:1台のカメラ,1:複数のカメラ。
 
-/*粒子レンダリングを使用する時は次の変数を設定してください*/
-const size_t repetitions = 1;//粒子レンダリング時のアンサンブル数、それ以外の場合は特に使われない変数
+/*アンサンブル数の設定*/
+const size_t repetitions = 100;//アンサンブル数
 
 /*estimatethreshold=0;プレシミュレーションを使用しないときは次の変数を設定してください*/
 float threshold = 0; //閾値
