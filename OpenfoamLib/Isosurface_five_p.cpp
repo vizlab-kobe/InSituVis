@@ -1,4 +1,4 @@
-#include "PBVR_p.h"
+#include "Isosurface_five_p.h"
 #include "InverseDistanceWeighting.h"
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/Isosurface>
@@ -15,7 +15,8 @@
 #include <kvs/StochasticPolygonRenderer>
 #include <kvs/StochasticRenderingCompositor>
 
-void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value )
+void Isosurface_five_p( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value,   std::string stlpath, float cameraposx, float cameraposy, float cameraposz, const size_t repetitions,float isothr1, float isothr2, float isothr3, float isothr4, float isothr5 )
+
 {
   int rank, nrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -113,7 +114,7 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
   ParallelImageComposition::ImageCompositor compositor( rank, nrank, MPI_COMM_WORLD );
   compositor.initialize( width, height, depth_testing );
 
-  const size_t repetitions = 100;
+  //  const size_t repetitions = 20;
   const float step = 0.5f;
 
   kvs::OpacityMap omap( 256, min_value, max_value );
@@ -136,37 +137,139 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
   screen.create();
   kvs::Light::SetModelTwoSide( true );
   
-  kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();
-  kvs::StochasticPolygonRenderer* poly_renderer = new kvs::StochasticPolygonRenderer();
-  kvs::PolygonObject* poly_object = new kvs::PolygonImporter("/home/ubuntu/realistic-cfd3.stl");
-  poly_object->setOpacity( 30 );
+  kvs::PolygonObject* poly_object1 = new kvs::PolygonImporter(stlpath);
+  kvs::StochasticPolygonRenderer* poly_renderer1 = new kvs::StochasticPolygonRenderer();
+
+  poly_object1->setOpacity( 30 );
   //poly_object->setMinMaxExternalCoords( poly_object->minExternalCoord()*0.1, poly_object->maxExternalCoord()*0.1 );
-  poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );  
-  poly_object->setName("Polygon");
+  poly_object1->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );  
+  poly_object1->setName("Polygon");
+
+
+  kvs::StochasticPolygonRenderer* poly_renderer2 = new kvs::StochasticPolygonRenderer();
+  kvs::StochasticPolygonRenderer* poly_renderer3 = new kvs::StochasticPolygonRenderer();
+  kvs::StochasticPolygonRenderer* poly_renderer4 = new kvs::StochasticPolygonRenderer();
+  kvs::StochasticPolygonRenderer* poly_renderer5 = new kvs::StochasticPolygonRenderer();
+  kvs::StochasticPolygonRenderer* poly_renderer6 = new kvs::StochasticPolygonRenderer();
+
+
+
+
+
   
   for( size_t i = 0; i < repetitions; i++)
     {
       kvs::Camera* camera = new kvs::Camera();
       camera->setWindowSize( width, height );
-      kvs::PointObject* object = new kvs::CellByCellMetropolisSampling( camera, volume, 1, step, tfunc );
-      object->setName("Particle");
-      object->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
-      object->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
-      object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
 
-      kvs::PolygonObject* replace_poly_object = new kvs::PolygonObject();
-      replace_poly_object->deepCopy( *poly_object );
-      replace_poly_object->setName("Polygon");
+      kvs::PolygonObject* poly_object2 = new kvs::Isosurface(volume,isothr1,kvs::Isosurface::PolygonNormal);
+      poly_object2->setOpacity( 255 );
+      kvs::RGBColor color2 = tfunc.colorMap().at(isothr1);
+      poly_object2->setColor(color2);
+      kvs::PolygonObject* poly_object3 = new kvs::Isosurface(volume,isothr2,kvs::Isosurface::PolygonNormal);
+      poly_object3->setOpacity( 255 );
+      kvs::RGBColor color3 = tfunc.colorMap().at(isothr2);
+      poly_object3->setColor(color3);
+      kvs::PolygonObject* poly_object4 = new kvs::Isosurface(volume,isothr3,kvs::Isosurface::PolygonNormal);
+      poly_object4->setOpacity( 255 );
+      kvs::RGBColor color4 = tfunc.colorMap().at(isothr3);
+      poly_object4->setColor(color4);
+      kvs::PolygonObject* poly_object5 = new kvs::Isosurface(volume,isothr4,kvs::Isosurface::PolygonNormal);
+      poly_object5->setOpacity( 255 );
+      kvs::RGBColor color5 = tfunc.colorMap().at(isothr4);
+      poly_object5->setColor(color5);
+      kvs::PolygonObject* poly_object6 = new kvs::Isosurface(volume,isothr5,kvs::Isosurface::PolygonNormal);
+      poly_object6->setOpacity( 255 );
+      kvs::RGBColor color6 = tfunc.colorMap().at(isothr5);
+      poly_object6->setColor(color6);
+
+      poly_object2->setName("Polygon2");
+      poly_object2->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object2->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object2->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
+      poly_object3->setName("Polygon3");
+      poly_object3->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object3->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object3->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
+      poly_object4->setName("Polygon4");
+      poly_object4->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object4->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object4->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
+
+      poly_object5->setName("Polygon5");
+      poly_object5->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object5->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object5->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
+
+
+      poly_object6->setName("Polygon6");
+      poly_object6->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object6->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
+      poly_object6->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
+
+
+
+      kvs::PolygonObject* replace_poly_object1 = new kvs::PolygonObject();
+      kvs::PolygonObject* replace_poly_object2 = new kvs::PolygonObject();
+      kvs::PolygonObject* replace_poly_object3 = new kvs::PolygonObject();
+      kvs::PolygonObject* replace_poly_object4 = new kvs::PolygonObject();
+      kvs::PolygonObject* replace_poly_object5 = new kvs::PolygonObject();
+      kvs::PolygonObject* replace_poly_object6 = new kvs::PolygonObject();      
+      
+      replace_poly_object1->deepCopy( *poly_object1 );
+      replace_poly_object1->setName("Polygon1");
+      replace_poly_object2->deepCopy( *poly_object2 );
+      replace_poly_object2->setName("Polygon2");
+      replace_poly_object3->deepCopy( *poly_object3 );
+      replace_poly_object3->setName("Polygon3");
+      replace_poly_object4->deepCopy( *poly_object4 );
+      replace_poly_object4->setName("Polygon4");
+      replace_poly_object5->deepCopy( *poly_object5 );
+      replace_poly_object5->setName("Polygon5");
+      replace_poly_object6->deepCopy( *poly_object6 );
+      replace_poly_object6->setName("Polygon6");      
+
+
       if( i != 0 )
 	{
-	  screen.scene()->replaceObject( "Particle", object );
-	  screen.scene()->replaceObject( "Polygon", replace_poly_object);
+	  screen.scene()->replaceObject( "Polygon1", replace_poly_object1);
+	  screen.scene()->replaceObject( "Polygon2", replace_poly_object2);
+	  screen.scene()->replaceObject( "Polygon3", replace_poly_object3);
+	  screen.scene()->replaceObject( "Polygon4", replace_poly_object4);
+	  screen.scene()->replaceObject( "Polygon5", replace_poly_object5);
+	  screen.scene()->replaceObject( "Polygon6", replace_poly_object6);
 	}
       else
 	{
-	  screen.registerObject( object, renderer );
-	  screen.registerObject( replace_poly_object, poly_renderer);
+
+	  screen.registerObject( replace_poly_object1, poly_renderer1);
+	  if(poly_object2->numberOfVertices() != 0)
+	    screen.registerObject( replace_poly_object2, poly_renderer2);
+	  else
+	    delete poly_renderer2;
+	  if(poly_object3->numberOfVertices() != 0)
+	    screen.registerObject( replace_poly_object3, poly_renderer3);
+	  else
+	    delete poly_renderer3;
+	  if(poly_object4->numberOfVertices() != 0)
+	    screen.registerObject( replace_poly_object4, poly_renderer4);
+	  else
+	    delete poly_renderer4;
+	  if(poly_object5->numberOfVertices() != 0)
+	    screen.registerObject( replace_poly_object5, poly_renderer5);
+	  else
+	    delete poly_renderer5;
+	  if(poly_object6->numberOfVertices() != 0)
+	    screen.registerObject( replace_poly_object6, poly_renderer6);
+	  else
+	    delete poly_renderer6;
+			  
 	}
+
+      
+
+
+
       
       //screen.draw();
       rendering_compositor.update();
@@ -188,7 +291,7 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
     }
       
   delete volume;
-  delete poly_object;
+  delete poly_object1;
   std::vector<kvs::UInt32>().swap(tmp_connection);
   
   kvs::ValueArray<kvs::UInt8> pixels( npixels * 3 );

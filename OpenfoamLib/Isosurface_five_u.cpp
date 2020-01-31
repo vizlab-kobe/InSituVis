@@ -1,4 +1,4 @@
-#include "Isosurface_five.h"
+#include "Isosurface_five_u.h"
 #include "InverseDistanceWeighting.h"
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/Isosurface>
@@ -15,7 +15,7 @@
 #include <kvs/StochasticPolygonRenderer>
 #include <kvs/StochasticRenderingCompositor>
 
-void Isosurface_five( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value,   std::string stlpath, float cameraposx, float cameraposy, float cameraposz, const size_t repetitions,float isothr1, float isothr2, float isothr3, float isothr4, float isothr5 )
+void Isosurface_five_u( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value,   std::string stlpath, float cameraposx, float cameraposy, float cameraposz, const size_t repetitions,float isothr1, float isothr2, float isothr3, float isothr4, float isothr5 )
 
 {
   int rank, nrank;
@@ -117,14 +117,7 @@ void Isosurface_five( const std::vector<float> &values, int ncells, int nnodes, 
   //  const size_t repetitions = 20;
   const float step = 0.5f;
 
-  kvs::OpacityMap omap( 256, min_value, max_value );
-  omap.addPoint( min_value, 0.0 );
-  omap.addPoint( 99999.0, 0.2 );
-  omap.addPoint( 100000.0, 0.3 );
-  omap.addPoint( 100001.0, 0.4 );
-  omap.addPoint( max_value, 0.0 );
-  omap.create();
-  kvs::TransferFunction tfunc( omap ); 
+  kvs::TransferFunction tfunc( 256 ); 
   tfunc.setRange( min_value, max_value );  
   
   kvs::osmesa::Screen screen;

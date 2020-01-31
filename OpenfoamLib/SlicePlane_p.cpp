@@ -1,4 +1,4 @@
-#include "PBVR_p.h"
+#include "SlicePlane_p.h"
 #include "InverseDistanceWeighting.h"
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/Isosurface>
@@ -6,6 +6,7 @@
 #include <kvs/CellByCellMetropolisSampling>
 #include <kvs/ParticleBasedRenderer>
 #include <kvs/TransferFunction>
+#include <kvs/SlicePlane>
 #include <kvs/osmesa/Screen>
 #include <ParallelImageComposition/Lib/ImageCompositor.h>
 #include <mpi.h>
@@ -15,9 +16,9 @@
 #include <kvs/StochasticPolygonRenderer>
 #include <kvs/StochasticRenderingCompositor>
 
-void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value )
+void SlicePlane_p( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value, const size_t repetitions )
 {
-  int rank, nrank;
+ int rank, nrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
 
@@ -102,8 +103,24 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
   volume->setConnections( real_connections );
   volume->updateMinMaxCoords();
   volume->updateMinMaxValues();
-  volume->setMinMaxValues( min_value, max_value );
+  volume->setMinMaxValues( min_value, max_value);
+ 
 
+
+
+ 
+  kvs::OpacityMap omap( 256, min_value, max_value );
+  omap.addPoint( min_value, 0.0 );
+  omap.addPoint( 99999.0, 0.2 );
+  omap.addPoint( 100000.0, 0.3 );
+  omap.addPoint( 100001.0, 0.4 );
+  omap.addPoint( max_value, 0.0 );
+  omap.create();
+  kvs::TransferFunction tfunc( omap );
+  tfunc.setRange( min_value, max_value );
+
+
+  
   const size_t width = 512;
   const size_t height = 512;
   const size_t npixels = width * height;
@@ -113,61 +130,66 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
   ParallelImageComposition::ImageCompositor compositor( rank, nrank, MPI_COMM_WORLD );
   compositor.initialize( width, height, depth_testing );
 
-  const size_t repetitions = 100;
-  const float step = 0.5f;
 
-  kvs::OpacityMap omap( 256, min_value, max_value );
-  omap.addPoint( min_value, 0.0 );
-  omap.addPoint( 99999.0, 0.2 );
-  omap.addPoint( 100000.0, 0.3 );
-  omap.addPoint( 100001.0, 0.4 );
-  omap.addPoint( max_value, 0.0 );
-  omap.create();
-  kvs::TransferFunction tfunc( omap ); 
-  tfunc.setRange( min_value, max_value );  
-  
+
+
+
+  kvs::Vec3 pos(0,0,12);
   kvs::osmesa::Screen screen;
   kvs::StochasticRenderingCompositor rendering_compositor( screen.scene() );
   screen.setBackgroundColor( kvs::RGBColor::White() );
   screen.setGeometry( 0, 0, width, height );
   screen.scene()->camera()->setWindowSize( width, height );
-  const kvs::Mat3 R = kvs::Mat3::RotationX( 230 ) * kvs::Mat3::RotationY( 0 )* kvs::Mat3::RotationZ( 10 );
+  screen.scene()->camera()->setPosition( pos );
+  //    const kvs::Mat3 R = kvs::Mat3::RotationX( 230 ) * kvs::Mat3::RotationY( 0 )* kvs::Mat3::RotationZ( 10 );
+      const kvs::Mat3 R = kvs::Mat3::RotationX( 180 ) * kvs::Mat3::RotationY( 0 )* kvs::Mat3::RotationZ( 0 );
   screen.setEvent(&rendering_compositor );
   screen.create();
   kvs::Light::SetModelTwoSide( true );
   
-  kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();
+  //  kvs::glsl::ParticleBasedRenderer* renderer = new kvs::glsl::ParticleBasedRenderer();
   kvs::StochasticPolygonRenderer* poly_renderer = new kvs::StochasticPolygonRenderer();
+  kvs::StochasticPolygonRenderer* renderer = new kvs::StochasticPolygonRenderer();
   kvs::PolygonObject* poly_object = new kvs::PolygonImporter("/home/ubuntu/realistic-cfd3.stl");
   poly_object->setOpacity( 30 );
-  //poly_object->setMinMaxExternalCoords( poly_object->minExternalCoord()*0.1, poly_object->maxExternalCoord()*0.1 );
+    //poly_object->setMinMaxExternalCoords( poly_object->minExternalCoord()*0.1, poly_object->maxExternalCoord()*0.1 );
   poly_object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );  
   poly_object->setName("Polygon");
-  
+
+
   for( size_t i = 0; i < repetitions; i++)
     {
+  
       kvs::Camera* camera = new kvs::Camera();
+
+
+     
+      const kvs::Vector3f c( ( volume->maxObjectCoord() + volume->minObjectCoord() ) * 0.5f);
+      const kvs::Vector3f p( c );
+      const kvs::Vector3f n( 0.0, 0.0, 1.0);
+      kvs::PolygonObject* object = new kvs::SlicePlane( volume, p, n, tfunc );
+      object->multiplyXform(  kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );  
+      
       camera->setWindowSize( width, height );
-      kvs::PointObject* object = new kvs::CellByCellMetropolisSampling( camera, volume, 1, step, tfunc );
-      object->setName("Particle");
-      object->setMinMaxObjectCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
-      object->setMinMaxExternalCoords( kvs::Vec3( global_minx, global_miny, global_minz )*1000, kvs::Vec3( global_maxx, global_maxy, global_maxz )*1000 );
-      object->multiplyXform( kvs::Xform::Rotation( R ) * kvs::Xform::Scaling( 1.3 ) );
 
       kvs::PolygonObject* replace_poly_object = new kvs::PolygonObject();
       replace_poly_object->deepCopy( *poly_object );
       replace_poly_object->setName("Polygon");
-      if( i != 0 )
-	{
-	  screen.scene()->replaceObject( "Particle", object );
-	  screen.scene()->replaceObject( "Polygon", replace_poly_object);
-	}
+
+
+  if( i != 0 )
+        {
+          screen.scene()->replaceObject( "Particle", object );
+          screen.scene()->replaceObject( "Polygon", replace_poly_object);
+        }
       else
-	{
-	  screen.registerObject( object, renderer );
-	  screen.registerObject( replace_poly_object, poly_renderer);
-	}
+        {
+          screen.registerObject( object, renderer );
+          screen.registerObject( replace_poly_object, poly_renderer);
+        }
+
       
+
       //screen.draw();
       rendering_compositor.update();
       
@@ -175,17 +197,21 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
       kvs::ValueArray<kvs::Real32> depth_buffer = screen.readbackDepthBuffer();
       compositor.run( color_buffer, depth_buffer );
       
-      const float a = 1.0f / ( i + 1 );      
+     
+
+      const float a = 1.0f / ( i + 1 );
       for ( size_t j = 0; j < npixels; j++ )
-	{
-	  const float r = kvs::Real32( color_buffer[ 4 * j + 0 ] );
-	  const float g = kvs::Real32( color_buffer[ 4 * j + 1 ] );
-	  const float b = kvs::Real32( color_buffer[ 4 * j + 2 ] );
-	  ensemble_buffer[ 3 * j + 0 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 0 ], r, a );
-	  ensemble_buffer[ 3 * j + 1 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 1 ], g, a );
-	  ensemble_buffer[ 3 * j + 2 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 2 ], b, a );
-	}
+        {
+          const float r = kvs::Real32( color_buffer[ 4 * j + 0 ] );
+          const float g = kvs::Real32( color_buffer[ 4 * j + 1 ] );
+          const float b = kvs::Real32( color_buffer[ 4 * j + 2 ] );
+          ensemble_buffer[ 3 * j + 0 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 0 ], r, a );
+          ensemble_buffer[ 3 * j + 1 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 1 ], g, a );
+          ensemble_buffer[ 3 * j + 2 ] = kvs::Math::Mix( ensemble_buffer[ 3 * j + 2 ], b, a );
+        }
     }
+
+      
       
   delete volume;
   delete poly_object;

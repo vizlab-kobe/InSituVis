@@ -1,4 +1,4 @@
-#include "SlicePlane.h"
+#include "SlicePlane_u.h"
 #include "InverseDistanceWeighting.h"
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/Isosurface>
@@ -16,7 +16,7 @@
 #include <kvs/StochasticPolygonRenderer>
 #include <kvs/StochasticRenderingCompositor>
 
-void SlicePlane( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value, const size_t repetitions, float isothr1, float isothr2, float isothr3 )
+void SlicePlane_u( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value, const size_t repetitions )
 {
  int rank, nrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -109,14 +109,8 @@ void SlicePlane( const std::vector<float> &values, int ncells, int nnodes, const
 
 
  
-  kvs::OpacityMap omap( 256, min_value, max_value );
-  omap.addPoint( min_value, 0.0 );
-  omap.addPoint( 99999.0, 0.2 );
-  omap.addPoint( 100000.0, 0.3 );
-  omap.addPoint( 100001.0, 0.4 );
-  omap.addPoint( max_value, 0.0 );
-  omap.create();
-  kvs::TransferFunction tfunc( omap );
+
+  kvs::TransferFunction tfunc( 256 );
   tfunc.setRange( min_value, max_value );
 
 

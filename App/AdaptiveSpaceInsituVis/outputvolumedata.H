@@ -32,4 +32,4 @@ forAll(mesh.points(), k)
   pointCoords.push_back( static_cast<float>( mesh.points()[k].y() ) );
   pointCoords.push_back( static_cast<float>( mesh.points()[k].z() ) );  
 }  
-data_set.push_back( pValues );
+data_set.push_back( uValues );
