@@ -26,7 +26,7 @@ numz = sc.str();
 std::string name2 = "./Output/output_result_mix_pbvr_u_" + num + "_" + numx + "_" + numy + "_" + numz + ".bmp";
 
 
-judgevis = PSNR(name1,name2);
+judgevis = do_PSNR(name1,name2);
 
 
 
