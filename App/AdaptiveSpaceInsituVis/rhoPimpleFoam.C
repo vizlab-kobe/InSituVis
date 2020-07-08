@@ -53,6 +53,10 @@ Description
 #include <kvs/Timer>
 #include <math.h>
 
+#include <kvs/ColorImage> // modified
+#include <kvs/RGBColor> // modified
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 int main(int argc, char *argv[])
 {

@@ -15,6 +15,33 @@
 #include <kvs/StochasticPolygonRenderer>
 #include <kvs/StochasticRenderingCompositor>
 
+namespace
+{
+
+void CalculateMinMax( float& min_x, float& min_y, float& min_z, float& max_x, float& max_y, float & max_z )
+{
+  float recv_min_x = FLT_MAX;
+  float recv_min_y = FLT_MAX;
+  float recv_min_z = FLT_MAX;
+  float recv_max_x = FLT_MIN;
+  float recv_max_y = FLT_MIN;
+  float recv_max_z = FLT_MIN;
+  MPI_Allreduce( &min_x, &recv_min_x, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD );
+  MPI_Allreduce( &min_y, &recv_min_y, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD );
+  MPI_Allreduce( &min_z, &recv_min_z, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD );
+  MPI_Allreduce( &max_x, &recv_max_x, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+  MPI_Allreduce( &max_y, &recv_max_y, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+  MPI_Allreduce( &max_z, &recv_max_z, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+  
+  min_x = recv_min_x;
+  min_y = recv_min_y;
+  min_z = recv_min_z;
+  max_x = recv_max_x;
+  max_y = recv_max_y;
+  max_z = recv_max_z;
+}
+}
+
 void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std::vector<float> &vertex_coords, const std::vector<float> &cell_coords, const std::vector<int> &label, int time, float min_value, float max_value )
 {
   int rank, nrank;
@@ -208,27 +235,4 @@ void PBVR_p( const std::vector<float> &values, int ncells, int nnodes, const std
       image.write( name );
     }
   
-}
-
-void CalculateMinMax( float& min_x, float& min_y, float& min_z, float& max_x, float& max_y, float & max_z )
-{
-  float recv_min_x = FLT_MAX;
-  float recv_min_y = FLT_MAX;
-  float recv_min_z = FLT_MAX;
-  float recv_max_x = FLT_MIN;
-  float recv_max_y = FLT_MIN;
-  float recv_max_z = FLT_MIN;
-  MPI_Allreduce( &min_x, &recv_min_x, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD );
-  MPI_Allreduce( &min_y, &recv_min_y, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD );
-  MPI_Allreduce( &min_z, &recv_min_z, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD );
-  MPI_Allreduce( &max_x, &recv_max_x, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-  MPI_Allreduce( &max_y, &recv_max_y, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-  MPI_Allreduce( &max_z, &recv_max_z, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-  
-  min_x = recv_min_x;
-  min_y = recv_min_y;
-  min_z = recv_min_z;
-  max_x = recv_max_x;
-  max_y = recv_max_y;
-  max_z = recv_max_z;
 }

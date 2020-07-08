@@ -26,7 +26,7 @@ inline kvs::Real32 PSNR( const kvs::ColorImage& image1, const kvs::ColorImage& i
     return 10.0f * std::log10( max_value * max_value / mse );
 }
 
-int do_PSNR( char* name1, char* name2 )
+int do_PSNR( const std::string name1, const std::string name2 )
 {
     kvs::ColorImage image1( name1 );
     kvs::ColorImage image2( name2 );

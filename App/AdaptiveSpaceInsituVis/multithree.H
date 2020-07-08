@@ -1,3 +1,6 @@
+std::string name1; // modified
+std::string name2; // modified
+
 if( mdirection == 1 || mdirection == 2){
   if(mdirection == 1)
     cameraposx = maxcamerapos;
