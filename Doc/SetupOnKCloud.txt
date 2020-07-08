@@ -1,0 +1,270 @@
+京クラウドOpenFOAM環境構築メモ
+
+・京クラウドを利用する場合は下記サイトのSlideなどを参考にインスタンスを作成してください
+https://www.r-ccs.riken.jp/ungi/prpstcloud/
+ソースはUbuntu18.04.1_LTSを使用しました。
+ネットワークは rccs-hud-internal
+リモートでアクセスします。
+B3.hugeで実行するとうまくいきました。
+メモリの容量の問題で止まることがあるため、それなりに大きいメモリのインスタンスを作成することを推奨します。
+ちなみに、異なるインスタンスで同じFloating IP Addressを使うとエラーになることがあるので、その場合は.ssh/known_hostの中身を消してください。
+京クラウド以外の環境で実行する場合はそれぞれの指示に従ってリモートでログインをしてください。
+
+・次に、
+https://github.com/naohisas/kcloud-setup
+を見て、京クラウドを利用している場合はこの通りに、
+そうでない場合はこの中で入っていないものをすべてインストールします。
+
+また、コンパイラはmpicxxを使っており、バージョンは7.4.0を使っております。
+実際にバージョンを確認したところ、
+$ mpicxx --version
+g++ (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0
+Copyright (C) 2017 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+です。
+また、OpenFOAMは2.3.1を使っています。
+ちなみに、OpenFOAMについては
+http://foam.sourceforge.net/docs/Guides-a4/UserGuide-Japanese.pdf
+を見ると詳細な説明があります。特に後述のcontrolDictはこれを見て設定しました。
+
+・次にKVS関連の環境構築
+まず以下を実行。(注意:この作業は京クラウド立ち上げ時に毎回行うこと!!!!!!)
+export KVS_DIR=${HOME}/local/kvs.osmesa
+export PATH=${PATH}:${KVS_DIR}/bin
+export KVS_OSMESA_DIR=${HOME}/local/osmesa_swr
+export KVS_OSMESA_LINK_LIBRARY="-lOSMesa32 -lz `~/local/llvm/bin/llvm-config --libs` `~/local/llvm/bin/llvm-config --ldflags` -lrt -ldl -lpthread -lm"
+*なお、１つ目のexport KVS_DIRはlocal/以下には自分が使うディレクトリ名を入れること
+(kvs.osmesa or kvs.llvm)
+
+KVSをクローン & コンパイル
+$ cd (ホームディレクトリに移動)
+$ mkdir Work
+$ cd Work
+$ mkdir GitHub
+$ cd GitHub
+$ git clone https://github.com/naohisas/KVS.git
+(以下githubからダウンロードするものは全て~/Work/GitHub/以下にダウンロードしてください。)
+$ cd KVS
+$ emacs -nw kvs.conf
+
+#=============================================================================
+#  KVS enable/support flags
+#  $Id: kvs.conf 1525 2013-04-11 02:58:08Z naohisa.sakamoto@gmail.com $
+#=============================================================================
+KVS_ENABLE_OPENGL     = 1
+KVS_ENABLE_GLU        = 0
+KVS_ENABLE_GLEW       = 0
+KVS_ENABLE_OPENMP     = 1
+KVS_ENABLE_DEPRECATED = 0
+
+KVS_SUPPORT_CUDA      = 0
+KVS_SUPPORT_GLUT      = 0
+KVS_SUPPORT_OPENCV    = 0
+KVS_SUPPORT_QT        = 0
+KVS_SUPPORT_PYTHON    = 1
+KVS_SUPPORT_EGL       = 0
+KVS_SUPPORT_OSMESA    = 1
+
+以上のように設定してください。
+
+$ make -j 8  & make install
+
+・234Compsitorのインストール&コンパイル
+$ git clone https://github.com/vizlab-kobe/ParallelImageComposition.git
+$ cd ParallelImageComposition/ThirdParty
+$ sh init.sh
+$ sh make.sh 
+$ sh make.sh install
+$ cd ../Lib
+$ KVS_CPP=mpicxx ./kvsmake.py 
+
+・InSituVisのインストール&コンパイル
+$ git clone https://github.com/vizlab-kobe/InSituVis.git
+$ cd InSituVis/OpenfoamLib
+$ ./kvsmake.py
+
+・OpenFOAMの環境構築
+ホームディレクトリに置いたopenfoam231.tar.gz を解凍
+$ tar -zxvf openfoam231.tar.gz 
+$ cd OpenFOAM/OpenFOAM-2.3.1/
+wmake/rules/linux64Gcc/c++ 内のg++ をmpicxx に変更 。etc/bashrcのexport WM_COMPILER=Gccを書き換えた場合はそれに合わせたwmake/rules内のc++を変更する。
+$ source etc/bashrc
+(注意:source etc/bashrcは京クラウド立ち上げ時に毎回行うこと!!!!!!)
+$ cd src/PStream/mpi 
+$ wclean &wmake 
+$ cd ../../../
+$ ./Allwmake
+コンパイルがうまくいかない場合はetc/bashrcに書かれたPATHなどが正しいか確かめる。また特にこだわりがなければOpenFOAMはホームディレクトリ直下におくこと。
+実行を確認するためにreal2.tgzを解凍
+$ tar -zxvf  real2.tgz
+$ mv realistic-s2 ~/OpenFOAM/OpenFOAM-2.3.1
+$ cd ~/OpenFOAM/OpenFOAM-2.3.1/realistic-s2
+$ mpirun -n 48 rhoPimpleFoam -parallel で実行し、正しく実行できるか確認する。
+
+realistic-s2は48並列での実行用に作成されている。4並列で実行を行う場合はrealistic-s1.tgzを解凍し同様に実行する。
+
+$ tar -zxvf  realistic-s1.tgz
+$ mv realistic-s1 ~/OpenFOAM/OpenFOAM-2.3.1
+$ cd ~/OpenFOAM/OpenFOAM-2.3.1/realistic-s1
+$ mpirun -n 4 rhoPimpleFoam -parallel
+
+・林さんおよび山岡の修論プログラムの実行方法
+山岡バージョンのプログラムで林さんの修論の再現が可能です。
+林さんのバージョンを使う場合は林さんの残したメモに従ってください。
+$ mkdir ~/OpenFOAM/OpenFOAM-2.3.1/realistic-s2/presimulation 
+$ mkdir ~/OpenFOAM/OpenFOAM-2.3.1/realistic-s2/Output
+InSituVis/OpenfoamLib/Material内にあるファイルを所定の位置にコピー
+$ cp ~/Work/Github/InSituVis/Openfoam/Material/rhoPimpleFoam.C  ~/OpenFOAM/OpenFOAM-2.3.1/applications/solvers/rhoPimpleFoam/
+$ cp ~/Work/Github/InSituVis/Openfoam/Material/vis.H  ~/OpenFOAM/OpenFOAM-2.3.1/applications/solvers/rhoPimpleFoam/
+$ cp  ~/Work/Github/InSituVis/Openfoam/Material/options  ~/OpenFOAM/OpenFOAM-2.3.1/applications/solvers/rhoPimpleFoam/Make
+$ cp  ~/Work/Github/InSituVis/Openfoam/Material/distribution.py  ~/OpenFOAM/OpenFOAM-2.3.1/realistic-s2
+
+(参考)この時点でのディレクトリ構造
+~/Work/GitHub/以下
+	KVS
+	InsituVis
+	ParallelImageComposition
+
+~/local/以下
+	kvs.osmesa
+	234compositor
+
+~/OpenFOAM/OpenFOAM-2.3.1/以下
+	realistic-s2/以下
+		各プロセスのディレクトリ
+		Output/出力画像
+		distribution.py
+		presimulation/プレシミュレーションデータ
+		system/controlDict
+	applications/solvers/rhoPimpleFoam/以下
+		*.C
+		*.H
+		Make/options(リンク用ファイル)
+	(ここに記載されていないものは特に編集する必要はない)
+
+実行プログラムのコンパイル
+$ cd ~/OpenFOAM/OpenFOAM-2.3.1/applications/solvers/rhoPimpleFoam
+$ wclean
+$ wmake
+$ cd ~/OpenFOAM/OpenFOAM-2.3.1/realistic-s2
+$ mpirun -n 48  rhoPimpleFoam -parallel 
+実行するとOutputに画像データが保存され、entropy.csvに変化量が時系列ごとに書き込まれる。
+なお、wcleanおよびwmakeは使用するKVSのプログラムをコンパイルし直した時にも実行する必要がある。
+
+また、
+simulationtime.csvがシミュレーション実行時間
+visualizationtime.csvが可視化処理実行時間
+distributiontime.csvがKL情報量計算処理実行時間
+の時間計測結果のファイルです。
+シミュレーションの設定を変更する場合は~/OpenFOAM/OpenFOAM-2.3.1/realistic-s2/system/controlDictのファイルを変更する。
+シミュレーション時間が長いとosmesaのメモリリークの影響により、実行が停止またはエラーで終了してしまう。
+そこでリスタートを行いながら実行することを推奨する。
+そのため、controldictを変更しなければならない。
+以下がその変更例です。
+
+
+具体的にはStartFromとstartTimeとwriteControlとwriteIntervalを書き換えました。
+実際に使ったcontrolDictは以下の通りです。
+
+/*--------------------------------*- C++ -*----------------------------------* \
+\                                                                               
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     rhoPimpleFoam;
+
+startFrom       latestTime;
+
+stopAt          nextWrite;
+
+endTime         15e-04;
+
+deltaT          1e-07;
+
+writeControl    runTime;
+
+writeInterval   100e-07;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  11;
+
+writeCompression on;
+
+timeFormat      general;
+
+timePrecision   8;
+
+runTimeModifiable true;
+
+adjustTimeStep  no;
+
+maxCo           0.9;
+
+functions
+{
+}
+
+// ************************************************************************* //
+
+
+山岡が実際に使っていたcontroldictはgithub/InsituVis/OpenFOAMLib/Material/に保存しておりますので、参考程度に利用してください。
+
+次にスクリプトファイル(ex: run.sh)を用意し以下のように記述しこれを実行する
+//
+#!/bin/sh
+mpirun -n 48 rhoPimpleFoam -parallel
+mpirun -n 48 rhoPimpleFoam -parallel 
+mpirun -n 48 rhoPimpleFoam -parallel  
+….
+….
+//
+$ run.sh
+
+
+---------------林さんバージョンの注意---------
+realistic-cfd3.stlを読めない場合、山岡バージョンのようにvis.Hで読み込んでください。
+-------------------------------------------
+
+・パラメータの設定について:
+config.Hがユーザーによる変更が可能なパラメータです。
+山岡バージョンで林さんの修論のプログラムを実行する場合は、次のようにパラメータを設定してください。
+なお、パラメータの詳しい説明は、プログラムコード中のconfig.Hにコメントとして書いております。
+mode=0;
+estimatethreshold=0;
+multicamera=0;
+
+また、林さんの修論のプログラムを実行する場合は、次のパラメータは変更が可能です。
+step=任意の指定;細かい可視化間隔/ボリュームデータ出力間隔Δt'
+repetitions=任意の指定;粒子ベースレンダリングのアンサンブル数
+threshold=任意の指定;閾値
+vis_skip=任意の指定;粒度R
+noutperKL=任意の指定;KL情報量計算ごとのボリュームデータ出力回数
+
+このとき、step*noutperKL=x, ただしxは、controlDict中のwriteIntervalを　x * 10^-7とおいたときのx
+また、vis_skipはxの約数もしくはxを超える任意の値に設定するのがよい。
+
+また、山岡の修論プログラムの実行の際は、
+config.Hの中のパラメータを、上から順にコメントの指示通りに変更してください。
+
+*注意
+simulation time stepは20000かつKL情報量計算間隔は100stepに1回を想定しております。
+それより大きい場合は、rhoPimpleFoam.C中のnsimを変更する必要があります。
+(nsimは全体のKL情報量計算回数です。)
+
