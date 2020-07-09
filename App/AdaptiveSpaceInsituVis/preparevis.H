@@ -1,3 +1,4 @@
+#if 0
 const int now_time = static_cast<int>(atof(runTime.timeName().c_str())/runTime.deltaT().value());
 const int start_time = static_cast<int>( runTime.startTimeIndex() );
 
@@ -41,7 +42,7 @@ if ( ( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulati
                 distribution_time = distribution_timer.sec();
                 timeswitch=3;
                 #include "calculatetime.H"
-                count=0;	
+                count=0;
             }
             else if ( ( mode == 0 ) && ( estimatethreshold == 1 ) )
             {
@@ -138,3 +139,4 @@ if ( ( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulati
     }
 }
 
+#endif

@@ -53,10 +53,13 @@ Description
 #include <kvs/python/Array>
 #include <kvs/python/Float>
 #include <mpi.h>
-#include <kvs/Timer>
 #include <math.h>
 #include <kvs/ColorImage> // modified
 #include <kvs/RGBColor> // modified
+
+
+
+#include "StampTimer.h"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -149,9 +152,9 @@ int main( int argc, char** argv )
     }
 
     //シミュレーション時間結果を書き出すファイル
-    std::string timefilename = "simulationtime.csv";
-    std::ofstream time_writing_file;
-    time_writing_file.open(timefilename, std::ios::app);
+//    std::string timefilename = "simulationtime.csv";
+//    std::ofstream time_writing_file;
+//    time_writing_file.open(timefilename, std::ios::app);
 
     //可視化時間結果を書き出すファイル
     std::string timefilename2 = "visualizationtime.csv";
@@ -245,35 +248,286 @@ int main( int argc, char** argv )
 
     //ここから処理スタート//
 
-    kvs::Timer sim_timer; // timer for simulation
-    float sim_time = 0.0;//シミュレーション時間
+//    kvs::Timer sim_timer; // timer for simulation
+//    float sim_time = 0.0;//シミュレーション時間
+//    std::vector<float> sim_times;
+
+    local::StampTimer sim_times;
 
     Info<< "\nStarting time loop\n" << endl;
     while ( runTime.run() )
     {
         /* simulation code */
-        if ( mode == 0 ) { sim_timer.start(); }
+//        if ( mode == 0 ) { sim_timer.start(); sim_times.start(); }
+        if ( mode == 0 ) { sim_times.start(); }
 
         #include "simulation.H" // シミュレーションを行うためのコード
         if ( mode == 0 )
         {
-            sim_timer.stop();
-            sim_time = sim_timer.sec();
+//            sim_timer.stop();
+//            sim_time = sim_timer.sec();
+            sim_times.stamp();
+            Info << "Simulation Solver time: " << sim_times.last() << endl;
+
             timeswitch = 1;
 
             // 時間計測の処理、粒子レンダリングを使う場合、粒子レンダリング内の個々の時間計測についてはPBVR_u.cppで行なっている。
-            #include "calculatetime.H"
-        }
+//            #include "calculatetime.H"
+//            {
+//                if ( timeswitch == 1 )
+//                {
+//                    sim_times.push_back( sim_time );
+//                    MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+//                    if (my_rank == 0 )
+//                    {
+//                        time_writing_file << sim_time << std::endl;
+//                    }
+//                    Info << "Simulation Solver time : " << sim_time << endl;
+//                    Info << "Simulation Solver time stamp: " << sim_times.last() << endl;
+//                }
+/*
+                else if ( timeswitch == 2 )
+                {
+                    MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                    if ( my_rank == 0 )
+                    {
+                        time_writing_file2 << vis_time << std::endl;
+                    }
+                    Info << "Conversion vis time : " << vis_time << endl;
+                }
 
+                else if ( timeswitch == 3 )
+                {
+                    MPI_Allreduce( &distribution_time, &distribution_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                    if ( my_rank == 0 )
+                    {
+                        time_writing_file3 << distribution_time << std::endl;
+                    }
+                    Info << "Distribution time : " << distribution_time << endl;
+                }
+*/
+//            }
+        }
         /* simulation code end */
+
         {
             // ゼロ割り(floating exception)を無視するための関数,osmesa内でゼロ割が起こっているため
             fenv_t curr_excepts;
             feholdexcept( &curr_excepts );
 
+
+
             /* visualization code */
             //in-situ可視化を行うためのコード
-            #include "preparevis.H"
+//            #include "preparevis.H"
+            {
+                const int now_time = static_cast<int>(atof(runTime.timeName().c_str())/runTime.deltaT().value());
+                const int start_time = static_cast<int>( runTime.startTimeIndex() );
+
+                //可視化初期処理
+                if ( now_time -1 == start_time )
+                {
+                    std::vector<float> first_uValues;
+                    forAll( mesh.cellPoints(), i )
+                    {
+                        first_uValues.push_back( static_cast<float>( mag(U[i]) ) );
+                        old_hist = kvs::ValueArray<float>( first_uValues );
+                    }
+                    std::vector<float>().swap(first_uValues);
+                }
+
+                //ボリュームデータ出力判定
+                if ( ( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulationinterval == 0))
+                {
+                    #include <PBVR_u.h>
+                    std::vector<float> pValues; //圧力
+                    std::vector<float> pointCoords; //頂点の座標値
+                    std::vector<float> cellCoords; //要素中心の座標値
+                    std::vector<int> cellPoints; //中心から頂点への接続情報
+                    std::vector<float> uValues; //速度の絶対値
+                    //std::vector<float> uVector; //速度のベクトル値
+
+                    //ボリュームデータ出力処理
+                    #include "outputvolumedata.H"
+                    //KL情報量計算の実行判定および処理
+                    count++;
+                    if ( ( count >= noutperKL ) || ( mode == 1 ) )
+                    {
+                        new_hist = kvs::ValueArray<float>( uValues );
+                        if ( old_hist.size() != 0)
+                        {
+                            if ( ( mode == 0 ) && ( estimatethreshold == 0 ) )
+                            {
+                                distribution_timer.start();
+                                #include "calculateKL.H"
+                                distribution_timer.stop();
+                                distribution_time = distribution_timer.sec();
+                                timeswitch=3;
+//                                #include "calculatetime.H"
+                                {
+                                    /*
+                                    if ( timeswitch == 1 )
+                                    {
+//                                        sim_times.push_back( sim_time );
+                                        MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                        if (my_rank == 0 )
+                                        {
+                                            time_writing_file << sim_time << std::endl;
+                                        }
+                                        Info << "Simulation Solver time : " << sim_time << endl;
+                                    }
+
+                                    else if ( timeswitch == 2 )
+                                    {
+                                        MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                        if ( my_rank == 0 )
+                                        {
+                                            time_writing_file2 << vis_time << std::endl;
+                                        }
+                                        Info << "Conversion vis time : " << vis_time << endl;
+                                    }
+                                    */
+//                                    else if ( timeswitch == 3 )
+                                    {
+                                        MPI_Allreduce( &distribution_time, &distribution_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                        if ( my_rank == 0 )
+                                        {
+                                            time_writing_file3 << distribution_time << std::endl;
+                                        }
+                                        Info << "Distribution time : " << distribution_time << endl;
+                                    }
+                                }
+
+                                count=0;
+                            }
+                            else if ( ( mode == 0 ) && ( estimatethreshold == 1 ) )
+                            {
+                                KLpattern==presim_judgevis[countpreKL];
+                                countpreKL++;
+                            }
+                            else
+                            {
+                                //mode == 1
+                                #include "presimulationcalculateKL.H"
+                            }
+                        }
+
+                        //可視化の実行判定および処理
+                        if ( mode == 0 )
+                        {
+                            vis_timer.start();
+                            if( KLpattern==2 ) //パターンB(細かい可視化)
+                            {
+                                for( size_t i = 0; i < data_set.size(); i++)
+                                {
+                                    if ( multicamera == 1 )
+                                    {
+                                        #include "multicamera.H"
+                                    }
+                                    else
+                                    {
+                                        #include "vis.H"
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if ( KLpattern==3 ) //パターンC(細かい可視化から粗い可視化)
+                                {
+                                    KLpattern = 2;
+                                    for( size_t i = 0; i < int(data_set.size()/2); i++)
+                                    {
+                                        if ( multicamera == 1 )
+                                        {
+                                            #include "multicamera.H"
+                                        }
+                                        else
+                                        {
+                                            #include "vis.H"
+                                        }
+                                    }
+                                    KLpattern = 1;
+                                    for ( size_t i = int(data_set.size()/2) + vis_skip; i < data_set.size(); i += vis_skip )
+                                    {
+                                        if ( multicamera == 1 )
+                                        {
+                                            #include "multicamera.H"
+                                        }
+                                        else
+                                        {
+                                            #include "vis.H"
+                                        }
+                                    }
+                                }
+                                else //パターンA(粗い可視化)
+                                {
+                                    for( size_t i = data_set.size()*vis_skip-1; i < data_set.size(); i += vis_skip)
+                                    {
+                                        if ( multicamera == 1 )
+                                        {
+                                            #include "multicamera.H"
+                                        }
+                                        else
+                                        {
+                                            #include "vis.H"
+                                        }
+                                    }
+                                }
+                            }
+
+                            data_set.clear();
+                            vis_timer.stop();
+                            vis_time = vis_timer.sec();
+                            timeswitch = 2;
+//                            #include "calculatetime.H"
+                            {
+                                /*
+                                if ( timeswitch == 1 )
+                                {
+//                                    sim_times.push_back( sim_time );
+                                    MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                    if (my_rank == 0 )
+                                    {
+                                        time_writing_file << sim_time << std::endl;
+                                    }
+                                    Info << "Simulation Solver time : " << sim_time << endl;
+                                }
+                                */
+//                                else if ( timeswitch == 2 )
+                                {
+                                    MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                    if ( my_rank == 0 )
+                                    {
+                                        time_writing_file2 << vis_time << std::endl;
+                                    }
+                                    Info << "Conversion vis time : " << vis_time << endl;
+                                }
+/*
+                                else if ( timeswitch == 3 )
+                                {
+                                    MPI_Allreduce( &distribution_time, &distribution_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                    if ( my_rank == 0 )
+                                    {
+                                        time_writing_file3 << distribution_time << std::endl;
+                                    }
+                                    Info << "Distribution time : " << distribution_time << endl;
+                                }
+*/
+                            }
+                        }
+                        else
+                        {
+                            //(mode==1)
+                            data_set.clear();
+                        }
+                        std::vector<float>().swap(uValues);
+                        std::vector<float>().swap(pValues);
+                        std::vector<float>().swap(pointCoords);
+                        std::vector<float>().swap(cellCoords);
+                        std::vector<int>().swap(cellPoints);
+                    }
+                }
+            }
             /* visualization code end */
         }
         Info << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
@@ -286,6 +540,22 @@ int main( int argc, char** argv )
         //プレシミュレーション結果の出力
         time_writing_file4 << presimulationinterval << std::endl;
         Info<< "Rewrite the config.H (at least, mode = 0, estimatethreshold = 1) and do your simulation with visualization.\n" << endl;
+    }
+
+    {
+        sim_times.allreduce( MPI_MAX, MPI_COMM_WORLD );
+        if ( my_rank == 0 ) { sim_times.write( "simulationtime.csv" ); }
+        /*
+        std::vector<float> temp( sim_times.size() );
+        MPI_Allreduce( &sim_times[0], &temp[0], sim_times.size(), MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+        temp.swap( sim_times );
+
+        if ( my_rank == 0 )
+        {
+            std::ofstream ofs( "sim.csv", std::ios::out | std::ios::app );
+            for ( auto& t : sim_times ) { ofs << t << std::endl; }
+        }
+        */
     }
 
     Info << "End\n" << endl;
