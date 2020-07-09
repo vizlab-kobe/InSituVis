@@ -4,30 +4,30 @@
 
 runTime++;
 
-Info<< "Time = " << runTime.timeName() << nl << endl;
+Info << "Time = " << runTime.timeName() << nl << endl;
 
-if (pimple.nCorrPIMPLE() <= 1)
-  {
-#include "rhoEqn.H"
-  }
+if ( pimple.nCorrPIMPLE() <= 1 )
+{
+    #include "rhoEqn.H"
+}
 
-// --- Pressure-velocity PIMPLE corrector loop                                                                                                                                                          
+// --- Pressure-velocity PIMPLE corrector loop
+while ( pimple.loop() )
+{
+    #include "UEqn.H"
+    #include "EEqn.H"
 
-while (pimple.loop())
-  {
-#include "UEqn.H"
-#include "EEqn.H"
-    
-    // --- Pressure corrector loop                                                                                                                                                                      
-    while (pimple.correct())
-      {
-#include "pEqn.H"
-      }
-    
+    // --- Pressure corrector loop
+    while ( pimple.correct() )
+    {
+        #include "pEqn.H"
+    }
+
     if (pimple.turbCorr())
-      {
-	turbulence->correct();
-      }
-  }
+    {
+        turbulence->correct();
+    }
+}
+
 runTime.write();
 
