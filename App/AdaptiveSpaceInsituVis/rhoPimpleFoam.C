@@ -90,15 +90,6 @@ int main( int argc, char** argv )
     float cameraposy = 0;//default:0
     float cameraposz = 5;//default:5
 
-    //timer
-//  kvs::Timer sim_timer;
-    kvs::Timer vis_timer;//可視化時間用タイマー
-    kvs::Timer distribution_timer;//KL情報量計算時間用タイマー*消去もあり
-//    float sim_time = 0.0;//シミュレーション時間
-    float vis_time = 0.0;//可視化時間
-    float distribution_time = 0.0;//KL情報量計算時間*消去もあり
-    int timeswitch;//計測時間の種類の判定,1:シミュレーションの時間,2:可視化の時間,3:KL情報量計算の時間,自動で設定されるので特にユーザーが設定する必要はない
-
     //KL情報量計算結果を書き出すファイル
     std::string filename1 = "entropy.csv";
     std::string filename2 = "presimulation/preentropy10.csv";
@@ -150,31 +141,6 @@ int main( int argc, char** argv )
         writing_file1[18].open(filename20, std::ios::app);
         writing_file1[19].open(filename21, std::ios::app);
     }
-
-    //シミュレーション時間結果を書き出すファイル
-//    std::string timefilename = "simulationtime.csv";
-//    std::ofstream time_writing_file;
-//    time_writing_file.open(timefilename, std::ios::app);
-
-    //可視化時間結果を書き出すファイル
-    std::string timefilename2 = "visualizationtime.csv";
-    std::ofstream time_writing_file2;
-    time_writing_file2.open(timefilename2, std::ios::app);
-
-    //KL情報量計算時間結果を書き出すファイル*消去もあり
-    std::string timefilename3 = "distributiontime.csv";
-    std::ofstream time_writing_file3;
-    time_writing_file3.open(timefilename3, std::ios::app);
-
-    //プレシミュレーション計算時間結果を書き出すファイル
-    std::string timefilename4 = "presimulation/presimulationinterval.csv";
-    std::ofstream time_writing_file4;
-    time_writing_file4.open(timefilename4, std::ios::app);
-
-    //閾値推定結果を書き出すファイル
-    std::string timefilename5 = "threshold.csv";
-    std::ofstream time_writing_file5;
-    time_writing_file5.open(timefilename5, std::ios::app);
 
     //KL情報量計算に必要な変数
     float pre_entropy  = 0.0;//前の時刻のKL情報量
@@ -248,65 +214,22 @@ int main( int argc, char** argv )
 
     //ここから処理スタート//
 
-//    kvs::Timer sim_timer; // timer for simulation
-//    float sim_time = 0.0;//シミュレーション時間
-//    std::vector<float> sim_times;
-
-    local::StampTimer sim_times;
+    // Timers for processing time measurement.
+    local::StampTimer sim_times; // simulation processing times
+    local::StampTimer vis_times; // visualization processing times
+    local::StampTimer kld_times; // KL divergence calculation processing times
 
     Info<< "\nStarting time loop\n" << endl;
     while ( runTime.run() )
     {
         /* simulation code */
-//        if ( mode == 0 ) { sim_timer.start(); sim_times.start(); }
         if ( mode == 0 ) { sim_times.start(); }
-
         #include "simulation.H" // シミュレーションを行うためのコード
         if ( mode == 0 )
         {
-//            sim_timer.stop();
-//            sim_time = sim_timer.sec();
             sim_times.stamp();
             Info << "Simulation Solver time: " << sim_times.last() << endl;
-
-            timeswitch = 1;
-
             // 時間計測の処理、粒子レンダリングを使う場合、粒子レンダリング内の個々の時間計測についてはPBVR_u.cppで行なっている。
-//            #include "calculatetime.H"
-//            {
-//                if ( timeswitch == 1 )
-//                {
-//                    sim_times.push_back( sim_time );
-//                    MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-//                    if (my_rank == 0 )
-//                    {
-//                        time_writing_file << sim_time << std::endl;
-//                    }
-//                    Info << "Simulation Solver time : " << sim_time << endl;
-//                    Info << "Simulation Solver time stamp: " << sim_times.last() << endl;
-//                }
-/*
-                else if ( timeswitch == 2 )
-                {
-                    MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                    if ( my_rank == 0 )
-                    {
-                        time_writing_file2 << vis_time << std::endl;
-                    }
-                    Info << "Conversion vis time : " << vis_time << endl;
-                }
-
-                else if ( timeswitch == 3 )
-                {
-                    MPI_Allreduce( &distribution_time, &distribution_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                    if ( my_rank == 0 )
-                    {
-                        time_writing_file3 << distribution_time << std::endl;
-                    }
-                    Info << "Distribution time : " << distribution_time << endl;
-                }
-*/
-//            }
         }
         /* simulation code end */
 
@@ -314,7 +237,6 @@ int main( int argc, char** argv )
             // ゼロ割り(floating exception)を無視するための関数,osmesa内でゼロ割が起こっているため
             fenv_t curr_excepts;
             feholdexcept( &curr_excepts );
-
 
 
             /* visualization code */
@@ -358,45 +280,10 @@ int main( int argc, char** argv )
                         {
                             if ( ( mode == 0 ) && ( estimatethreshold == 0 ) )
                             {
-                                distribution_timer.start();
+                                kld_times.start();
                                 #include "calculateKL.H"
-                                distribution_timer.stop();
-                                distribution_time = distribution_timer.sec();
-                                timeswitch=3;
-//                                #include "calculatetime.H"
-                                {
-                                    /*
-                                    if ( timeswitch == 1 )
-                                    {
-//                                        sim_times.push_back( sim_time );
-                                        MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                                        if (my_rank == 0 )
-                                        {
-                                            time_writing_file << sim_time << std::endl;
-                                        }
-                                        Info << "Simulation Solver time : " << sim_time << endl;
-                                    }
-
-                                    else if ( timeswitch == 2 )
-                                    {
-                                        MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                                        if ( my_rank == 0 )
-                                        {
-                                            time_writing_file2 << vis_time << std::endl;
-                                        }
-                                        Info << "Conversion vis time : " << vis_time << endl;
-                                    }
-                                    */
-//                                    else if ( timeswitch == 3 )
-                                    {
-                                        MPI_Allreduce( &distribution_time, &distribution_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                                        if ( my_rank == 0 )
-                                        {
-                                            time_writing_file3 << distribution_time << std::endl;
-                                        }
-                                        Info << "Distribution time : " << distribution_time << endl;
-                                    }
-                                }
+                                kld_times.stamp();
+                                Info << "Distribution time : " << kld_times.last() << endl;
 
                                 count=0;
                             }
@@ -415,7 +302,7 @@ int main( int argc, char** argv )
                         //可視化の実行判定および処理
                         if ( mode == 0 )
                         {
-                            vis_timer.start();
+                            vis_times.start();
                             if( KLpattern==2 ) //パターンB(細かい可視化)
                             {
                                 for( size_t i = 0; i < data_set.size(); i++)
@@ -476,44 +363,9 @@ int main( int argc, char** argv )
                             }
 
                             data_set.clear();
-                            vis_timer.stop();
-                            vis_time = vis_timer.sec();
-                            timeswitch = 2;
-//                            #include "calculatetime.H"
-                            {
-                                /*
-                                if ( timeswitch == 1 )
-                                {
-//                                    sim_times.push_back( sim_time );
-                                    MPI_Allreduce( &sim_time, &sim_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                                    if (my_rank == 0 )
-                                    {
-                                        time_writing_file << sim_time << std::endl;
-                                    }
-                                    Info << "Simulation Solver time : " << sim_time << endl;
-                                }
-                                */
-//                                else if ( timeswitch == 2 )
-                                {
-                                    MPI_Allreduce( &vis_time, &vis_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                                    if ( my_rank == 0 )
-                                    {
-                                        time_writing_file2 << vis_time << std::endl;
-                                    }
-                                    Info << "Conversion vis time : " << vis_time << endl;
-                                }
-/*
-                                else if ( timeswitch == 3 )
-                                {
-                                    MPI_Allreduce( &distribution_time, &distribution_time, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-                                    if ( my_rank == 0 )
-                                    {
-                                        time_writing_file3 << distribution_time << std::endl;
-                                    }
-                                    Info << "Distribution time : " << distribution_time << endl;
-                                }
-*/
-                            }
+
+                            vis_times.stamp();
+                            Info << "Conversion vis time : " << vis_times.last() << endl;
                         }
                         else
                         {
@@ -537,25 +389,24 @@ int main( int argc, char** argv )
 
     if ( mode == 1 )
     {
+        std::string timefilename4 = "presimulation/presimulationinterval.csv";
+        std::ofstream time_writing_file4;
+        time_writing_file4.open(timefilename4, std::ios::app);
+
         //プレシミュレーション結果の出力
         time_writing_file4 << presimulationinterval << std::endl;
         Info<< "Rewrite the config.H (at least, mode = 0, estimatethreshold = 1) and do your simulation with visualization.\n" << endl;
     }
 
+    // Output the processing times to the files at the rank0 node.
+    sim_times.allreduce( MPI_MAX, MPI_COMM_WORLD );
+    vis_times.allreduce( MPI_MAX, MPI_COMM_WORLD );
+    kld_times.allreduce( MPI_MAX, MPI_COMM_WORLD );
+    if ( my_rank == 0 )
     {
-        sim_times.allreduce( MPI_MAX, MPI_COMM_WORLD );
-        if ( my_rank == 0 ) { sim_times.write( "simulationtime.csv" ); }
-        /*
-        std::vector<float> temp( sim_times.size() );
-        MPI_Allreduce( &sim_times[0], &temp[0], sim_times.size(), MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
-        temp.swap( sim_times );
-
-        if ( my_rank == 0 )
-        {
-            std::ofstream ofs( "sim.csv", std::ios::out | std::ios::app );
-            for ( auto& t : sim_times ) { ofs << t << std::endl; }
-        }
-        */
+        sim_times.write( "simulationtime.csv" );
+        vis_times.write( "visualizationtime.csv" );
+        kld_times.write( "distributiontime.csv" );
     }
 
     Info << "End\n" << endl;
