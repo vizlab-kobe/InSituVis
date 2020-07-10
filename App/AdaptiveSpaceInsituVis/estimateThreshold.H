@@ -1,3 +1,4 @@
+#if 0
 int ret;
 int prei = 0;
 /*
@@ -155,3 +156,4 @@ for ( int judgeKL = 0; judgeKL < prei; judgeKL++ )
 }
 
 Info<< "Finishing Reading the data of presimulation" << endl;
+#endif

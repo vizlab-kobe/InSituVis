@@ -1,4 +1,4 @@
-#if 0
+/*
 const int now_time = static_cast<int>(atof(runTime.timeName().c_str())/runTime.deltaT().value());
 const int start_time = static_cast<int>( runTime.startTimeIndex() );
 
@@ -138,5 +138,4 @@ if ( ( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulati
         std::vector<int>().swap(cellPoints);
     }
 }
-
-#endif
+*/

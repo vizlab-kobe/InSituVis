@@ -1,3 +1,6 @@
+namespace config
+{
+
 /*全ての場合に次の変数を設定してください*/
 const int mode = 0; //実行モード,0:本番実行,1:プレシミュレーション実行
 
@@ -28,3 +31,5 @@ float C_R = 0;//可視化コスト削減割合C(0or0<C_R<=1で設定)
 const int depthmulti_high = 3; //マルチカメラ時、KL情報量が閾値以上の場合、x,y,z,方向に何回まで分割して詳細化するか、1,2,3のいずれかに設定すること
 const int depthmulti_low = 2; //マルチカメラ時、KL情報量が閾値未満の場合、x,y,z方向に何回まで分割して詳細化するか、1,2,3のいずれかかつdepthmulti_high以下の数値にすること
 const float multicamera_posABS = 5.0; //マルチカメラ時、カメラポジションのx,y,z,方向の座標の最大値および最小値の絶対値
+
+} // end of namespace config

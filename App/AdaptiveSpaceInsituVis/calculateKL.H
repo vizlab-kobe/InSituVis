@@ -1,3 +1,4 @@
+/*
 kvs::python::Tuple args( 2 );
 args.set( 0, kvs::python::Array( new_hist ) );
 args.set( 1, kvs::python::Array( old_hist ) );
@@ -29,3 +30,4 @@ if ( my_rank == 0 )
     writing_file << "," << entropy << std::endl;
 }
 old_hist = new_hist;
+*/

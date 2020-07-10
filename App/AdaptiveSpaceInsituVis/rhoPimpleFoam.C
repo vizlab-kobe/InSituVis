@@ -61,6 +61,131 @@ Description
 
 #include "StampTimer.h"
 
+/*
+int EstimateThreshold( kvs::ValueArray<int>& presim_judgevis )
+{
+//    double sorted_entropies[20000/config::presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
+//    double ordered_entropies[20000/config::presim_number];
+    kvs::ValueArray<double> sorted_entropies( presim_judgevis.size() );
+    kvs::ValueArray<double> ordered_entropies( presim_judgevis.size() );
+
+    sorted_entropies.fill( 0.0 );
+    ordered_entropies.fill( 0.0 );
+    presim_judgevis.fill( 0 );
+//    for ( int shokika = 0; shokika < 20000/config::presim_number; shokika++ )
+//    {
+//        sorted_entropies[shokika] = 0;
+//        ordered_entropies[shokika] = 0;
+//        presim_judgevis[shokika] = 0;
+//    }
+
+//        #include "estimateThreshold.H"
+//    int ret;
+//    int prei = 0;
+
+     //int interval = 1;
+     //double threshold = 0.0;
+    //プレシミュレーションの時のデータの読み込みをして、thresholdを決定する。
+    Info << "Reading the data of presimulation...\n" << endl;
+
+    config::noutperKL = config::presim_number / config::step;
+
+    FILE *fp;
+    if ( config::presim_number == 10 )       { fp = fopen("./presimulation/preentropy10.csv","r"); }
+    else if ( config::presim_number == 20 )  { fp = fopen("./presimulation/preentropy20.csv","r"); }
+    else if ( config::presim_number == 30 )  { fp = fopen("./presimulation/preentropy30.csv","r"); }
+    else if ( config::presim_number == 40 )  { fp = fopen("./presimulation/preentropy40.csv","r"); }
+    else if ( config::presim_number == 50 )  { fp = fopen("./presimulation/preentropy50.csv","r"); }
+    else if ( config::presim_number == 60 )  { fp = fopen("./presimulation/preentropy60.csv","r"); }
+    else if ( config::presim_number == 70 )  { fp = fopen("./presimulation/preentropy70.csv","r"); }
+    else if ( config::presim_number == 80 )  { fp = fopen("./presimulation/preentropy80.csv","r"); }
+    else if ( config::presim_number == 90 )  { fp = fopen("./presimulation/preentropy90.csv","r"); }
+    else if ( config::presim_number == 100 ) { fp = fopen("./presimulation/preentropy100.csv","r"); }
+    else if ( config::presim_number == 110 ) { fp = fopen("./presimulation/preentropy110.csv","r"); }
+    else if ( config::presim_number == 120 ) { fp = fopen("./presimulation/preentropy120.csv","r"); }
+    else if ( config::presim_number == 130 ) { fp = fopen("./presimulation/preentropy130.csv","r"); }
+    else if ( config::presim_number == 140 ) { fp = fopen("./presimulation/preentropy140.csv","r"); }
+    else if ( config::presim_number == 150 ) { fp = fopen("./presimulation/preentropy150.csv","r"); }
+    else if ( config::presim_number == 160 ) { fp = fopen("./presimulation/preentropy160.csv","r"); }
+    else if ( config::presim_number == 170 ) { fp = fopen("./presimulation/preentropy170.csv","r"); }
+    else if ( config::presim_number == 180 ) { fp = fopen("./presimulation/preentropy180.csv","r"); }
+    else if ( config::presim_number == 190 ) { fp = fopen("./presimulation/preentropy190.csv","r"); }
+    else if ( config::presim_number == 200 ) { fp = fopen("./presimulation/preentropy200.csv","r"); }
+    else
+    {
+        Info << "presim_number in config.H is wrong!!!!!\nPlease check the config.H" << endl;
+        return 1;
+    }
+
+    if ( config::I_R < 0.0 ) config::I_R = 0;
+    if ( config::I_R > 1.0 ) config::I_R = 1.0;
+    if ( config::C_R < 0.0 ) config::C_R = 0;
+    if ( config::C_R > 1.0 ) config::C_R = 1.0;
+    if ( ( config::I_R * config::C_R == 0 ) && ( config::I_R + config::C_R == 0 ) )
+    {
+        Info << "I_R or C_R in config.H is wrong!!!!!\nPlease check the config.H" << endl;
+        return 1;
+    }
+
+    double inputentropy = 0;
+    int ret = 0;
+    int prei = 0;
+    while ( ret = fscanf( fp, "%lf,", &inputentropy ) != EOF )
+    {
+        ordered_entropies[prei]=inputentropy;
+        for ( int ethr = prei; ethr >=0; ethr-- )
+        {
+            if ( sorted_entropies[ethr] > inputentropy )
+            {
+                sorted_entropies[ethr+1]=sorted_entropies[ethr];
+            }
+            else
+            {
+                sorted_entropies[ethr+1]=inputentropy;
+            }
+        }
+        prei++;
+        if ( prei == 20000 / config::presim_number ) //エラー回避
+            break;
+    }
+
+    int rating;
+    if ( config::I_R == 0 )
+    {
+        //コスト削減割合から閾値を決定
+        if ( config::vis_skip > config::noutperKL )
+            rating=prei*(config::C_R);
+        else
+            rating=prei*(config::vis_skip/(config::vis_skip-1))*config::C_R;
+    }
+    else
+    {
+        //重要区間率から閾値を決定
+        rating=prei*(1-config::I_R);
+    }
+
+    if ( rating == 0 ) rating++; //0のときは0を取るようにする
+    config::threshold = sorted_entropies[rating-1];
+
+    for ( int judgeKL = 0; judgeKL < prei; judgeKL++ )
+    {
+        if ( ordered_entropies[judgeKL] > config::threshold )
+            presim_judgevis[judgeKL]=2;
+        else if ( judgeKL == 0 )//エラー回避
+            presim_judgevis[judgeKL]=1;
+        else if ( ordered_entropies[judgeKL-1] > config::threshold )
+            presim_judgevis[judgeKL]=3;
+        else
+            presim_judgevis[judgeKL]=1;
+    }
+
+    Info<< "Finishing Reading the data of presimulation" << endl;
+
+    return 0;
+}
+*/
+
+#include "config.H" //テスト実行時に変更するパラメータが書かれているソースコード
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 int main( int argc, char** argv )
@@ -82,7 +207,7 @@ int main( int argc, char** argv )
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     /**********************mpi end***********/
 
-    #include "config.H" //テスト実行時に変更するパラメータが書かれているソースコード
+//    #include "config.H" //テスト実行時に変更するパラメータが書かれているソースコード
 
     /*******************no change******************/
     int presimulationcount = 0;
@@ -91,35 +216,36 @@ int main( int argc, char** argv )
     float cameraposz = 5;//default:5
 
     //KL情報量計算結果を書き出すファイル
-    std::string filename1 = "entropy.csv";
-    std::string filename2 = "presimulation/preentropy10.csv";
-    std::string filename3 = "presimulation/preentropy20.csv";
-    std::string filename4 = "presimulation/preentropy30.csv";
-    std::string filename5 = "presimulation/preentropy40.csv";
-    std::string filename6 = "presimulation/preentropy50.csv";
-    std::string filename7 = "presimulation/preentropy60.csv";
-    std::string filename8 = "presimulation/preentropy70.csv";
-    std::string filename9 = "presimulation/preentropy80.csv";
-    std::string filename10 = "presimulation/preentropy90.csv";
-    std::string filename11 = "presimulation/preentropy100.csv";
-    std::string filename12 = "presimulation/preentropy110.csv";
-    std::string filename13 = "presimulation/preentropy120.csv";
-    std::string filename14 = "presimulation/preentropy130.csv";
-    std::string filename15 = "presimulation/preentropy140.csv";
-    std::string filename16 = "presimulation/preentropy150.csv";
-    std::string filename17 = "presimulation/preentropy160.csv";
-    std::string filename18 = "presimulation/preentropy170.csv";
-    std::string filename19 = "presimulation/preentropy180.csv";
-    std::string filename20 = "presimulation/preentropy190.csv";
-    std::string filename21 = "presimulation/preentropy200.csv";
     std::ofstream writing_file;
     std::ofstream writing_file1[20];
-    if ( mode == 0 )
+//    if ( mode == 0 )
+    if ( config::mode == 0 )
     {
+        std::string filename1 = "entropy.csv";
         writing_file.open(filename1, std::ios::app);
     }
     else
     {
+        std::string filename2 = "presimulation/preentropy10.csv";
+        std::string filename3 = "presimulation/preentropy20.csv";
+        std::string filename4 = "presimulation/preentropy30.csv";
+        std::string filename5 = "presimulation/preentropy40.csv";
+        std::string filename6 = "presimulation/preentropy50.csv";
+        std::string filename7 = "presimulation/preentropy60.csv";
+        std::string filename8 = "presimulation/preentropy70.csv";
+        std::string filename9 = "presimulation/preentropy80.csv";
+        std::string filename10 = "presimulation/preentropy90.csv";
+        std::string filename11 = "presimulation/preentropy100.csv";
+        std::string filename12 = "presimulation/preentropy110.csv";
+        std::string filename13 = "presimulation/preentropy120.csv";
+        std::string filename14 = "presimulation/preentropy130.csv";
+        std::string filename15 = "presimulation/preentropy140.csv";
+        std::string filename16 = "presimulation/preentropy150.csv";
+        std::string filename17 = "presimulation/preentropy160.csv";
+        std::string filename18 = "presimulation/preentropy170.csv";
+        std::string filename19 = "presimulation/preentropy180.csv";
+        std::string filename20 = "presimulation/preentropy190.csv";
+        std::string filename21 = "presimulation/preentropy200.csv";
         writing_file1[0].open(filename2, std::ios::app);
         writing_file1[1].open(filename3, std::ios::app);
         writing_file1[2].open(filename4, std::ios::app);
@@ -164,8 +290,8 @@ int main( int argc, char** argv )
     float image2_x;
     float image2_y;
     float image2_z;
-    const int nmulticamera_high = 1 + 2^depthmulti_high; //マルチカメラ時、KL情報量が閾値以上の場合、x,y,z方向にそれぞれ何台カメラを設置するか
-    const int nmulticamera_low = 1 + 2^depthmulti_low;//閾値未満の場合、同様
+    const int nmulticamera_high = 1 + 2^config::depthmulti_high; //マルチカメラ時、KL情報量が閾値以上の場合、x,y,z方向にそれぞれ何台カメラを設置するか
+    const int nmulticamera_low = 1 + 2^config::depthmulti_low;//閾値未満の場合、同様
     float camerainterval, maxcamerapos, mincamerapos;
     int nmulticamera;
     int judgevis;
@@ -176,10 +302,10 @@ int main( int argc, char** argv )
     float mthreefourmaxx;
     float mthreefourmaxy;
     float mthreefourmaxz;
-    if ( multicamera == 1 )
+    if ( config::multicamera == 1 )
     {
         //マルチカメラ時の初期設定
-        camerainterval = multicamera_posABS*2/(nmulticamera_high-1);
+        camerainterval = config::multicamera_posABS * 2/(nmulticamera_high-1);
     }
 
     const int presimulationinterval = 10;//プレシミュレーション時の最小KL情報量計算間隔ΔT,mode=0の時はこの変数は使用しない
@@ -192,24 +318,127 @@ int main( int argc, char** argv )
     /****python end***************************/
 
     /************プレシミュレーションによる初期閾値の推定**************/
-    double inputentropy = 0;
-    double sorted_entropies[20000/presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
-    double ordered_entropies[20000/presim_number];
-    int presim_judgevis[20000/presim_number];
-    if ( estimatethreshold == 1 )
+//    double inputentropy = 0;
+//    double sorted_entropies[20000/config::presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
+//    double ordered_entropies[20000/config::presim_number];
+    int presim_judgevis[20000/config::presim_number];
+    if ( config::estimatethreshold == 1 )
     {
-        for( int shokika = 0; shokika < 20000/presim_number; shokika++ )
+        double sorted_entropies[20000/config::presim_number];  //segmentation fault が出た場合、この配列のサイズを変えること。デフォルトでは、シミュレーションを20000step行った場合について作っている。
+        double ordered_entropies[20000/config::presim_number];
+
+        for( int shokika = 0; shokika < 20000/config::presim_number; shokika++ )
         {
             sorted_entropies[shokika] = 0;
             ordered_entropies[shokika] = 0;
             presim_judgevis[shokika] = 0;
         }
 
-        #include "estimateThreshold.H"
+//        #include "estimateThreshold.H"
+        int ret;
+        int prei = 0;
+        /*
+           int interval = 1;
+           double threshold = 0.0;*/
+        //プレシミュレーションの時のデータの読み込みをして、thresholdを決定する。
+        Info << "Reading the data of presimulation...\n" << endl;
+
+        config::noutperKL = config::presim_number / config::step;
+
+        FILE *fp;
+        if ( config::presim_number == 10 )       { fp = fopen("./presimulation/preentropy10.csv","r"); }
+        else if ( config::presim_number == 20 )  { fp = fopen("./presimulation/preentropy20.csv","r"); }
+        else if ( config::presim_number == 30 )  { fp = fopen("./presimulation/preentropy30.csv","r"); }
+        else if ( config::presim_number == 40 )  { fp = fopen("./presimulation/preentropy40.csv","r"); }
+        else if ( config::presim_number == 50 )  { fp = fopen("./presimulation/preentropy50.csv","r"); }
+        else if ( config::presim_number == 60 )  { fp = fopen("./presimulation/preentropy60.csv","r"); }
+        else if ( config::presim_number == 70 )  { fp = fopen("./presimulation/preentropy70.csv","r"); }
+        else if ( config::presim_number == 80 )  { fp = fopen("./presimulation/preentropy80.csv","r"); }
+        else if ( config::presim_number == 90 )  { fp = fopen("./presimulation/preentropy90.csv","r"); }
+        else if ( config::presim_number == 100 ) { fp = fopen("./presimulation/preentropy100.csv","r"); }
+        else if ( config::presim_number == 110 ) { fp = fopen("./presimulation/preentropy110.csv","r"); }
+        else if ( config::presim_number == 120 ) { fp = fopen("./presimulation/preentropy120.csv","r"); }
+        else if ( config::presim_number == 130 ) { fp = fopen("./presimulation/preentropy130.csv","r"); }
+        else if ( config::presim_number == 140 ) { fp = fopen("./presimulation/preentropy140.csv","r"); }
+        else if ( config::presim_number == 150 ) { fp = fopen("./presimulation/preentropy150.csv","r"); }
+        else if ( config::presim_number == 160 ) { fp = fopen("./presimulation/preentropy160.csv","r"); }
+        else if ( config::presim_number == 170 ) { fp = fopen("./presimulation/preentropy170.csv","r"); }
+        else if ( config::presim_number == 180 ) { fp = fopen("./presimulation/preentropy180.csv","r"); }
+        else if ( config::presim_number == 190 ) { fp = fopen("./presimulation/preentropy190.csv","r"); }
+        else if ( config::presim_number == 200 ) { fp = fopen("./presimulation/preentropy200.csv","r"); }
+        else
+        {
+            Info << "presim_number in config.H is wrong!!!!!\nPlease check the config.H" << endl;
+            return 1;
+        }
+
+        if ( config::I_R < 0.0 ) config::I_R = 0;
+        if ( config::I_R > 1.0 ) config::I_R = 1.0;
+        if ( config::C_R < 0.0 ) config::C_R = 0;
+        if ( config::C_R > 1.0 ) config::C_R = 1.0;
+        if ( ( config::I_R * config::C_R == 0 ) && ( config::I_R + config::C_R == 0 ) )
+        {
+            Info << "I_R or C_R in config.H is wrong!!!!!\nPlease check the config.H" << endl;
+            return 1;
+        }
+
+        double inputentropy = 0;
+        while ( ret = fscanf( fp, "%lf,", &inputentropy ) != EOF )
+        {
+            ordered_entropies[prei]=inputentropy;
+            for ( int ethr = prei; ethr >=0; ethr-- )
+            {
+                if ( sorted_entropies[ethr] > inputentropy )
+                {
+                    sorted_entropies[ethr+1]=sorted_entropies[ethr];
+                }
+                else
+                {
+                    sorted_entropies[ethr+1]=inputentropy;
+                }
+            }
+            prei++;
+            if ( prei == 20000 / config::presim_number ) //エラー回避
+                break;
+        }
+
+        int rating;
+        if ( config::I_R == 0 )
+        {
+            //コスト削減割合から閾値を決定
+            if ( config::vis_skip > config::noutperKL )
+                rating=prei*(config::C_R);
+            else
+                rating=prei*(config::vis_skip/(config::vis_skip-1))*config::C_R;
+        }
+        else
+        {
+            //重要区間率から閾値を決定
+            rating=prei*(1-config::I_R);
+        }
+
+        if ( rating == 0 ) rating++; //0のときは0を取るようにする
+        config::threshold = sorted_entropies[rating-1];
+
+        for ( int judgeKL = 0; judgeKL < prei; judgeKL++ )
+        {
+            if ( ordered_entropies[judgeKL] > config::threshold )
+                presim_judgevis[judgeKL]=2;
+            else if ( judgeKL == 0 )//エラー回避
+                presim_judgevis[judgeKL]=1;
+            else if ( ordered_entropies[judgeKL-1] > config::threshold )
+                presim_judgevis[judgeKL]=3;
+            else
+                presim_judgevis[judgeKL]=1;
+        }
+
+        Info<< "Finishing Reading the data of presimulation" << endl;
     }
     /************プレシミュレーションによる初期閾値の推定終了**********/
 
     /*******************no change end**************/
+
+
 
 
     //ここから処理スタート//
@@ -223,9 +452,9 @@ int main( int argc, char** argv )
     while ( runTime.run() )
     {
         /* simulation code */
-        if ( mode == 0 ) { sim_times.start(); }
+        if ( config::mode == 0 ) { sim_times.start(); }
         #include "simulation.H" // シミュレーションを行うためのコード
-        if ( mode == 0 )
+        if ( config::mode == 0 )
         {
             sim_times.stamp();
             Info << "Simulation Solver time: " << sim_times.last() << endl;
@@ -259,7 +488,7 @@ int main( int argc, char** argv )
                 }
 
                 //ボリュームデータ出力判定
-                if ( ( mode == 0 && now_time % step == 0 )||(mode == 1 && now_time % presimulationinterval == 0))
+                if ( ( config::mode == 0 && now_time % config::step == 0 )||( config::mode == 1 && now_time % presimulationinterval == 0))
                 {
                     #include <PBVR_u.h>
                     std::vector<float> pValues; //圧力
@@ -273,41 +502,97 @@ int main( int argc, char** argv )
                     #include "outputvolumedata.H"
                     //KL情報量計算の実行判定および処理
                     count++;
-                    if ( ( count >= noutperKL ) || ( mode == 1 ) )
+                    if ( ( count >= config::noutperKL ) || ( config::mode == 1 ) )
                     {
                         new_hist = kvs::ValueArray<float>( uValues );
                         if ( old_hist.size() != 0)
                         {
-                            if ( ( mode == 0 ) && ( estimatethreshold == 0 ) )
+                            if ( ( config::mode == 0 ) && ( config::estimatethreshold == 0 ) )
                             {
                                 kld_times.start();
-                                #include "calculateKL.H"
+//                                #include "calculateKL.H"
+                                {
+                                    kvs::python::Tuple args( 2 );
+                                    args.set( 0, kvs::python::Array( new_hist ) );
+                                    args.set( 1, kvs::python::Array( old_hist ) );
+
+                                    entropy = kvs::python::Float( func.call( args ) );
+                                    MPI_Allreduce( &entropy, &entropy, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+
+                                    if ( entropy >= config::threshold )
+                                    {
+                                        //パターンB(細かい可視化)
+                                        KLpattern = 2;
+                                    }
+                                    else if ( pre_entropy >= config::threshold )
+                                    {
+                                        //パターンC(細かい可視化から粗い可視化)
+                                        KLpattern = 3;
+                                    }
+                                    else
+                                    {
+                                        //パターンA(粗い可視化)
+                                        KLpattern = 1;
+                                    }
+
+                                    pre_entropy = entropy;
+                                    if ( my_rank == 0 )
+                                    {
+                                        std::cout << "entropy : " << entropy << std::endl;
+                                        writing_file << "," << entropy << std::endl;
+                                    }
+                                    old_hist = new_hist;
+                                }
                                 kld_times.stamp();
                                 Info << "Distribution time : " << kld_times.last() << endl;
 
                                 count=0;
                             }
-                            else if ( ( mode == 0 ) && ( estimatethreshold == 1 ) )
+                            else if ( ( config::mode == 0 ) && ( config::estimatethreshold == 1 ) )
                             {
                                 KLpattern==presim_judgevis[countpreKL];
                                 countpreKL++;
                             }
                             else
                             {
-                                //mode == 1
-                                #include "presimulationcalculateKL.H"
+                                //config::mode == 1
+//                                #include "presimulationcalculateKL.H"
+                                {
+                                    new_hist = kvs::ValueArray<float>( uValues );
+
+                                    kvs::python::Tuple args( 2 );
+                                    for ( int numpre = 0; numpre < 20; numpre++ )
+                                    {
+                                        if ( ( minpresimulation > numpre ) && ( now_time % (numpre+10) == 0 ) )
+                                        {
+                                            args.set( 0, kvs::python::Array( new_hist ) );
+                                            args.set( 1, kvs::python::Array( pre_hist[numpre] ) );
+                                            entropy = kvs::python::Float( func.call( args ) );
+                                            MPI_Allreduce( &entropy, &entropy, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD );
+                                            if ( my_rank == 0 )
+                                            {
+                                                std::cout << "entropy : " << entropy << std::endl;
+                                                writing_file1[numpre] << "," << entropy << std::endl;
+                                            }
+                                        }
+                                    }
+
+                                    minpresimulation++;
+                                    pre_hist[presimulationcount]=new_hist;
+                                    presimulationcount = (presimulationcount + 1)%20;
+                                }
                             }
                         }
 
                         //可視化の実行判定および処理
-                        if ( mode == 0 )
+                        if ( config::mode == 0 )
                         {
                             vis_times.start();
                             if( KLpattern==2 ) //パターンB(細かい可視化)
                             {
                                 for( size_t i = 0; i < data_set.size(); i++)
                                 {
-                                    if ( multicamera == 1 )
+                                    if ( config::multicamera == 1 )
                                     {
                                         #include "multicamera.H"
                                     }
@@ -324,7 +609,7 @@ int main( int argc, char** argv )
                                     KLpattern = 2;
                                     for( size_t i = 0; i < int(data_set.size()/2); i++)
                                     {
-                                        if ( multicamera == 1 )
+                                        if ( config::multicamera == 1 )
                                         {
                                             #include "multicamera.H"
                                         }
@@ -334,9 +619,9 @@ int main( int argc, char** argv )
                                         }
                                     }
                                     KLpattern = 1;
-                                    for ( size_t i = int(data_set.size()/2) + vis_skip; i < data_set.size(); i += vis_skip )
+                                    for ( size_t i = int(data_set.size()/2) + config::vis_skip; i < data_set.size(); i += config::vis_skip )
                                     {
-                                        if ( multicamera == 1 )
+                                        if ( config::multicamera == 1 )
                                         {
                                             #include "multicamera.H"
                                         }
@@ -348,9 +633,9 @@ int main( int argc, char** argv )
                                 }
                                 else //パターンA(粗い可視化)
                                 {
-                                    for( size_t i = data_set.size()*vis_skip-1; i < data_set.size(); i += vis_skip)
+                                    for( size_t i = data_set.size()*config::vis_skip-1; i < data_set.size(); i += config::vis_skip)
                                     {
-                                        if ( multicamera == 1 )
+                                        if ( config::multicamera == 1 )
                                         {
                                             #include "multicamera.H"
                                         }
@@ -369,7 +654,7 @@ int main( int argc, char** argv )
                         }
                         else
                         {
-                            //(mode==1)
+                            //(config::mode==1)
                             data_set.clear();
                         }
                         std::vector<float>().swap(uValues);
@@ -387,7 +672,7 @@ int main( int argc, char** argv )
              << nl << endl;
     }
 
-    if ( mode == 1 )
+    if ( config::mode == 1 )
     {
         std::string timefilename4 = "presimulation/presimulationinterval.csv";
         std::ofstream time_writing_file4;

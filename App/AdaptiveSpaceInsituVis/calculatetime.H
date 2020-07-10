@@ -1,4 +1,4 @@
-#if 0
+/*
 //時間の計測およびその結果の出力のためのプログラム
 
 if ( timeswitch == 1 )
@@ -30,4 +30,4 @@ else if ( timeswitch == 3 )
     }
     Info << "Distribution time : " << distribution_time << endl;
 }
-#endif
+*/
