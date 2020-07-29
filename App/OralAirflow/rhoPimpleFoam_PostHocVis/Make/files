@@ -1,3 +1,4 @@
 rhoPimpleFoam.C
 
-EXE = $(FOAM_APPBIN)/rhoPimpleFoam
+//EXE = $(FOAM_APPBIN)/rhoPimpleFoam
+EXE = rhoPimpleFoam_PostHocVis
