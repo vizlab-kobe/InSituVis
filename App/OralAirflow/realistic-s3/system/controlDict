@@ -23,7 +23,8 @@ stopAt          endTime;
 
 endTime         15e-04;
 
-deltaT          1e-07;
+//deltaT          1e-07;
+deltaT          1.8e-04;
 
 writeControl    timeStep;
 
