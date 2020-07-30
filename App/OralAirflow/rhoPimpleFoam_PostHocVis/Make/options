@@ -1,4 +1,5 @@
 EXE_INC = \
+    -Wno-old-style-cast \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/turbulenceModels/compressible/turbulenceModel \
     -I$(LIB_SRC)/finiteVolume/cfdTools \
@@ -18,4 +19,4 @@ EXE_LIBS = \
     -lmeshTools \
     -lsampling \
     -lfvOptions \
-    -L${KVS_DIR}/lib -lkvsCore
+    -L${KVS_DIR}/lib -lkvsCore -lkvsSupportMPI

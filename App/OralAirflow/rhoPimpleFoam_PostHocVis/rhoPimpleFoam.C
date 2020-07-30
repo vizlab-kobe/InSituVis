@@ -40,7 +40,15 @@ Description
 #include "pimpleControl.H"
 #include "fvIOoptionList.H"
 
+// rhoPimpleFoam_PostHocVis: Headers
+// {
+#include <kvs/mpi/Communicator>
+#include <kvs/mpi/Logger>
+#include <kvs/Timer>
+#include <kvs/String>
+#include "local/CreateOutputDirectory.h"
 #include "local/CreateUnstructuredVolumeObject.h"
+// }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,9 +64,43 @@ int main(int argc, char *argv[])
     #include "createFvOptions.H"
     #include "initContinuityErrs.H"
 
+    // rhoPimpleFoam_PostHocVis: Parameter settings
+    // {
+    Foam::messageStream::level = 0; // Disable Foam::Info
+    kvs::mpi::Communicator world( MPI_COMM_WORLD );
+    kvs::mpi::Logger logger( world );
+    kvs::Timer timer;
+    const kvs::Indent indent(4);
+    const int root = 0;
+    const int size = world.size();
+    const int rank = world.rank();
+    // }
+
+    // rhoPimpleFoam_PostHocVis: Create output directories
+    // {
+    const auto output_dirname = local::CreateOutputDirectory( world, "Output", "Proc" );
+    if ( output_dirname.empty() )
+    {
+        logger( root ) << "ERROR: " << "Cannot create output directory." << std::endl;
+        world.abort();
+    }
+    // }
+
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    Info<< "\nStarting time loop\n" << endl;
+    // rhoPimpleFoam_PostHocVis: Output messages
+    // {
+    // Info<< "\nStarting time loop\n" << endl;
+    const auto start_time = runTime.startTime().value();
+    const auto start_time_index = runTime.startTimeIndex();
+    const auto end_time = runTime.endTime().value();
+    const auto end_time_index = static_cast<int>( end_time / runTime.deltaT().value() );
+    logger( root ) << std::endl;
+    logger( root ) << "STARTING TIME LOOP" << std::endl;
+    logger( root ) << indent << "Start time and index: " << start_time << ", " << start_time_index << std::endl;
+    logger( root ) << indent << "End time and index: " << end_time << ", " << end_time_index << std::endl;
+    logger( root ) << std::endl;
+    // }
 
     while (runTime.run())
     {
@@ -68,7 +110,21 @@ int main(int argc, char *argv[])
 
         runTime++;
 
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        // rhoPimpleFoam_PostHocVis: Output messages
+        // {
+        // Info<< "Time = " << runTime.timeName() << nl << endl;
+        const auto current_time = runTime.timeName();
+        const auto current_time_index = runTime.timeIndex();
+        logger( root ) << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
+        logger( root ) << indent << "T: " << current_time << std::endl;
+        logger( root ) << indent << "End T: " << end_time << std::endl;
+        logger( root ) << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
+        // }
+
+        // rhoPimpleFoam_PostHocVis: Start timer
+        // {
+        timer.start();
+        // }
 
         if (pimple.nCorrPIMPLE() <= 1)
         {
@@ -95,16 +151,69 @@ int main(int argc, char *argv[])
 
         runTime.write();
 
-        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-            << "  ClockTime = " << runTime.elapsedClockTime() << " s"
-            << nl << endl;
+        // rhoPimpleFoam_PostHocVis: Stop timer
+        // {
+        timer.stop();
+        // }
 
-        // Output KVS unstructured volume object.
-        auto* volume = local::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
+        // rhoPimpleFoam_PostHocVis: Output messages
+        // {
+        const auto ts = timer.sec();
+        const auto Ts = kvs::String::ToString( ts, 4 );
+        logger( root ) << indent << "Processing Times:" << std::endl;
+        logger( root ) << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
+        // }
+
+        // rhoPimpleFoam_PostHocVis: Import mesh and field
+        // {
+        timer.start();
+        auto* volume = local::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure value
+        timer.stop();
+        // }
+
+        // rhoPimpleFoam_PostHocVis: Output messages
+        // {
+        const auto ti = timer.sec();
+        const auto Ti = kvs::String::ToString( ti, 4 );
+        logger( root ) << indent.nextIndent() << "Import: " << Ti << " s" << std::endl;
+        // }
+
+        // rhoPimpleFoam_PostHocVis: Output KVSML
+        timer.start();
+        const std::string output_basename("output");
+        const std::string output_filename = output_basename + "_" + current_time + ".kvsml";
+        volume->write( output_dirname + output_filename );
+        timer.stop();
         delete volume;
+
+        // rhoPimpleFoam_PostHocVis: Output messages
+        // {
+        const auto to = timer.sec();
+        const auto To = kvs::String::ToString( to, 4 );
+        logger( root ) << indent.nextIndent() << "Write: " << To << " s" << std::endl;
+        // }
+
+        // rhoPimpleFoam_PostHocVis: Output messages
+        // {
+        const auto tt = ts + ti + to;
+        const auto Tt = kvs::String::ToString( tt, 4 );
+        logger( root ) << indent.nextIndent() << "---" << std::endl;
+        logger( root ) << indent.nextIndent() << "Total: " << Tt << " s" << std::endl;
+        // }
+
+        // rhoPimpleFoam_PostHocVis: Output messages
+        // {
+        // Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+        //     << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+        //     << nl << endl;
+        const auto elapsed_time = runTime.elapsedCpuTime();
+        logger( root ) << std::endl;
+        logger( root ) << "Elapsed Time: " << elapsed_time << " s" << std::endl;
+        logger( root ) << std::endl;
+        // }
     }
 
-    Info<< "End\n" << endl;
+    //Info<< "End\n" << endl;
 
     return 0;
 }
