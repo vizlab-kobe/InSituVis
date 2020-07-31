@@ -139,6 +139,26 @@ void PBVR_u( const std::vector<float> &values, int ncells, int nnodes, const std
   volume->updateMinMaxValues();
   volume->setMinMaxValues( min_value, max_value );
   timer.stop();
+
+
+  /// Debug
+  if ( false )
+  {
+      /// NOTE: Cannot read the output file. The file is broken???
+      std::ostringstream ss,sa,sb,sc;
+      ss << std::setw(5) << std::setfill('0') << time;
+      sa << std::setw(2) << std::setfill('0') << cameraposx;
+      sb << std::setw(2) << std::setfill('0') << cameraposy;
+      sc << std::setw(2) << std::setfill('0') << cameraposz;
+      std::string num = ss.str();
+      std::string numx = sa.str();
+      std::string numy = sb.str();
+      std::string numz = sc.str();
+      std::string name = "./Output/output_result_mix_pbvr_u_" + num + "_" + numx + "_" + numy + "_" + numz + ".kvsml";
+      volume->write( name );
+  }
+
+
   conversion_time = timer.sec();
   const size_t width = 512;
   const size_t height = 512;

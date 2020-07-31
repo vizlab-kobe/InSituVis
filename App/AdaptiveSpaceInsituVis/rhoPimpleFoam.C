@@ -57,6 +57,7 @@ Description
 #include <kvs/ColorImage> // modified
 #include <kvs/RGBColor> // modified
 
+#include <kvs/Indent>
 
 
 #include "StampTimer.h"
@@ -201,6 +202,8 @@ int main( int argc, char** argv )
     #include "initContinuityErrs.H"
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    Foam::messageStream::level = 0; // Disable Foam::Info
 
     /**********************mpi***************/
     int my_rank;
@@ -443,6 +446,17 @@ int main( int argc, char** argv )
 
     //ここから処理スタート//
 
+    const kvs::Indent indent( 4 );
+    const auto start_time = runTime.startTime().value();
+    const auto start_time_index = runTime.startTimeIndex();
+    const auto end_time = runTime.endTime().value();
+    const auto end_time_index = static_cast<int>( end_time / runTime.deltaT().value() );
+    if ( my_rank == 0 ) std::cout << std::endl;
+    if ( my_rank == 0 ) std::cout << "STARTING TIME LOOP" << std::endl;
+    if ( my_rank == 0 ) std::cout << indent << "Start time and index: " << start_time << ", " << start_time_index << std::endl;
+    if ( my_rank == 0 ) std::cout << indent << "End time and index: " << end_time << ", " << end_time_index << std::endl;
+    if ( my_rank == 0 ) std::cout << std::endl;
+
     // Timers for processing time measurement.
     local::StampTimer sim_times; // simulation processing times
     local::StampTimer vis_times; // visualization processing times
@@ -461,6 +475,13 @@ int main( int argc, char** argv )
             // 時間計測の処理、粒子レンダリングを使う場合、粒子レンダリング内の個々の時間計測についてはPBVR_u.cppで行なっている。
         }
         /* simulation code end */
+
+        const auto current_time = runTime.timeName();
+        const auto current_time_index = runTime.timeIndex();
+        if ( my_rank == 0 ) std::cout << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
+        if ( my_rank == 0 ) std::cout << indent << "T: " << current_time << std::endl;
+        if ( my_rank == 0 ) std::cout << indent << "End T: " << end_time << std::endl;
+        if ( my_rank == 0 ) std::cout << indent << "Delta T: " << runTime.deltaT().value() << std::endl << std::endl;
 
         {
             // ゼロ割り(floating exception)を無視するための関数,osmesa内でゼロ割が起こっているため
