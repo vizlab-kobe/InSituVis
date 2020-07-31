@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <algorithm>
 
 // OpenFOAM related headers
 #include "fvMesh.H"
@@ -10,107 +11,178 @@
 #include <kvs/ValueArray>
 #include <kvs/InverseDistanceWeighting>
 
+//#include "InverseDistanceWeighting.h"
+
 
 namespace local
 {
 
-inline kvs::UnstructuredVolumeObject* CreateUnstructuredVolumeObject(
+namespace internal
+{
+
+inline kvs::ValueArray<kvs::Real32> CalculateCoords(
+    const Foam::fvMesh& mesh )
+{
+    const size_t nnodes = mesh.nPoints(); // number of nodes
+
+    kvs::ValueArray<float> coords( nnodes * 3 );
+    for ( size_t i = 0; i < nnodes; ++i )
+    {
+        coords[ 3 * i + 0 ] = mesh.points()[i].x();
+        coords[ 3 * i + 1 ] = mesh.points()[i].y();
+        coords[ 3 * i + 2 ] = mesh.points()[i].z();
+    }
+
+    return coords;
+}
+
+inline kvs::ValueArray<kvs::Real32> CalculateValues(
     const Foam::fvMesh& mesh,
     const Foam::volScalarField& field )
 {
-    std::vector<float> cell_centered_coords; // cellCoords
-    std::vector<float> cell_centered_values; // pValues
-    std::vector<int> cell_connections; // cell_points, label
+    const size_t ncells = mesh.nCells(); // number of cells
+    const size_t nnodes = mesh.nPoints(); // number of nodes
 
-    const size_t ncells = mesh.cellPoints().size(); // == mesh.nCells();
+    // Calculate values on each grid point.
+    kvs::InverseDistanceWeighting<kvs::Real32> idw( nnodes );
     for ( size_t i = 0; i < ncells; ++i )
     {
-        cell_centered_coords.push_back( mesh.C()[i].x() );
-        cell_centered_coords.push_back( mesh.C()[i].y() );
-        cell_centered_coords.push_back( mesh.C()[i].z() );
-        cell_centered_values.push_back( field[i] );
+        const auto& c = mesh.C()[i];
+        const kvs::Vec3 center( c.x(), c.y() , c.z() );
+        const float value = static_cast<float>( field[i] );
+        for ( auto& id : mesh.cellPoints()[i] )
+        {
+            const auto& p = mesh.points()[id];
+            const kvs::Vec3 vertex( p.x(), p.y(), p.z() );
+            const auto distance = ( center -vertex ).length();
+            idw.insert( id, value, distance );
+        }
+    }
 
+    return idw.serialize();
+}
+
+inline kvs::ValueArray<kvs::Real32> CalculateValues(
+    const Foam::fvMesh& mesh,
+    const Foam::volVectorField& field )
+{
+    const size_t ncells = mesh.nCells(); // number of cells
+    const size_t nnodes = mesh.nPoints(); // number of nodes
+
+    // Calculate values on each grid point.
+    kvs::InverseDistanceWeighting<kvs::Real32> idw( nnodes );
+    for ( size_t i = 0; i < ncells; ++i )
+    {
+        const auto& c = mesh.C()[i];
+        const kvs::Vec3 center( c.x(), c.y() , c.z() );
+        const float value = static_cast<float>( Foam::mag( field[i] ) );
+        for ( auto& id : mesh.cellPoints()[i] )
+        {
+            const auto& p = mesh.points()[id];
+            const kvs::Vec3 vertex( p.x(), p.y(), p.z() );
+            const auto distance = ( center -vertex ).length();
+            idw.insert( id, value, distance );
+        }
+    }
+
+    return idw.serialize();
+}
+
+inline kvs::ValueArray<kvs::UInt32> CalculateConnections(
+    const Foam::fvMesh& mesh )
+{
+    const size_t ncells = mesh.nCells(); // number of cells
+
+    std::vector<kvs::UInt32> connections;
+    for ( size_t i = 0; i < ncells; ++i )
+    {
         // For only hex cells.
         const auto cell_nnodes = mesh.cellPoints()[i].size();
         const auto cell_nfaces = mesh.cells()[i].size();
         if ( cell_nnodes == 8 && cell_nfaces == 6 )
         {
-            for ( auto& id : mesh.cellPoints()[i] )
-            {
-                cell_connections.push_back( static_cast<int>( id ) );
-            }
-        }
-        else
-        {
-            for ( size_t j = 0; j < 8; ++j )
-            {
-                cell_connections.push_back( -1 );
-            }
-        }
-    }
-
-    std::vector<float> coords;
-    const size_t nnodes = mesh.points().size(); // == mesh.nPoints();
-    for ( size_t i = 0; i < nnodes; ++i )
-    {
-        coords.push_back( mesh.points()[i].x() );
-        coords.push_back( mesh.points()[i].y() );
-        coords.push_back( mesh.points()[i].z() );
-    }
-
-    int nocell_count = 0;
-    std::vector<kvs::UInt32> connections;
-    kvs::InverseDistanceWeighting<kvs::Real32> idw( nnodes );
-    for ( size_t i = 0; i < ncells; ++i )
-    {
-        if ( cell_connections[ 8 * i ] < 0 ) { nocell_count++; }
-        else
-        {
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 4 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 6 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 7 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 5 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 0 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 2 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 3 ] ) );
-            connections.push_back( static_cast<kvs::UInt32>( cell_connections[ 8 * i + 1 ] ) );
-
-            const auto x0 = cell_centered_coords[ 3 * i + 0 ];
-            const auto y0 = cell_centered_coords[ 3 * i + 1 ];
-            const auto z0 = cell_centered_coords[ 3 * i + 2 ];
-            const auto center = kvs::Vec3( x0, y0, z0 );
-            const auto value = cell_centered_values[i];
-            for ( size_t j = 0; j < 8; ++j )
-            {
-                const auto id = static_cast<kvs::UInt32>( cell_connections[ 8 * i + j ] );
-                const auto xj = coords[ 3 * id + 0 ];
-                const auto yj = coords[ 3 * id + 1 ];
-                const auto zj = coords[ 3 * id + 2 ];
-                const auto distance = ( center - kvs::Vec3( xj, yj, zj ) ).length();
-                idw.insert( id, value, distance );
-            }
+            kvs::UInt32 id[8];
+            std::copy_n( mesh.cellPoints()[i].begin(), 8, id );
+/*
+            connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[6] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[7] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+*/
+/*
+            connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[7] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[6] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+*/
+            connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[6] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[7] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+            connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
         }
     }
 
-    auto values = idw.serialize();
+    return kvs::ValueArray<kvs::UInt32>( connections );
+}
 
-//    int nonode_count = 0;
-    for ( size_t i = 0; i < nnodes; ++i )
-    {
-        coords[ 3 * i + 0 ] *= 1000;
-        coords[ 3 * i + 1 ] *= 1000;
-        coords[ 3 * i + 2 ] *= 1000;
-//        if ( kvs::Math::IsZero( values[i] ) ) { nonode_count++; }
-    }
+}
+
+inline kvs::UnstructuredVolumeObject* CreateUnstructuredVolumeObject(
+    const Foam::fvMesh& mesh,
+    const Foam::volScalarField& field )
+{
+    const auto coords = internal::CalculateCoords( mesh );
+    const auto values = internal::CalculateValues( mesh, field );
+    const auto connections = internal::CalculateConnections( mesh );
+
+    const auto nnodes = coords.size() / 3;
+    const auto ncells = connections.size() / 8;
 
     auto* volume = new kvs::UnstructuredVolumeObject();
     volume->setCellTypeToHexahedra();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
-    volume->setNumberOfCells( ncells - nocell_count );
+    volume->setNumberOfCells( ncells );
     volume->setValues( values );
-    volume->setCoords( kvs::ValueArray<kvs::Real32>( coords ) );
-    volume->setConnections( kvs::ValueArray<kvs::UInt32>( connections ) );
+    volume->setCoords( coords );
+    volume->setConnections( connections );
+    volume->updateMinMaxValues();
+    volume->updateMinMaxCoords();
+
+    return volume;
+}
+
+inline kvs::UnstructuredVolumeObject* CreateUnstructuredVolumeObject(
+    const Foam::fvMesh& mesh,
+    const Foam::volVectorField& field )
+{
+    const auto coords = internal::CalculateCoords( mesh );
+    const auto values = internal::CalculateValues( mesh, field );
+    const auto connections = internal::CalculateConnections( mesh );
+
+    const auto nnodes = coords.size() / 3;
+    const auto ncells = connections.size() / 8;
+
+    auto* volume = new kvs::UnstructuredVolumeObject();
+    volume->setCellTypeToHexahedra();
+    volume->setVeclen( 1 );
+    volume->setNumberOfNodes( nnodes );
+    volume->setNumberOfCells( ncells );
+    volume->setValues( values );
+    volume->setCoords( coords );
+    volume->setConnections( connections );
     volume->updateMinMaxValues();
     volume->updateMinMaxCoords();
 

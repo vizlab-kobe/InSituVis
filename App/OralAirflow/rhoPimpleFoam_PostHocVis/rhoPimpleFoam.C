@@ -162,12 +162,15 @@ int main(int argc, char *argv[])
         const auto Ts = kvs::String::ToString( ts, 4 );
         logger( root ) << indent << "Processing Times:" << std::endl;
         logger( root ) << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
+        //logger( root ) << indent.nextIndent().nextIndent() << "Number of nodes: " << mesh.nPoints() << std::endl;
+        //logger( root ) << indent.nextIndent().nextIndent() << "Number of cells: " << mesh.nCells() << std::endl;
         // }
 
         // rhoPimpleFoam_PostHocVis: Import mesh and field
         // {
         timer.start();
-        auto* volume = local::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure value
+        auto* volume = local::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
+        //auto* volume = local::CreateUnstructuredVolumeObject( mesh, U ); // U: velocity (magnitude)
         timer.stop();
         // }
 
@@ -176,6 +179,7 @@ int main(int argc, char *argv[])
         const auto ti = timer.sec();
         const auto Ti = kvs::String::ToString( ti, 4 );
         logger( root ) << indent.nextIndent() << "Import: " << Ti << " s" << std::endl;
+        //volume->print( logger( root ), indent.nextIndent().nextIndent() );
         // }
 
         // rhoPimpleFoam_PostHocVis: Output KVSML
