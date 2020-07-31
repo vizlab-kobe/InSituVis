@@ -46,8 +46,8 @@ Description
 #include <kvs/mpi/Logger>
 #include <kvs/Timer>
 #include <kvs/String>
-#include "local/CreateOutputDirectory.h"
-#include "local/CreateUnstructuredVolumeObject.h"
+#include "../Util/CreateOutputDirectory.h"
+#include "../Util/CreateUnstructuredVolumeObject.h"
 // }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
     // rhoPimpleFoam_PostHocVis: Create output directories
     // {
-    const auto output_dirname = local::CreateOutputDirectory( world, "Output", "Proc" );
+    const auto output_dirname = Util::CreateOutputDirectory( world, "Output", "Proc" );
     if ( output_dirname.empty() )
     {
         logger( root ) << "ERROR: " << "Cannot create output directory." << std::endl;
@@ -169,8 +169,8 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_PostHocVis: Import mesh and field
         // {
         timer.start();
-        auto* volume = local::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
-        //auto* volume = local::CreateUnstructuredVolumeObject( mesh, U ); // U: velocity (magnitude)
+        auto* volume = Util::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
+        //auto* volume = Util::CreateUnstructuredVolumeObject( mesh, U ); // U: velocity (magnitude)
         timer.stop();
         // }
 
