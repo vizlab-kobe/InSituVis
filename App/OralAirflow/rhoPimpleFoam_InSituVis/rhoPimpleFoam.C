@@ -1,4 +1,4 @@
-/*---------------------------------------------------------------------------*\
+/*---------------------------------------------------------------------------* \
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
@@ -40,12 +40,16 @@ Description
 #include "pimpleControl.H"
 #include "fvIOoptionList.H"
 
-// rhoPimpleFoam_PostHocVis: Headers
+// rhoPimpleFoam_InSituVis: Headers
 // {
+#include <cfenv>
 #include <kvs/mpi/Communicator>
 #include <kvs/mpi/Logger>
+#include <kvs/mpi/ImageCompositor>
 #include <kvs/Timer>
 #include <kvs/String>
+#include <kvs/OffScreen>
+#include <kvs/ExternalFaces>
 #include "../Util/CreateOutputDirectory.h"
 #include "../Util/CreateUnstructuredVolumeObject.h"
 // }
@@ -64,7 +68,7 @@ int main(int argc, char *argv[])
     #include "createFvOptions.H"
     #include "initContinuityErrs.H"
 
-    // rhoPimpleFoam_PostHocVis: Parameter settings
+    // rhoPimpleFoam_InSituVis: Parameter settings
     // {
     Foam::messageStream::level = 0; // Disable Foam::Info
     kvs::mpi::Communicator world( MPI_COMM_WORLD );
@@ -76,7 +80,7 @@ int main(int argc, char *argv[])
     const int rank = world.rank();
     // }
 
-    // rhoPimpleFoam_PostHocVis: Create output directories
+    // rhoPimpleFoam_InSituVis: Create output directories
     // {
     const auto output_dirname = Util::CreateOutputDirectory( world, "Output", "Proc" );
     if ( output_dirname.empty() )
@@ -88,7 +92,7 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    // rhoPimpleFoam_PostHocVis: Output messages
+    // rhoPimpleFoam_InSituVis: Output messages
     // {
     // Info<< "\nStarting time loop\n" << endl;
     const auto start_time = runTime.startTime().value();
@@ -110,7 +114,7 @@ int main(int argc, char *argv[])
 
         runTime++;
 
-        // rhoPimpleFoam_PostHocVis: Output messages
+        // rhoPimpleFoam_InSituVis: Output messages
         // {
         // Info<< "Time = " << runTime.timeName() << nl << endl;
         const auto current_time = runTime.timeName();
@@ -121,7 +125,7 @@ int main(int argc, char *argv[])
         logger( root ) << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
         // }
 
-        // rhoPimpleFoam_PostHocVis: Start timer
+        // rhoPimpleFoam_InSituVis: Start timer
         // {
         timer.start();
         // }
@@ -151,12 +155,12 @@ int main(int argc, char *argv[])
 
         runTime.write();
 
-        // rhoPimpleFoam_PostHocVis: Stop timer
+        // rhoPimpleFoam_InSituVis: Stop timer
         // {
         timer.stop();
         // }
 
-        // rhoPimpleFoam_PostHocVis: Output messages
+        // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto ts = timer.sec();
         const auto Ts = kvs::String::ToString( ts, 4 );
@@ -166,7 +170,7 @@ int main(int argc, char *argv[])
         //logger( root ) << indent.nextIndent().nextIndent() << "Number of cells: " << mesh.nCells() << std::endl;
         // }
 
-        // rhoPimpleFoam_PostHocVis: Import mesh and field
+        // rhoPimpleFoam_InSituVis: Import mesh and field
         // {
         timer.start();
         auto* volume = Util::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
@@ -174,7 +178,7 @@ int main(int argc, char *argv[])
         timer.stop();
         // }
 
-        // rhoPimpleFoam_PostHocVis: Output messages
+        // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto ti = timer.sec();
         const auto Ti = kvs::String::ToString( ti, 4 );
@@ -182,30 +186,65 @@ int main(int argc, char *argv[])
         //volume->print( logger( root ), indent.nextIndent().nextIndent() );
         // }
 
-        // rhoPimpleFoam_PostHocVis: Output KVSML
+        // rhoPimpleFoam_InSituVis: Output KVSML
         timer.start();
         const std::string output_basename("output");
         const std::string output_filename = output_basename + "_" + current_time + ".kvsml";
-        volume->write( output_dirname + output_filename );
+        volume->write( output_dirname + output_filename, false );
         timer.stop();
-        delete volume;
 
-        // rhoPimpleFoam_PostHocVis: Output messages
+        // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto to = timer.sec();
         const auto To = kvs::String::ToString( to, 4 );
         logger( root ) << indent.nextIndent() << "Write: " << To << " s" << std::endl;
         // }
 
-        // rhoPimpleFoam_PostHocVis: Output messages
+	// rhoPimpleFoam_InSituVis: Rendering volume
+	// {
+	fenv_t fe;
+	std::feholdexcept( &fe );
+	timer.start();
+	auto* object = new kvs::ExternalFaces( volume );
+	delete volume;
+	kvs::OffScreen screen;
+	screen.registerObject( object );
+	screen.draw();
+	timer.stop();
+	std::feupdateenv( &fe );
+	// }
+
+        // rhoPimpleFoam_InSituVis: Output messages
         // {
-        const auto tt = ts + ti + to;
+        const auto tv = timer.sec();
+        const auto Tv = kvs::String::ToString( tv, 4 );
+        logger( root ) << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
+        // }
+
+	// rhoPimpleFoam_InSituVis: Drawback and output rendering image
+	// {
+	timer.start();
+	auto image = screen.capture();
+	image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
+	timer.stop();
+	// }
+
+        // rhoPimpleFoam_InSituVis: Output messages
+        // {
+        const auto td = timer.sec();
+        const auto Td = kvs::String::ToString( td, 4 );
+        logger( root ) << indent.nextIndent() << "Drawback: " << Td << " s" << std::endl;
+        // }
+
+        // rhoPimpleFoam_InSituVis: Output messages
+        // {
+        const auto tt = ts + ti + to + tv + td;
         const auto Tt = kvs::String::ToString( tt, 4 );
         logger( root ) << indent.nextIndent() << "---" << std::endl;
         logger( root ) << indent.nextIndent() << "Total: " << Tt << " s" << std::endl;
         // }
 
-        // rhoPimpleFoam_PostHocVis: Output messages
+        // rhoPimpleFoam_InSituVis: Output messages
         // {
         // Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
         //     << "  ClockTime = " << runTime.elapsedClockTime() << " s"

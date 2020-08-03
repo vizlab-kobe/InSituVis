@@ -8,7 +8,8 @@ EXE_INC = \
     -I$(LIB_SRC)/sampling/lnInclude \
     -I$(LIB_SRC)/fvOptions/lnInclude \
     -I${HOME}/Work/GitHub/InSituVis/OpenfoamLib \
-    -I${KVS_DIR}/include
+    -I${KVS_DIR}/include \
+    -I${KVS_OSMESA_DIR}/include -DKVS_SUPPORT_OSMESA
 
 EXE_LIBS = \
     -lfluidThermophysicalModels \
@@ -20,5 +21,6 @@ EXE_LIBS = \
     -lmeshTools \
     -lsampling \
     -lfvOptions \
-    -L${KVS_DIR}/lib -lkvsCore -lkvsSupportMPI \
-    -L${HOME}/Work/GitHub/InSituVis/OpenfoamLib -lOpenFoamInsituVis
+    -L${HOME}/Work/GitHub/InSituVis/OpenfoamLib -lOpenFoamInsituVis \
+    -L${KVS_DIR}/lib -lkvsSupportMPI -lkvsSupportOSMesa -lkvsCore \
+    -L${KVS_OSMESA_DIR}/lib ${KVS_OSMESA_LINK_LIBRARY}
