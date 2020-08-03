@@ -78,11 +78,15 @@ int main(int argc, char *argv[])
     const int root = 0;
     const int size = world.size();
     const int rank = world.rank();
+    const bool output_volume = false;
+    const bool output_image = true;
+    const bool output_sub_image = true;
     // }
 
     // rhoPimpleFoam_InSituVis: Create output directories
     // {
-    const auto output_dirname = Util::CreateOutputDirectory( world, "Output", "Proc" );
+    const std::string output_base_dirname( "Output" );
+    const auto output_dirname = Util::CreateOutputDirectory( world, output_base_dirname, "Proc" );
     if ( output_dirname.empty() )
     {
         logger( root ) << "ERROR: " << "Cannot create output directory." << std::endl;
@@ -190,7 +194,7 @@ int main(int argc, char *argv[])
         timer.start();
         const std::string output_basename("output");
         const std::string output_filename = output_basename + "_" + current_time + ".kvsml";
-        volume->write( output_dirname + output_filename, false );
+        if ( output_volume ) volume->write( output_dirname + output_filename, false );
         timer.stop();
 
         // rhoPimpleFoam_InSituVis: Output messages
@@ -225,7 +229,7 @@ int main(int argc, char *argv[])
 	// {
 	timer.start();
 	auto image = screen.capture();
-	image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
+	if ( output_sub_image ) image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
 	timer.stop();
 	// }
 
@@ -235,6 +239,37 @@ int main(int argc, char *argv[])
         const auto Td = kvs::String::ToString( td, 4 );
         logger( root ) << indent.nextIndent() << "Drawback: " << Td << " s" << std::endl;
         // }
+
+	// rhoPimpleFoam_InSituVis: Image composition
+	// {
+	timer.start();
+	auto color_buffer = screen.readbackColorBuffer();
+	auto depth_buffer = screen.readbackDepthBuffer();
+	const auto width = screen.width();
+	const auto height = screen.height();
+	const bool depth_testing = true;
+	kvs::mpi::ImageCompositor compositor( world );
+	compositor.initialize( width, height, depth_testing );
+	compositor.run( color_buffer, depth_buffer );
+	compositor.destroy();
+	timer.stop();
+	// }
+
+	// rhoPimpleFoam_InSituVis: Output composite image
+	// {
+	if ( output_image )
+	{
+	    kvs::ValueArray<kvs::UInt8> rgb( width * height * 3 );
+	    for ( size_t i = 0; i < width * height; ++i )
+	    {
+	        rgb[ 3 * i + 0 ] = color_buffer[ 4 * i + 0 ];
+		rgb[ 3 * i + 1 ] = color_buffer[ 4 * i + 1 ];
+		rgb[ 3 * i + 2 ] = color_buffer[ 4 * i + 2 ];
+	    }
+	    kvs::ColorImage composite_image( width, height, rgb );
+	    composite_image.write( output_base_dirname + "/" + kvs::File( output_filename ).baseName() + ".bmp" );
+	}
+	// }
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
