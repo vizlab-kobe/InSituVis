@@ -50,6 +50,8 @@ Description
 #include <kvs/String>
 #include <kvs/OffScreen>
 #include <kvs/ExternalFaces>
+#include <kvs/PolygonRenderer>
+#include <kvs/Png>
 #include "../Util/CreateOutputDirectory.h"
 #include "../Util/CreateUnstructuredVolumeObject.h"
 // }
@@ -73,11 +75,14 @@ int main(int argc, char *argv[])
     Foam::messageStream::level = 0; // Disable Foam::Info
     kvs::mpi::Communicator world( MPI_COMM_WORLD );
     kvs::mpi::Logger logger( world );
-    kvs::Timer timer;
     const kvs::Indent indent(4);
     const int root = 0;
     const int size = world.size();
     const int rank = world.rank();
+    const size_t image_width = 512;
+    const size_t image_height = 512;
+    const bool depth_testing = true;
+    const bool output_sim = false;
     const bool output_volume = false;
     const bool output_image = true;
     const bool output_sub_image = true;
@@ -110,6 +115,12 @@ int main(int argc, char *argv[])
     logger( root ) << std::endl;
     // }
 
+    // rhoPimpleFoam_InSituVis: Setup image compositor
+    // {
+    kvs::mpi::ImageCompositor compositor( world );
+    compositor.initialize( image_width, image_height, depth_testing );
+    // }
+
     while (runTime.run())
     {
         #include "readTimeControls.H"
@@ -131,6 +142,7 @@ int main(int argc, char *argv[])
 
         // rhoPimpleFoam_InSituVis: Start timer
         // {
+        kvs::Timer timer;
         timer.start();
         // }
 
@@ -157,7 +169,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        runTime.write();
+        if ( output_sim ) runTime.write();
 
         // rhoPimpleFoam_InSituVis: Stop timer
         // {
@@ -177,8 +189,23 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_InSituVis: Import mesh and field
         // {
         timer.start();
-        auto* volume = Util::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
-        //auto* volume = Util::CreateUnstructuredVolumeObject( mesh, U ); // U: velocity (magnitude)
+        //auto* volume = Util::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
+        auto* volume = Util::CreateUnstructuredVolumeObject( mesh, U ); // U: velocity (magnitude)
+        auto min_coord = volume->minObjectCoord();
+        auto max_coord = volume->maxObjectCoord();
+        auto min_value = volume->minValue();
+        auto max_value = volume->maxValue();
+        world.allReduce( min_coord[0], min_coord[0], MPI_MIN );
+        world.allReduce( min_coord[1], min_coord[1], MPI_MIN );
+        world.allReduce( min_coord[2], min_coord[2], MPI_MIN );
+        world.allReduce( max_coord[0], max_coord[0], MPI_MAX );
+        world.allReduce( max_coord[1], max_coord[1], MPI_MAX );
+        world.allReduce( max_coord[2], max_coord[2], MPI_MAX );
+        world.allReduce( min_value, min_value, MPI_MIN );
+        world.allReduce( max_value, max_value, MPI_MAX );
+        volume->setMinMaxObjectCoords( min_coord, max_coord );
+        volume->setMinMaxExternalCoords( min_coord, max_coord );
+        volume->setMinMaxValues( min_value, max_value );
         timer.stop();
         // }
 
@@ -192,8 +219,10 @@ int main(int argc, char *argv[])
 
         // rhoPimpleFoam_InSituVis: Output KVSML
         timer.start();
+        std::ostringstream output_index; output_index << std::setw(5) << std::setfill('0') << current_time_index;
         const std::string output_basename("output");
-        const std::string output_filename = output_basename + "_" + current_time + ".kvsml";
+        //const std::string output_filename = output_basename + "_" + current_time + ".kvsml";
+        const std::string output_filename = output_basename + "_" + output_index.str() + ".kvsml";
         if ( output_volume ) volume->write( output_dirname + output_filename, false );
         timer.stop();
 
@@ -204,19 +233,22 @@ int main(int argc, char *argv[])
         logger( root ) << indent.nextIndent() << "Write: " << To << " s" << std::endl;
         // }
 
-	// rhoPimpleFoam_InSituVis: Rendering volume
-	// {
-	fenv_t fe;
-	std::feholdexcept( &fe );
-	timer.start();
-	auto* object = new kvs::ExternalFaces( volume );
-	delete volume;
-	kvs::OffScreen screen;
-	screen.registerObject( object );
-	screen.draw();
-	timer.stop();
-	std::feupdateenv( &fe );
-	// }
+        // rhoPimpleFoam_InSituVis: Rendering volume
+        // {
+        fenv_t fe;
+        std::feholdexcept( &fe );
+        timer.start();
+        auto* object = new kvs::ExternalFaces( volume );
+        auto* renderer = new kvs::glsl::PolygonRenderer();
+        delete volume;
+        kvs::OffScreen screen;
+        //screen.setBackgroundColor( kvs::RGBColor::Black() );
+        screen.setSize( image_width, image_height );
+        screen.registerObject( object, renderer );
+        screen.draw();
+        timer.stop();
+        std::feupdateenv( &fe );
+        // }
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
@@ -225,13 +257,13 @@ int main(int argc, char *argv[])
         logger( root ) << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
         // }
 
-	// rhoPimpleFoam_InSituVis: Drawback and output rendering image
-	// {
-	timer.start();
-	auto image = screen.capture();
-	if ( output_sub_image ) image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
-	timer.stop();
-	// }
+        // rhoPimpleFoam_InSituVis: Drawback and output rendering image
+        // {
+        timer.start();
+        auto image = screen.capture();
+        if ( output_sub_image ) image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
+        timer.stop();
+        // }
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
@@ -240,36 +272,24 @@ int main(int argc, char *argv[])
         logger( root ) << indent.nextIndent() << "Drawback: " << Td << " s" << std::endl;
         // }
 
-	// rhoPimpleFoam_InSituVis: Image composition
-	// {
-	timer.start();
-	auto color_buffer = screen.readbackColorBuffer();
-	auto depth_buffer = screen.readbackDepthBuffer();
-	const auto width = screen.width();
-	const auto height = screen.height();
-	const bool depth_testing = true;
-	kvs::mpi::ImageCompositor compositor( world );
-	compositor.initialize( width, height, depth_testing );
-	compositor.run( color_buffer, depth_buffer );
-	compositor.destroy();
-	timer.stop();
-	// }
+        // rhoPimpleFoam_InSituVis: Image composition
+        // {
+        timer.start();
+        auto color_buffer = screen.readbackColorBuffer();
+        auto depth_buffer = screen.readbackDepthBuffer();
+        compositor.run( color_buffer, depth_buffer );
+        timer.stop();
+        // }
 
-	// rhoPimpleFoam_InSituVis: Output composite image
-	// {
-	if ( output_image )
-	{
-	    kvs::ValueArray<kvs::UInt8> rgb( width * height * 3 );
-	    for ( size_t i = 0; i < width * height; ++i )
-	    {
-	        rgb[ 3 * i + 0 ] = color_buffer[ 4 * i + 0 ];
-		rgb[ 3 * i + 1 ] = color_buffer[ 4 * i + 1 ];
-		rgb[ 3 * i + 2 ] = color_buffer[ 4 * i + 2 ];
-	    }
-	    kvs::ColorImage composite_image( width, height, rgb );
-	    composite_image.write( output_base_dirname + "/" + kvs::File( output_filename ).baseName() + ".bmp" );
-	}
-	// }
+        // rhoPimpleFoam_InSituVis: Output composite image
+        // {
+        if ( output_image )
+        {
+            world.barrier();
+            kvs::Png composed_image( image_width, image_height, color_buffer );
+            composed_image.write( output_base_dirname + "/" + kvs::File( output_filename ).baseName() + ".png" );
+        }
+        // }
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
@@ -290,6 +310,11 @@ int main(int argc, char *argv[])
         logger( root ) << std::endl;
         // }
     }
+
+    // rhoPimpleFoam_InSituVis: Destory image compositor
+    // {
+    compositor.destroy();
+    // }
 
     //Info<< "End\n" << endl;
 

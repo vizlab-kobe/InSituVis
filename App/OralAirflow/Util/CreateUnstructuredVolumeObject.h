@@ -10,8 +10,7 @@
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/ValueArray>
 #include <kvs/InverseDistanceWeighting>
-
-//#include "InverseDistanceWeighting.h"
+#include "InverseDistanceWeighting.h"
 
 
 namespace Util
@@ -101,7 +100,8 @@ inline kvs::ValueArray<kvs::UInt32> CalculateConnections(
         const auto cell_nfaces = mesh.cells()[i].size();
         if ( cell_nnodes == 8 && cell_nfaces == 6 )
         {
-            kvs::UInt32 id[8];
+//            kvs::UInt32 id[8];
+            Foam::label id[8];
             std::copy_n( mesh.cellPoints()[i].begin(), 8, id );
 /*
             connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
