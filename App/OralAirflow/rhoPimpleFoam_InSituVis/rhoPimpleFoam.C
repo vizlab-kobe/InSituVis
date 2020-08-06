@@ -54,6 +54,7 @@ Description
 #include <kvs/Png>
 #include "../Util/Importer.h"
 #include "../Util/OutputDirectory.h"
+#include "Visualization.h"
 // }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
