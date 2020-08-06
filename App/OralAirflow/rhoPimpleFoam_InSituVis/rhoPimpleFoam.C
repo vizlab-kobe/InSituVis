@@ -54,8 +54,6 @@ Description
 #include <kvs/Png>
 #include "../Util/Importer.h"
 #include "../Util/OutputDirectory.h"
-#include "../Util/CreateOutputDirectory.h"
-#include "../Util/CreateUnstructuredVolumeObject.h"
 // }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -132,7 +130,7 @@ int main(int argc, char *argv[])
 
         runTime++;
 
-        // rhoPimpleFoam_InSituVis: Output messages
+        // rhoPimpleFoam_InSituVis: Output loop information
         // {
         // Info<< "Time = " << runTime.timeName() << nl << endl;
         const auto current_time = runTime.timeName();
@@ -143,7 +141,7 @@ int main(int argc, char *argv[])
         logger( root ) << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
         // }
 
-        // rhoPimpleFoam_InSituVis: Start timer
+        // rhoPimpleFoam_InSituVis: Start simulation
         // {
         kvs::Timer timer;
         timer.start();
@@ -174,19 +172,13 @@ int main(int argc, char *argv[])
 
         if ( output_sim ) runTime.write();
 
-        // rhoPimpleFoam_InSituVis: Stop timer
+        // rhoPimpleFoam_InSituVis: End simulation
         // {
         timer.stop();
-        // }
-
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
         const auto ts = timer.sec();
         const auto Ts = kvs::String::From( ts, 4 );
         logger( root ) << indent << "Processing Times:" << std::endl;
         logger( root ) << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
-        //logger( root ) << indent.nextIndent().nextIndent() << "Number of nodes: " << mesh.nPoints() << std::endl;
-        //logger( root ) << indent.nextIndent().nextIndent() << "Number of cells: " << mesh.nCells() << std::endl;
         // }
 
         // rhoPimpleFoam_InSituVis: Import mesh and field
@@ -194,17 +186,13 @@ int main(int argc, char *argv[])
         timer.start();
         auto* volume = new Util::Importer( world, mesh, U );
         timer.stop();
-        // }
-
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
         const auto ti = timer.sec();
         const auto Ti = kvs::String::From( ti, 4 );
         logger( root ) << indent.nextIndent() << "Import: " << Ti << " s" << std::endl;
         //volume->print( logger( root ), indent.nextIndent().nextIndent() );
         // }
 
-        // rhoPimpleFoam_InSituVis: Output KVSML
+        // rhoPimpleFoam_InSituVis: Write volume data
         timer.start();
         //const std::string output_number = current_time;
         const std::string output_number = kvs::String::From( current_time_index, 5, '0' );
@@ -212,15 +200,12 @@ int main(int argc, char *argv[])
         const std::string output_filename = output_basename + "_" + output_number + ".kvsml";
         if ( output_volume ) volume->write( output_dirname + output_filename, false );
         timer.stop();
-
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
-        const auto to = timer.sec();
-        const auto To = kvs::String::From( to, 4 );
-        logger( root ) << indent.nextIndent() << "Write: " << To << " s" << std::endl;
+        const auto tv = timer.sec();
+        const auto Tv = kvs::String::From( tv, 4 );
+        logger( root ) << indent.nextIndent() << "Write volume: " << Tv << " s" << std::endl;
         // }
 
-        // rhoPimpleFoam_InSituVis: Rendering volume
+        // rhoPimpleFoam_InSituVis: Render volume data
         // {
         fenv_t fe;
         std::feholdexcept( &fe );
@@ -235,28 +220,23 @@ int main(int argc, char *argv[])
         screen.draw();
         timer.stop();
         std::feupdateenv( &fe );
+        const auto tr = timer.sec();
+        const auto Tr = kvs::String::From( tr, 4 );
+        logger( root ) << indent.nextIndent() << "Visualization: " << Tr << " s" << std::endl;
         // }
 
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
-        const auto tv = timer.sec();
-        const auto Tv = kvs::String::From( tv, 4 );
-        logger( root ) << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
-        // }
-
-        // rhoPimpleFoam_InSituVis: Drawback and output rendering image
+        // rhoPimpleFoam_InSituVis: Write rendering image
         // {
         timer.start();
-        auto image = screen.capture();
-        if ( output_sub_image ) image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
+        if ( output_sub_image )
+        {
+            auto image = screen.capture();
+            image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
+        }
         timer.stop();
-        // }
-
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
-        const auto td = timer.sec();
-        const auto Td = kvs::String::From( td, 4 );
-        logger( root ) << indent.nextIndent() << "Drawback: " << Td << " s" << std::endl;
+        const auto tw = timer.sec();
+        const auto Tw = kvs::String::From( tw, 4 );
+        logger( root ) << indent.nextIndent() << "Write sub-image: " << Tw << " s" << std::endl;
         // }
 
         // rhoPimpleFoam_InSituVis: Image composition
@@ -265,22 +245,21 @@ int main(int argc, char *argv[])
         auto color_buffer = screen.readbackColorBuffer();
         auto depth_buffer = screen.readbackDepthBuffer();
         compositor.run( color_buffer, depth_buffer );
-        timer.stop();
-        // }
-
-        // rhoPimpleFoam_InSituVis: Output composite image
-        // {
         if ( output_image )
         {
             world.barrier();
             kvs::Png composed_image( image_width, image_height, color_buffer );
             composed_image.write( output_base_dirname + "/" + kvs::File( output_filename ).baseName() + ".png" );
         }
+        timer.stop();
+        const auto tc = timer.sec();
+        const auto Tc = kvs::String::From( tc, 4 );
+        logger( root ) << indent.nextIndent() << "Composition: " << Tc << " s" << std::endl;
         // }
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
-        const auto tt = ts + ti + to + tv + td;
+        const auto tt = ts + ti + tv + tr + tw + tc;
         const auto Tt = kvs::String::From( tt, 4 );
         logger( root ) << indent.nextIndent() << "---" << std::endl;
         logger( root ) << indent.nextIndent() << "Total: " << Tt << " s" << std::endl;
