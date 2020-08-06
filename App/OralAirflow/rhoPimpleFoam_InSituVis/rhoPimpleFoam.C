@@ -52,6 +52,8 @@ Description
 #include <kvs/ExternalFaces>
 #include <kvs/PolygonRenderer>
 #include <kvs/Png>
+#include "../Util/Importer.h"
+#include "../Util/OutputDirectory.h"
 #include "../Util/CreateOutputDirectory.h"
 #include "../Util/CreateUnstructuredVolumeObject.h"
 // }
@@ -90,13 +92,14 @@ int main(int argc, char *argv[])
 
     // rhoPimpleFoam_InSituVis: Create output directories
     // {
-    const std::string output_base_dirname( "Output" );
-    const auto output_dirname = Util::CreateOutputDirectory( world, output_base_dirname, "Proc" );
-    if ( output_dirname.empty() )
+    Util::OutputDirectory output_dir( "Output", "Proc_" );
+    if ( !output_dir.create( world ) )
     {
         logger( root ) << "ERROR: " << "Cannot create output directory." << std::endl;
         world.abort();
     }
+    const auto output_base_dirname = output_dir.baseDirectoryName();
+    const auto output_dirname = output_dir.name();
     // }
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -179,7 +182,7 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto ts = timer.sec();
-        const auto Ts = kvs::String::ToString( ts, 4 );
+        const auto Ts = kvs::String::From( ts, 4 );
         logger( root ) << indent << "Processing Times:" << std::endl;
         logger( root ) << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
         //logger( root ) << indent.nextIndent().nextIndent() << "Number of nodes: " << mesh.nPoints() << std::endl;
@@ -189,47 +192,31 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_InSituVis: Import mesh and field
         // {
         timer.start();
-        //auto* volume = Util::CreateUnstructuredVolumeObject( mesh, p ); // p: pressure
-        auto* volume = Util::CreateUnstructuredVolumeObject( mesh, U ); // U: velocity (magnitude)
-        auto min_coord = volume->minObjectCoord();
-        auto max_coord = volume->maxObjectCoord();
-        auto min_value = volume->minValue();
-        auto max_value = volume->maxValue();
-        world.allReduce( min_coord[0], min_coord[0], MPI_MIN );
-        world.allReduce( min_coord[1], min_coord[1], MPI_MIN );
-        world.allReduce( min_coord[2], min_coord[2], MPI_MIN );
-        world.allReduce( max_coord[0], max_coord[0], MPI_MAX );
-        world.allReduce( max_coord[1], max_coord[1], MPI_MAX );
-        world.allReduce( max_coord[2], max_coord[2], MPI_MAX );
-        world.allReduce( min_value, min_value, MPI_MIN );
-        world.allReduce( max_value, max_value, MPI_MAX );
-        volume->setMinMaxObjectCoords( min_coord, max_coord );
-        volume->setMinMaxExternalCoords( min_coord, max_coord );
-        volume->setMinMaxValues( min_value, max_value );
+        auto* volume = new Util::Importer( world, mesh, U );
         timer.stop();
         // }
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto ti = timer.sec();
-        const auto Ti = kvs::String::ToString( ti, 4 );
+        const auto Ti = kvs::String::From( ti, 4 );
         logger( root ) << indent.nextIndent() << "Import: " << Ti << " s" << std::endl;
         //volume->print( logger( root ), indent.nextIndent().nextIndent() );
         // }
 
         // rhoPimpleFoam_InSituVis: Output KVSML
         timer.start();
-        std::ostringstream output_index; output_index << std::setw(5) << std::setfill('0') << current_time_index;
+        //const std::string output_number = current_time;
+        const std::string output_number = kvs::String::From( current_time_index, 5, '0' );
         const std::string output_basename("output");
-        //const std::string output_filename = output_basename + "_" + current_time + ".kvsml";
-        const std::string output_filename = output_basename + "_" + output_index.str() + ".kvsml";
+        const std::string output_filename = output_basename + "_" + output_number + ".kvsml";
         if ( output_volume ) volume->write( output_dirname + output_filename, false );
         timer.stop();
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto to = timer.sec();
-        const auto To = kvs::String::ToString( to, 4 );
+        const auto To = kvs::String::From( to, 4 );
         logger( root ) << indent.nextIndent() << "Write: " << To << " s" << std::endl;
         // }
 
@@ -253,7 +240,7 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto tv = timer.sec();
-        const auto Tv = kvs::String::ToString( tv, 4 );
+        const auto Tv = kvs::String::From( tv, 4 );
         logger( root ) << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
         // }
 
@@ -268,7 +255,7 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto td = timer.sec();
-        const auto Td = kvs::String::ToString( td, 4 );
+        const auto Td = kvs::String::From( td, 4 );
         logger( root ) << indent.nextIndent() << "Drawback: " << Td << " s" << std::endl;
         // }
 
@@ -294,7 +281,7 @@ int main(int argc, char *argv[])
         // rhoPimpleFoam_InSituVis: Output messages
         // {
         const auto tt = ts + ti + to + tv + td;
-        const auto Tt = kvs::String::ToString( tt, 4 );
+        const auto Tt = kvs::String::From( tt, 4 );
         logger( root ) << indent.nextIndent() << "---" << std::endl;
         logger( root ) << indent.nextIndent() << "Total: " << Tt << " s" << std::endl;
         // }
