@@ -9,6 +9,7 @@
 #include <kvs/OffScreen>
 #include <kvs/ExternalFaces>
 #include <kvs/PolygonRenderer>
+#include <kvs/Bounds>
 #include <kvs/ColorImage>
 #include <kvs/GrayImage>
 #include "../Util/Importer.h"
@@ -65,6 +66,7 @@ public:
             auto* object = new kvs::ExternalFaces( &volume );
             auto* renderer = new kvs::glsl::PolygonRenderer();
             screen.registerObject( object, renderer );
+            screen.registerObject( object, new kvs::Bounds() );
         };
     }
 
@@ -209,16 +211,21 @@ private:
             }
         }
 
+        // Image composition
         if ( !m_compositor.run( color_buffer, depth_buffer ) )
         {
             this->log() << "ERROR: " << "Cannot compose images." << std::endl;
         }
 
         // Output composite image
-        if ( m_enable_output_image )
+        if ( m_world.rank() == m_world.root() )
         {
-            kvs::ColorImage image( m_width, m_height, color_buffer );
-            image.write( output_base_dirname + "/" + output_filename + ".bmp" );
+            if ( m_enable_output_image )
+            {
+                const auto filename = output_base_dirname + "/" + output_filename + ".bmp";
+                kvs::ColorImage image( m_width, m_height, color_buffer );
+                image.write( filename );
+            }
         }
     }
 };

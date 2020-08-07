@@ -65,6 +65,8 @@ int main(int argc, char *argv[])
     const kvs::Indent indent(4);
     local::Visualization vis( MPI_COMM_WORLD );
     vis.setSize( 512, 512 );
+    vis.setOutputImageEnabled( true );
+    vis.setOutputSubImageEnabled( false, false, false );
     vis.setOutputDirectoryName( "Output", "Proc_" );
     if ( !vis.initialize() )
     {
