@@ -9,7 +9,8 @@
 #include <kvs/OffScreen>
 #include <kvs/ExternalFaces>
 #include <kvs/PolygonRenderer>
-#include <kvs/Png>
+#include <kvs/ColorImage>
+#include <kvs/GrayImage>
 #include "../Util/Importer.h"
 #include "../Util/OutputDirectory.h"
 
@@ -36,8 +37,6 @@ private:
     bool m_enable_output_subimage;
     Pipeline m_pipeline; ///< visualization pipeline
     Volume* m_volume;
-//    std::string m_output_base_dirname;
-//    std::string m_output_dirname;
 
 public:
     Visualization( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -105,30 +104,6 @@ public:
         return true;
     }
 
-/*
-    bool initialize( const std::string& base_dirname, const std::string& sub_dirname )
-    {
-        Util::OutputDirectory output_dir( base_dirname, sub_dirname );
-        if ( !output_dir.create( m_world ) )
-        {
-            m_logger( m_world.root() ) << "ERROR: " << "Cannot create output directory." << std::endl;
-            return false;
-        }
-
-        m_output_base_dirname = output_dir.baseDirectoryName();
-        m_output_dirname = output_dir.name();
-
-        const bool depth_testing = true;
-        if ( !m_compositor.initialize( m_width, m_height, depth_testing ) )
-        {
-            m_logger( m_world.root() ) << "ERROR: " << "Cannot initialize image compositor." << std::endl;
-            return false;
-        }
-
-        return true;
-    }
-*/
-
     bool finalize()
     {
         m_compositor.destroy();
@@ -155,6 +130,12 @@ private:
         const std::string output_dirname = m_output_directory.name();
         const std::string output_base_dirname = m_output_directory.baseDirectoryName();
 
+        // Output volume data
+        if ( m_enable_output_volume )
+        {
+            volume->write( output_dirname + output_filename + ".kvsml", false );
+        }
+
         kvs::OffScreen screen;
         screen.setSize( m_width, m_height );
 
@@ -168,6 +149,23 @@ private:
 
         auto color_buffer = screen.readbackColorBuffer();
         auto depth_buffer = screen.readbackDepthBuffer();
+
+        // Output rendering image
+        if ( m_enable_output_subimage )
+        {
+            // RGB image
+            kvs::ColorImage image( m_width, m_height, color_buffer );
+            image.write( output_dirname + output_filename + ".bmp" );
+
+            // Depth image
+//            kvs::GrayImage depth_image( m_width, m_height, depth_buffer );
+//            depth_image.write( output_dirname + output_basename + "_depth_" + output_number + ".bmp" );
+
+            // Alpha image
+//            kvs::GrayImage alpha_image( m_width, m_height, color_buffer, 3 );
+//            alpha_image.write( output_dirname + output_basename + "_alpha_" + output_number + ".bmp" );
+        }
+
         m_compositor.run( color_buffer, depth_buffer );
 
         // Output composite image
