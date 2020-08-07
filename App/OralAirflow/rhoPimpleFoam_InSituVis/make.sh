@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ -z $WM_DIR ]; then
-    source ../etc/bashrc
+    . ../etc/bashrc
 fi
 
 wmake

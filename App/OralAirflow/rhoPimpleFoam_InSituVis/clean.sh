@@ -2,7 +2,7 @@
 PROGRAM=rhoPimpleFoam_InSituVis
 
 if [ -z $WM_DIR ]; then
-    source ../etc/bashrc
+    . ../etc/bashrc
 fi
 
 wclean
