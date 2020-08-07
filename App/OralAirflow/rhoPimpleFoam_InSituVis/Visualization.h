@@ -18,6 +18,11 @@
 namespace local
 {
 
+/*===========================================================================*/
+/**
+ *  @brief  Visualization process class.
+ */
+/*===========================================================================*/
 class Visualization
 {
 public:
@@ -26,28 +31,32 @@ public:
     using Pipeline = std::function<void(Screen&,Volume&)>;
 
 private:
-    kvs::mpi::Communicator m_world;
-    kvs::mpi::Logger m_logger;
-    kvs::mpi::ImageCompositor m_compositor;
-    size_t m_width;
-    size_t m_height;
-    Util::OutputDirectory m_output_directory;
-    bool m_enable_output_volume;
-    bool m_enable_output_image;
-    bool m_enable_output_subimage;
+    kvs::mpi::Communicator m_world; ///< MPI communicator
+    kvs::mpi::Logger m_log; ///< MPI log stream
+    kvs::mpi::ImageCompositor m_compositor; ///< image compositor
+    size_t m_width; ///< width of rendering image
+    size_t m_height; ///< height of rendering image
+    Util::OutputDirectory m_output_directory; ///< output directory
+    bool m_enable_output_volume; ///< flag for writing volume data
+    bool m_enable_output_image; ///< flag for writing final image data
+    bool m_enable_output_subimage; ///< flag for writing sub-volume rendering image
+    bool m_enable_output_subimage_depth; ///< flag for writing sub-volume rendering image (depth image)
+    bool m_enable_output_subimage_alpha; ///< flag for writing sub-volume rendering image (alpha image)
     Pipeline m_pipeline; ///< visualization pipeline
-    Volume* m_volume;
+    Volume* m_volume; ///< sub-volume data imported from OpenFOAM data
 
 public:
     Visualization( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
         m_world( world, root ),
-        m_logger( m_world ),
+        m_log( m_world ),
         m_compositor( m_world ),
         m_width( 512 ),
         m_height( 512 ),
         m_enable_output_volume( false ),
         m_enable_output_image( true ),
-        m_enable_output_subimage( true ),
+        m_enable_output_subimage( false ),
+        m_enable_output_subimage_depth( false ),
+        m_enable_output_subimage_alpha( false ),
         m_volume( nullptr )
     {
         // Default visualization pipeline.
@@ -60,7 +69,8 @@ public:
     }
 
     kvs::mpi::Communicator& world() { return m_world; }
-    std::ostream& log() { return m_logger( m_world.root() ); }
+    std::ostream& log() { return m_log( m_world.root() ); }
+    std::ostream& log( const int rank ) { return m_log( rank ); }
 
     void setPipeline( Pipeline pipeline )
     {
@@ -86,6 +96,26 @@ public:
         m_output_directory.setSubDirectoryName( sub_dirname );
     }
 
+    void setOutputVolumeEnabled( const bool enable = true )
+    {
+        m_enable_output_volume = enable;
+    }
+
+    void setOutputImageEnabled( const bool enable = true )
+    {
+        m_enable_output_image = enable;
+    }
+
+    void setOutputSubImageEnabled(
+        const bool enable = true,
+        const bool enable_depth = false,
+        const bool enable_alpha = false )
+    {
+        m_enable_output_subimage = enable;
+        m_enable_output_subimage_depth = enable_depth;
+        m_enable_output_subimage_alpha = enable_alpha;
+    }
+
     bool initialize()
     {
         if ( !m_output_directory.create( m_world ) )
@@ -106,8 +136,7 @@ public:
 
     bool finalize()
     {
-        m_compositor.destroy();
-        return true;
+        return m_compositor.destroy();
     }
 
     void exec( const Foam::Time& time, const Foam::fvMesh& mesh, const Foam::volScalarField& field )
@@ -133,41 +162,57 @@ private:
         // Output volume data
         if ( m_enable_output_volume )
         {
-            volume->write( output_dirname + output_filename + ".kvsml", false );
+            const auto filename = output_dirname + output_filename + ".kvsml";
+            volume->write( filename, false );
         }
 
+        // Execute visualization pipeline
         kvs::OffScreen screen;
         screen.setSize( m_width, m_height );
-
         m_pipeline( screen, *volume );
         delete volume;
 
+        // Draw image
         fenv_t fe;
         std::feholdexcept( &fe );
         screen.draw();
         std::feupdateenv( &fe );
 
+        // Read-back image
         auto color_buffer = screen.readbackColorBuffer();
         auto depth_buffer = screen.readbackDepthBuffer();
 
-        this->log() << "dw " << depth_buffer.size() << std::endl;
         // Output rendering image
         if ( m_enable_output_subimage )
         {
             // RGB image
-            kvs::ColorImage image( m_width, m_height, color_buffer );
-            image.write( output_dirname + output_filename + ".bmp" );
+            {
+                const auto filename = output_dirname + output_filename + ".bmp";
+                kvs::ColorImage image( m_width, m_height, color_buffer );
+                image.write( filename );
+            }
 
             // Depth image
-//            kvs::GrayImage depth_image( m_width, m_height, depth_buffer );
-//            depth_image.write( output_dirname + output_basename + "_depth_" + output_number + ".bmp" );
+            if ( m_enable_output_subimage_depth )
+            {
+                const auto filename = output_dirname + output_basename + "_depth_" + output_number + ".bmp";
+                kvs::GrayImage depth_image( m_width, m_height, depth_buffer );
+                depth_image.write( filename );
+            }
 
             // Alpha image
-            kvs::GrayImage alpha_image( m_width, m_height, color_buffer, 3 );
-            alpha_image.write( output_dirname + output_basename + "_alpha_" + output_number + ".bmp" );
+            if ( m_enable_output_subimage_alpha )
+            {
+                const auto filename = output_dirname + output_basename + "_alpha_" + output_number + ".bmp";
+                kvs::GrayImage alpha_image( m_width, m_height, color_buffer, 3 );
+                alpha_image.write( filename );
+            }
         }
 
-        m_compositor.run( color_buffer, depth_buffer );
+        if ( !m_compositor.run( color_buffer, depth_buffer ) )
+        {
+            this->log() << "ERROR: " << "Cannot compose images." << std::endl;
+        }
 
         // Output composite image
         if ( m_enable_output_image )
