@@ -150,6 +150,7 @@ private:
         auto color_buffer = screen.readbackColorBuffer();
         auto depth_buffer = screen.readbackDepthBuffer();
 
+        this->log() << "dw " << depth_buffer.size() << std::endl;
         // Output rendering image
         if ( m_enable_output_subimage )
         {
@@ -162,8 +163,8 @@ private:
 //            depth_image.write( output_dirname + output_basename + "_depth_" + output_number + ".bmp" );
 
             // Alpha image
-//            kvs::GrayImage alpha_image( m_width, m_height, color_buffer, 3 );
-//            alpha_image.write( output_dirname + output_basename + "_alpha_" + output_number + ".bmp" );
+            kvs::GrayImage alpha_image( m_width, m_height, color_buffer, 3 );
+            alpha_image.write( output_dirname + output_basename + "_alpha_" + output_number + ".bmp" );
         }
 
         m_compositor.run( color_buffer, depth_buffer );
