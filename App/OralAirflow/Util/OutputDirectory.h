@@ -13,10 +13,16 @@ class OutputDirectory
 {
 private:
     std::string m_base_dirname; ///< base directory name (e.g. "Output")
-    std::string m_sub_dirname; ///< sub directory name (e.g. "Proc")
+    std::string m_sub_dirname; ///< sub directory name (e.g. "Proc_")
     std::string m_dirname; ///< output directory name (e.g. "Output/Proc_0000")
 
 public:
+    OutputDirectory():
+        m_base_dirname(""),
+        m_sub_dirname("")
+    {
+    }
+
     OutputDirectory(
         const std::string& base_dirname,
         const std::string& sub_dirname ):
@@ -28,6 +34,16 @@ public:
     const std::string& baseDirectoryName() const { return m_base_dirname; }
     const std::string& subDirectoryName() const { return m_sub_dirname; }
     const std::string& name() const { return m_dirname; }
+
+    void setBaseDirectoryName( const std::string& dirname )
+    {
+        m_base_dirname = dirname;
+    }
+
+    void setSubDirectoryName( const std::string& dirname )
+    {
+        m_sub_dirname = dirname;
+    }
 
     bool create( kvs::mpi::Communicator& world )
     {

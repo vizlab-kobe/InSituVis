@@ -42,18 +42,6 @@ Description
 
 // rhoPimpleFoam_InSituVis: Headers
 // {
-#include <cfenv>
-#include <kvs/mpi/Communicator>
-#include <kvs/mpi/Logger>
-#include <kvs/mpi/ImageCompositor>
-#include <kvs/Timer>
-#include <kvs/String>
-#include <kvs/OffScreen>
-#include <kvs/ExternalFaces>
-#include <kvs/PolygonRenderer>
-#include <kvs/Png>
-#include "../Util/Importer.h"
-#include "../Util/OutputDirectory.h"
 #include "Visualization.h"
 // }
 
@@ -74,31 +62,14 @@ int main(int argc, char *argv[])
     // rhoPimpleFoam_InSituVis: Parameter settings
     // {
     Foam::messageStream::level = 0; // Disable Foam::Info
-    kvs::mpi::Communicator world( MPI_COMM_WORLD );
-    kvs::mpi::Logger logger( world );
     const kvs::Indent indent(4);
-    const int root = 0;
-    const int size = world.size();
-    const int rank = world.rank();
-    const size_t image_width = 512;
-    const size_t image_height = 512;
-    const bool depth_testing = true;
-    const bool output_sim = false;
-    const bool output_volume = false;
-    const bool output_image = true;
-    const bool output_sub_image = true;
-    // }
-
-    // rhoPimpleFoam_InSituVis: Create output directories
-    // {
-    Util::OutputDirectory output_dir( "Output", "Proc_" );
-    if ( !output_dir.create( world ) )
+    local::Visualization vis( MPI_COMM_WORLD );
+    vis.setSize( 512, 512 );
+    if ( !vis.initialize( "Output", "Proc_" ) )
     {
-        logger( root ) << "ERROR: " << "Cannot create output directory." << std::endl;
-        world.abort();
+        vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
+        vis.world().abort();
     }
-    const auto output_base_dirname = output_dir.baseDirectoryName();
-    const auto output_dirname = output_dir.name();
     // }
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -110,17 +81,11 @@ int main(int argc, char *argv[])
     const auto start_time_index = runTime.startTimeIndex();
     const auto end_time = runTime.endTime().value();
     const auto end_time_index = static_cast<int>( end_time / runTime.deltaT().value() );
-    logger( root ) << std::endl;
-    logger( root ) << "STARTING TIME LOOP" << std::endl;
-    logger( root ) << indent << "Start time and index: " << start_time << ", " << start_time_index << std::endl;
-    logger( root ) << indent << "End time and index: " << end_time << ", " << end_time_index << std::endl;
-    logger( root ) << std::endl;
-    // }
-
-    // rhoPimpleFoam_InSituVis: Setup image compositor
-    // {
-    kvs::mpi::ImageCompositor compositor( world );
-    compositor.initialize( image_width, image_height, depth_testing );
+    vis.log() << std::endl;
+    vis.log() << "STARTING TIME LOOP" << std::endl;
+    vis.log() << indent << "Start time and index: " << start_time << ", " << start_time_index << std::endl;
+    vis.log() << indent << "End time and index: " << end_time << ", " << end_time_index << std::endl;
+    vis.log() << std::endl;
     // }
 
     while (runTime.run())
@@ -136,10 +101,10 @@ int main(int argc, char *argv[])
         // Info<< "Time = " << runTime.timeName() << nl << endl;
         const auto current_time = runTime.timeName();
         const auto current_time_index = runTime.timeIndex();
-        logger( root ) << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
-        logger( root ) << indent << "T: " << current_time << std::endl;
-        logger( root ) << indent << "End T: " << end_time << std::endl;
-        logger( root ) << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
+        vis.log() << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
+        vis.log() << indent << "T: " << current_time << std::endl;
+        vis.log() << indent << "End T: " << end_time << std::endl;
+        vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
         // }
 
         // rhoPimpleFoam_InSituVis: Start simulation
@@ -171,100 +136,24 @@ int main(int argc, char *argv[])
             }
         }
 
-        if ( output_sim ) runTime.write();
+//        if ( output_sim ) runTime.write();
+        runTime.write();
 
         // rhoPimpleFoam_InSituVis: End simulation
         // {
         timer.stop();
         const auto ts = timer.sec();
         const auto Ts = kvs::String::From( ts, 4 );
-        logger( root ) << indent << "Processing Times:" << std::endl;
-        logger( root ) << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
+        vis.log() << indent << "Processing Times:" << std::endl;
+        vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
         // }
 
-        // rhoPimpleFoam_InSituVis: Import mesh and field
-        // {
         timer.start();
-        auto* volume = new Util::Importer( world, mesh, U );
-        timer.stop();
-        const auto ti = timer.sec();
-        const auto Ti = kvs::String::From( ti, 4 );
-        logger( root ) << indent.nextIndent() << "Import: " << Ti << " s" << std::endl;
-        //volume->print( logger( root ), indent.nextIndent().nextIndent() );
-        // }
-
-        // rhoPimpleFoam_InSituVis: Write volume data
-        timer.start();
-        //const std::string output_number = current_time;
-        const std::string output_number = kvs::String::From( current_time_index, 5, '0' );
-        const std::string output_basename("output");
-        const std::string output_filename = output_basename + "_" + output_number + ".kvsml";
-        if ( output_volume ) volume->write( output_dirname + output_filename, false );
+        vis.exec( runTime, mesh, U );
         timer.stop();
         const auto tv = timer.sec();
         const auto Tv = kvs::String::From( tv, 4 );
-        logger( root ) << indent.nextIndent() << "Write volume: " << Tv << " s" << std::endl;
-        // }
-
-        // rhoPimpleFoam_InSituVis: Render volume data
-        // {
-        fenv_t fe;
-        std::feholdexcept( &fe );
-        timer.start();
-        auto* object = new kvs::ExternalFaces( volume );
-        auto* renderer = new kvs::glsl::PolygonRenderer();
-        delete volume;
-        kvs::OffScreen screen;
-        //screen.setBackgroundColor( kvs::RGBColor::Black() );
-        screen.setSize( image_width, image_height );
-        screen.registerObject( object, renderer );
-        screen.draw();
-        timer.stop();
-        std::feupdateenv( &fe );
-        const auto tr = timer.sec();
-        const auto Tr = kvs::String::From( tr, 4 );
-        logger( root ) << indent.nextIndent() << "Visualization: " << Tr << " s" << std::endl;
-        // }
-
-        // rhoPimpleFoam_InSituVis: Write rendering image
-        // {
-        timer.start();
-        if ( output_sub_image )
-        {
-            auto image = screen.capture();
-            image.write( output_dirname + kvs::File( output_filename ).baseName() + ".bmp" );
-        }
-        timer.stop();
-        const auto tw = timer.sec();
-        const auto Tw = kvs::String::From( tw, 4 );
-        logger( root ) << indent.nextIndent() << "Write sub-image: " << Tw << " s" << std::endl;
-        // }
-
-        // rhoPimpleFoam_InSituVis: Image composition
-        // {
-        timer.start();
-        auto color_buffer = screen.readbackColorBuffer();
-        auto depth_buffer = screen.readbackDepthBuffer();
-        compositor.run( color_buffer, depth_buffer );
-        if ( output_image )
-        {
-            world.barrier();
-            kvs::Png composed_image( image_width, image_height, color_buffer );
-            composed_image.write( output_base_dirname + "/" + kvs::File( output_filename ).baseName() + ".png" );
-        }
-        timer.stop();
-        const auto tc = timer.sec();
-        const auto Tc = kvs::String::From( tc, 4 );
-        logger( root ) << indent.nextIndent() << "Composition: " << Tc << " s" << std::endl;
-        // }
-
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
-        const auto tt = ts + ti + tv + tr + tw + tc;
-        const auto Tt = kvs::String::From( tt, 4 );
-        logger( root ) << indent.nextIndent() << "---" << std::endl;
-        logger( root ) << indent.nextIndent() << "Total: " << Tt << " s" << std::endl;
-        // }
+        vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
 
         // rhoPimpleFoam_InSituVis: Output messages
         // {
@@ -272,15 +161,19 @@ int main(int argc, char *argv[])
         //     << "  ClockTime = " << runTime.elapsedClockTime() << " s"
         //     << nl << endl;
         const auto elapsed_time = runTime.elapsedCpuTime();
-        logger( root ) << std::endl;
-        logger( root ) << "Elapsed Time: " << elapsed_time << " s" << std::endl;
-        logger( root ) << std::endl;
+        vis.log() << std::endl;
+        vis.log() << "Elapsed Time: " << elapsed_time << " s" << std::endl;
+        vis.log() << std::endl;
         // }
     }
 
     // rhoPimpleFoam_InSituVis: Destory image compositor
     // {
-    compositor.destroy();
+    if ( !vis.finalize() )
+    {
+        vis.log() << "ERROR: " << "Cannot finalize visualization process." << std::endl;
+        vis.world().abort();
+    }
     // }
 
     //Info<< "End\n" << endl;
