@@ -30,13 +30,14 @@ private:
     kvs::mpi::ImageCompositor m_compositor;
     size_t m_width;
     size_t m_height;
+    Util::OutputDirectory m_output_directory;
     bool m_enable_output_volume;
     bool m_enable_output_image;
     bool m_enable_output_subimage;
     Pipeline m_pipeline; ///< visualization pipeline
     Volume* m_volume;
-    std::string m_output_base_dirname;
-    std::string m_output_dirname;
+//    std::string m_output_base_dirname;
+//    std::string m_output_dirname;
 
 public:
     Visualization( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -62,9 +63,49 @@ public:
     kvs::mpi::Communicator& world() { return m_world; }
     std::ostream& log() { return m_logger( m_world.root() ); }
 
-    void setPipeline( Pipeline pipeline ) { m_pipeline = pipeline; }
-    void setSize( const size_t width, const size_t height ) { m_width = width; m_height = height; }
+    void setPipeline( Pipeline pipeline )
+    {
+        m_pipeline = pipeline;
+    }
 
+    void setSize( const size_t width, const size_t height )
+    {
+        m_width = width;
+        m_height = height;
+    }
+
+    void setOutputDirectory( const Util::OutputDirectory& directory )
+    {
+        m_output_directory = directory;
+    }
+
+    void setOutputDirectoryName(
+        const std::string& base_dirname ,
+        const std::string& sub_dirname )
+    {
+        m_output_directory.setBaseDirectoryName( base_dirname );
+        m_output_directory.setSubDirectoryName( sub_dirname );
+    }
+
+    bool initialize()
+    {
+        if ( !m_output_directory.create( m_world ) )
+        {
+            this->log() << "ERROR: " << "Cannot create output directory." << std::endl;
+            return false;
+        }
+
+        const bool depth_testing = true;
+        if ( !m_compositor.initialize( m_width, m_height, depth_testing ) )
+        {
+            this->log() << "ERROR: " << "Cannot initialize image compositor." << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+/*
     bool initialize( const std::string& base_dirname, const std::string& sub_dirname )
     {
         Util::OutputDirectory output_dir( base_dirname, sub_dirname );
@@ -86,6 +127,7 @@ public:
 
         return true;
     }
+*/
 
     bool finalize()
     {
@@ -110,6 +152,8 @@ private:
         const std::string output_number = kvs::String::From( current_time_index, 5, '0' );
         const std::string output_basename( "output" );
         const std::string output_filename = output_basename + "_" + output_number;
+        const std::string output_dirname = m_output_directory.name();
+        const std::string output_base_dirname = m_output_directory.baseDirectoryName();
 
         kvs::OffScreen screen;
         screen.setSize( m_width, m_height );
@@ -130,7 +174,7 @@ private:
         if ( m_enable_output_image )
         {
             kvs::ColorImage image( m_width, m_height, color_buffer );
-            image.write( m_output_base_dirname + "/" + output_filename + ".bmp" );
+            image.write( output_base_dirname + "/" + output_filename + ".bmp" );
         }
     }
 };

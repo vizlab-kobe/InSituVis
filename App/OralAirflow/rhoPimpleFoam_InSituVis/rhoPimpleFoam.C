@@ -65,7 +65,8 @@ int main(int argc, char *argv[])
     const kvs::Indent indent(4);
     local::Visualization vis( MPI_COMM_WORLD );
     vis.setSize( 512, 512 );
-    if ( !vis.initialize( "Output", "Proc_" ) )
+    vis.setOutputDirectoryName( "Output", "Proc_" );
+    if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
         vis.world().abort();
