@@ -40,10 +40,9 @@ Description
 #include "pimpleControl.H"
 #include "fvIOoptionList.H"
 
-// rhoPimpleFoam_InSituVis: Headers
-// {
-#include "Visualization.h"
-// }
+// In-situ visualization
+#include "InSituVis.h"
+#define IN_SITU_VIS
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,27 +58,25 @@ int main(int argc, char *argv[])
     #include "createFvOptions.H"
     #include "initContinuityErrs.H"
 
-    // rhoPimpleFoam_InSituVis: Parameter settings
-    // {
+#if defined( IN_SITU_VIS )
     Foam::messageStream::level = 0; // Disable Foam::Info
-    const kvs::Indent indent(4);
-    local::Visualization vis( MPI_COMM_WORLD );
+    const kvs::Indent indent(4); // indent for log stream
+    kvs::Timer timer; // timer for measuring sim and vis processing times
+
+    local::InSituVis vis( MPI_COMM_WORLD );
     vis.setSize( 512, 512 );
+    vis.setOutputDirectoryName( "Output", "Proc" );
     vis.setOutputImageEnabled( true );
-    vis.setOutputSubImageEnabled( false, false, false );
-    vis.setOutputDirectoryName( "Output", "Proc_" );
+    vis.setOutputSubImageEnabled( false );
+    vis.setOutputSubVolumeEnabled( false );
     if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
         vis.world().abort();
     }
-    // }
+#endif // IN_SITU_VIS
 
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-    // rhoPimpleFoam_InSituVis: Output messages
-    // {
-    // Info<< "\nStarting time loop\n" << endl;
+#if defined( IN_SITU_VIS )
     const auto start_time = runTime.startTime().value();
     const auto start_time_index = runTime.startTimeIndex();
     const auto end_time = runTime.endTime().value();
@@ -89,7 +86,9 @@ int main(int argc, char *argv[])
     vis.log() << indent << "Start time and index: " << start_time << ", " << start_time_index << std::endl;
     vis.log() << indent << "End time and index: " << end_time << ", " << end_time_index << std::endl;
     vis.log() << std::endl;
-    // }
+#endif // IN_SITU_VIS
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     while (runTime.run())
     {
@@ -99,22 +98,17 @@ int main(int argc, char *argv[])
 
         runTime++;
 
-        // rhoPimpleFoam_InSituVis: Output loop information
-        // {
-        // Info<< "Time = " << runTime.timeName() << nl << endl;
+#if defined( IN_SITU_VIS )
         const auto current_time = runTime.timeName();
         const auto current_time_index = runTime.timeIndex();
         vis.log() << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
         vis.log() << indent << "T: " << current_time << std::endl;
         vis.log() << indent << "End T: " << end_time << std::endl;
         vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
-        // }
+        timer.start(); // begin sim.
+#endif // IN_SITU_VIS
 
-        // rhoPimpleFoam_InSituVis: Start simulation
-        // {
-        kvs::Timer timer;
-        timer.start();
-        // }
+        Info<< "Time = " << runTime.timeName() << nl << endl;
 
         if (pimple.nCorrPIMPLE() <= 1)
         {
@@ -139,47 +133,43 @@ int main(int argc, char *argv[])
             }
         }
 
-//        if ( output_sim ) runTime.write();
         runTime.write();
 
-        // rhoPimpleFoam_InSituVis: End simulation
-        // {
-        timer.stop();
+#if defined( IN_SITU_VIS )
+	timer.stop(); // end sim.
         const auto ts = timer.sec();
         const auto Ts = kvs::String::From( ts, 4 );
         vis.log() << indent << "Processing Times:" << std::endl;
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
-        // }
 
-        timer.start();
+	// Execute In-situ Vis.
+        timer.start(); // begin vis.
         vis.exec( runTime, mesh, U );
-        timer.stop();
+        timer.stop(); // end vis.
+
         const auto tv = timer.sec();
         const auto Tv = kvs::String::From( tv, 4 );
         vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
 
-        // rhoPimpleFoam_InSituVis: Output messages
-        // {
-        // Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-        //     << "  ClockTime = " << runTime.elapsedClockTime() << " s"
-        //     << nl << endl;
         const auto elapsed_time = runTime.elapsedCpuTime();
+        vis.log() << indent << "Elapsed Time: " << elapsed_time << " s" << std::endl;
         vis.log() << std::endl;
-        vis.log() << "Elapsed Time: " << elapsed_time << " s" << std::endl;
-        vis.log() << std::endl;
-        // }
+#endif // IN_SITU_VIS
+
+        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+            << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+            << nl << endl;
     }
 
-    // rhoPimpleFoam_InSituVis: Destory image compositor
-    // {
+#if defined( IN_SITU_VIS )
     if ( !vis.finalize() )
     {
         vis.log() << "ERROR: " << "Cannot finalize visualization process." << std::endl;
         vis.world().abort();
     }
-    // }
+#endif // IN_SITU_VIS
 
-    //Info<< "End\n" << endl;
+    Info<< "End\n" << endl;
 
     return 0;
 }

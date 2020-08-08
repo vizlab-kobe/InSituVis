@@ -21,10 +21,10 @@ namespace local
 
 /*===========================================================================*/
 /**
- *  @brief  Visualization process class.
+ *  @brief  In-situ visualization process class.
  */
 /*===========================================================================*/
-class Visualization
+class InSituVis
 {
 public:
     using Volume = kvs::UnstructuredVolumeObject;
@@ -38,26 +38,26 @@ private:
     size_t m_width; ///< width of rendering image
     size_t m_height; ///< height of rendering image
     Util::OutputDirectory m_output_directory; ///< output directory
-    bool m_enable_output_volume; ///< flag for writing volume data
     bool m_enable_output_image; ///< flag for writing final image data
     bool m_enable_output_subimage; ///< flag for writing sub-volume rendering image
     bool m_enable_output_subimage_depth; ///< flag for writing sub-volume rendering image (depth image)
     bool m_enable_output_subimage_alpha; ///< flag for writing sub-volume rendering image (alpha image)
+    bool m_enable_output_subvolume; ///< flag for writing sub-volume data
     Pipeline m_pipeline; ///< visualization pipeline
     Volume* m_volume; ///< sub-volume data imported from OpenFOAM data
 
 public:
-    Visualization( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
+    InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
         m_world( world, root ),
         m_log( m_world ),
         m_compositor( m_world ),
         m_width( 512 ),
         m_height( 512 ),
-        m_enable_output_volume( false ),
         m_enable_output_image( true ),
         m_enable_output_subimage( false ),
         m_enable_output_subimage_depth( false ),
         m_enable_output_subimage_alpha( false ),
+        m_enable_output_subvolume( false ),
         m_volume( nullptr )
     {
         // Default visualization pipeline.
@@ -98,11 +98,6 @@ public:
         m_output_directory.setSubDirectoryName( sub_dirname );
     }
 
-    void setOutputVolumeEnabled( const bool enable = true )
-    {
-        m_enable_output_volume = enable;
-    }
-
     void setOutputImageEnabled( const bool enable = true )
     {
         m_enable_output_image = enable;
@@ -116,6 +111,11 @@ public:
         m_enable_output_subimage = enable;
         m_enable_output_subimage_depth = enable_depth;
         m_enable_output_subimage_alpha = enable_alpha;
+    }
+
+    void setOutputSubVolumeEnabled( const bool enable = true )
+    {
+        m_enable_output_subvolume = enable;
     }
 
     bool initialize()
@@ -161,8 +161,8 @@ private:
         const std::string output_dirname = m_output_directory.name();
         const std::string output_base_dirname = m_output_directory.baseDirectoryName();
 
-        // Output volume data
-        if ( m_enable_output_volume )
+        // Output sub-volume data
+        if ( m_enable_output_subvolume )
         {
             const auto filename = output_dirname + output_filename + ".kvsml";
             volume->write( filename, false );
