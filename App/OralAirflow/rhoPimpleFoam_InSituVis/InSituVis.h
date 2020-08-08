@@ -2,7 +2,7 @@
 #include <cfenv>
 #include <functional>
 #include <kvs/mpi/Communicator>
-#include <kvs/mpi/Logger>
+#include <kvs/mpi/LogStream>
 #include <kvs/mpi/ImageCompositor>
 #include <kvs/Timer>
 #include <kvs/String>
@@ -33,7 +33,7 @@ public:
 
 private:
     kvs::mpi::Communicator m_world; ///< MPI communicator
-    kvs::mpi::Logger m_log; ///< MPI log stream
+    kvs::mpi::LogStream m_log; ///< MPI log stream
     kvs::mpi::ImageCompositor m_compositor; ///< image compositor
     size_t m_width; ///< width of rendering image
     size_t m_height; ///< height of rendering image
