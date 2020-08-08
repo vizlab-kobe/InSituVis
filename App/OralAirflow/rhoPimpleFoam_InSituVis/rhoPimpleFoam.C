@@ -59,10 +59,10 @@ int main(int argc, char *argv[])
     #include "initContinuityErrs.H"
 
 #if defined( IN_SITU_VIS )
+    // In-situ visualization setup
     Foam::messageStream::level = 0; // Disable Foam::Info
     const kvs::Indent indent(4); // indent for log stream
     kvs::Timer timer; // timer for measuring sim and vis processing times
-
     local::InSituVis vis( MPI_COMM_WORLD );
     vis.setSize( 512, 512 );
     vis.setOutputDirectoryName( "Output", "Proc" );
@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
 #endif // IN_SITU_VIS
 
 #if defined( IN_SITU_VIS )
+    // Time-loop information
     const auto start_time = runTime.startTime().value();
     const auto start_time_index = runTime.startTimeIndex();
     const auto end_time = runTime.endTime().value();
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
         runTime++;
 
 #if defined( IN_SITU_VIS )
+        // Loop information
         const auto current_time = runTime.timeName();
         const auto current_time_index = runTime.timeIndex();
         vis.log() << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
@@ -136,15 +138,16 @@ int main(int argc, char *argv[])
         runTime.write();
 
 #if defined( IN_SITU_VIS )
-	timer.stop(); // end sim.
+        timer.stop(); // end sim.
         const auto ts = timer.sec();
         const auto Ts = kvs::String::From( ts, 4 );
         vis.log() << indent << "Processing Times:" << std::endl;
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
 
-	// Execute In-situ Vis.
+        // Execute in-situ visualization process
         timer.start(); // begin vis.
-        vis.exec( runTime, mesh, U );
+        //vis.exec( runTime, mesh, p ); // pressure
+        vis.exec( runTime, mesh, U ); // velocity
         timer.stop(); // end vis.
 
         const auto tv = timer.sec();
