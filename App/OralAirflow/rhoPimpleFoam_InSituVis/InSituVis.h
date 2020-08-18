@@ -1,5 +1,5 @@
 #pragma once
-#include <cfenv>
+//#include <cfenv>
 #include <functional>
 #include <kvs/mpi/Communicator>
 #include <kvs/mpi/LogStream>
@@ -35,6 +35,7 @@ private:
     kvs::mpi::Communicator m_world; ///< MPI communicator
     kvs::mpi::LogStream m_log; ///< MPI log stream
     kvs::mpi::ImageCompositor m_compositor; ///< image compositor
+    Screen m_screen; ///< rendering screen (off-screen)
     size_t m_width; ///< width of rendering image
     size_t m_height; ///< height of rendering image
     Util::OutputDirectory m_output_directory; ///< output directory
@@ -63,10 +64,22 @@ public:
         // Default visualization pipeline.
         m_pipeline = [] ( Screen& screen, Volume& volume )
         {
+            // Create a new object
             auto* object = new kvs::ExternalFaces( &volume );
-            auto* renderer = new kvs::glsl::PolygonRenderer();
-            screen.registerObject( object, renderer );
-            screen.registerObject( object, new kvs::Bounds() );
+            object->setName("Object");
+
+            if ( screen.scene()->hasObject("Object") )
+            {
+                // Update the object.
+                screen.scene()->replaceObject( "Object", object );
+            }
+            else
+            {
+                // Register the object with renderer.
+                auto* renderer = new kvs::glsl::PolygonRenderer();
+                screen.registerObject( object, renderer );
+                screen.registerObject( object, new kvs::Bounds() );
+            }
         };
     }
 
@@ -133,6 +146,9 @@ public:
             return false;
         }
 
+        m_screen.setSize( m_width, m_height );
+        m_screen.create();
+
         return true;
     }
 
@@ -169,20 +185,15 @@ private:
         }
 
         // Execute visualization pipeline
-        kvs::OffScreen screen;
-        screen.setSize( m_width, m_height );
-        m_pipeline( screen, *volume );
+        m_pipeline( m_screen, *volume );
         delete volume;
 
         // Draw image
-        fenv_t fe;
-        std::feholdexcept( &fe );
-        screen.draw();
-        std::feupdateenv( &fe );
+        m_screen.draw();
 
         // Read-back image
-        auto color_buffer = screen.readbackColorBuffer();
-        auto depth_buffer = screen.readbackDepthBuffer();
+        auto color_buffer = m_screen.readbackColorBuffer();
+        auto depth_buffer = m_screen.readbackDepthBuffer();
 
         // Output rendering image
         if ( m_enable_output_subimage )
