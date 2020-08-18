@@ -268,3 +268,6 @@ simulation time stepは20000かつKL情報量計算間隔は100stepに1回を想
 それより大きい場合は、rhoPimpleFoam.C中のnsimを変更する必要があります。
 (nsimは全体のKL情報量計算回数です。)
 
+＊林君メモより
+ずっと接続したままシミュレーションを１日ほどまわすのは難しいので、sshの接続を解除しても実行できるようにtmuxを利用することを推奨する。下記サイトを参照。
+https://qiita.com/zwirky/items/adbf22abad7d7822456b
