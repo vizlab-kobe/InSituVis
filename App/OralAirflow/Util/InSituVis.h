@@ -148,7 +148,7 @@ private:
     void exec_pipeline( const Foam::Time& time, Volume* volume )
     {
         const auto current_time_index = time.timeIndex();
-        const std::string output_number = kvs::String::From( current_time_index, 5, '0' );
+        const std::string output_number = kvs::String::From( current_time_index, 6, '0' );
         const std::string output_basename( "output" );
         const std::string output_filename = output_basename + "_" + output_number;
         const std::string output_dirname = m_output_directory.name();
