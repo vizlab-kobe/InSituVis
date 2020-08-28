@@ -148,7 +148,7 @@ private:
             {
                 const auto& p = mesh.points()[id];
                 const kvs::Vec3 vertex( p.x(), p.y(), p.z() );
-                const auto distance = ( center -vertex ).length();
+                const auto distance = ( center - vertex ).length();
                 idw.insert( id, value, distance );
             }
         }
@@ -174,7 +174,7 @@ private:
             {
                 const auto& p = mesh.points()[id];
                 const kvs::Vec3 vertex( p.x(), p.y(), p.z() );
-                const auto distance = ( center -vertex ).length();
+                const auto distance = ( center - vertex ).length();
                 idw.insert( id, value, distance );
             }
         }

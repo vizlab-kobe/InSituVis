@@ -1,6 +1,11 @@
 #!/bin/sh
-OUTPUT_DIR=Output
+PS_COUNT=`ps aux | grep rhoPimpleFoam_InSituVis | grep -v grep | wc -l`
+if [ $PS_COUNT -gt 0 ]; then
+    killall rhoPimpleFoam_InSituVis
+fi
 
+OUTPUT_DIR=Output
 if [ -e $OUTPUT_DIR ]; then
     rm -rf $OUTPUT_DIR
+    rm -rf processor?/0.0*
 fi
