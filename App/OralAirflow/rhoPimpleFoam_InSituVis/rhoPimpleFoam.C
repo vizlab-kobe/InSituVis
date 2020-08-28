@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis( MPI_COMM_WORLD );
     vis.screen().scene()->camera()->setPosition( kvs::Vec3( -4, 4, 8 ) );
+    vis.screen().scene()->light()->setPosition( kvs::Vec3( -4, 4, 8 ) );
     if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;

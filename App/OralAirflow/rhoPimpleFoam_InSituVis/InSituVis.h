@@ -22,25 +22,33 @@ public:
         this->setPipeline(
             [&] ( Util::InSituVis::Screen& screen, Util::InSituVis::Volume& volume )
             {
-                // Create a new object
-                auto p = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
-                auto a = kvs::OrthoSlice::ZAxis;
+                // Create new slice objects.
                 auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
-                auto* object = new kvs::OrthoSlice( &volume, p, a, t );
-                object->setName("Object");
+                auto py = ( volume.minObjectCoord().y() + volume.maxObjectCoord().y() ) * 0.5f;
+                auto ay = kvs::OrthoSlice::YAxis;
+                auto* object_y = new kvs::OrthoSlice( &volume, py, ay, t );
+                object_y->setName("ObjectY");
 
-                if ( screen.scene()->hasObject("Object") )
+                auto pz = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
+                auto az = kvs::OrthoSlice::ZAxis;
+                auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
+                object_z->setName("ObjectZ");
+
+                if ( screen.scene()->hasObject("ObjectY") )
                 {
-                    // Update the object.
-                    screen.scene()->replaceObject( "Object", object );
+                    // Update the objects.
+                    screen.scene()->replaceObject( "ObjectY", object_y );
+                    screen.scene()->replaceObject( "ObjectZ", object_z );
                 }
                 else
                 {
-                    // Register the object with renderer.
-                    auto* renderer = new kvs::glsl::PolygonRenderer();
-                    renderer->disableShading();
-                    screen.registerObject( object, renderer );
-                    screen.registerObject( object, new kvs::Bounds() );
+                    // Register the objects with renderer.
+                    kvs::Light::SetModelTwoSide( true );
+                    auto* renderer_y = new kvs::glsl::PolygonRenderer();
+                    auto* renderer_z = new kvs::glsl::PolygonRenderer();
+                    screen.registerObject( object_y, renderer_y );
+                    screen.registerObject( object_z, renderer_z );
+                    screen.registerObject( object_z, new kvs::Bounds() );
                 }
             } );
     }
