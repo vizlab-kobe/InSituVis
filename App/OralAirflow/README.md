@@ -45,21 +45,20 @@ OpenFOAM 2.3.1 is required.
 
 1. Get OpenFOAM 2.3.1 source codes from the following URL.
 
-https://www.dropbox.com/s/aa8azaz2jt0inta/openfoam231.tar.gz?dl=0
+    - [openfoam321.tar.gz](https://www.dropbox.com/s/aa8azaz2jt0inta/openfoam231.tar.gz?dl=0)
 
 2. Compile the OpenFOAM
-
-```
-$ cd <download directory>
-$ tar -zxvf openfoam231.tar.gz 
-* Change 'g++' in wmake/rules/linux64Gcc/c++ to 'mpicxx'
-$ cd OpenFOAM/OpenFOAM-2.3.1
-$ source etc/bashrc
-$ cd src/PStream/mpi 
-$ wclean &wmake 
-$ cd ../../../
-$ ./Allwmake
-```
+    ```
+    $ cd <download directory>
+    $ tar -zxvf openfoam231.tar.gz 
+    * Change 'g++' in wmake/rules/linux64Gcc/c++ to 'mpicxx'
+    $ cd OpenFOAM/OpenFOAM-2.3.1
+    $ source etc/bashrc
+    $ cd src/PStream/mpi 
+    $ wclean &wmake 
+    $ cd ../../../
+    $ ./Allwmake
+    ```
 
 ## Execution
 
