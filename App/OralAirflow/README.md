@@ -96,6 +96,6 @@ $ ./run.sh
 ```
 
 ### rhoPimpleFoam
-The rhoPimpleFoam is an original program based OpenFOAM for the oral airflow simulation. This program can be compile and execute same as the rhoPimpleFoam_InSituVis program.
+The rhoPimpleFoam is an original program based OpenFOAM for the oral airflow simulation. This program can be compile and execute same as the rhoPimpleFoam_InSituVis program. This program doesn't require the KVS and OSMesa.
 
 
