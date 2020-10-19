@@ -65,34 +65,34 @@ OpenFOAM 2.3.1 is required.
 ### InSituVis
 
 1. Get the InSituVis source codes from the GitHub repository as follows:
-```
-$ git clone https://github.com/vizlab-kobe/InSituVis.git
-```
+    ```
+    $ git clone https://github.com/vizlab-kobe/InSituVis.git
+    ```
 
 2. Move to the application directory.
-```
-$ cd App/OralAirflow
-```
+    ```
+    $ cd App/OralAirflow
+    ```
 
 ### rhoPimpleFoam_InSituVis
 The compilation and execuation of the application are done in a separate terminal.
 
 - Compilation<br>
-```
-$ cd rhoPimpleFoam_InSituVis
-$ ./make.sh
-* 'clear.sh' is a shell script for removing the compiled files.
-```
+    ```
+    $ cd rhoPimpleFoam_InSituVis
+    $ ./make.sh
+    * 'clear.sh' is a shell script for removing the compiled files.
+    ```
 
 - Execution<br>
-```
-$ cd realistic-s3
-$ ./run.sh
-* The rendering results will be output in the 'Output' directory.
-* 'realistic-s3' is a 8-parallel version of the application program.
-* 'realistic-s1' and 'realistic-s2' are 4- and 48-parallel versions.
-* 'clear.sh' is a shell script for removing the output directory.
-```
+    ```
+    $ cd realistic-s3
+    $ ./run.sh
+    * The rendering results will be output in the 'Output' directory.
+    * 'realistic-s3' is a 8-parallel version of the application program.
+    * 'realistic-s1' and 'realistic-s2' are 4- and 48-parallel versions.
+    * 'clear.sh' is a shell script for removing the output directory.
+    ```
 
 ### rhoPimpleFoam
 The rhoPimpleFoam is an original program based OpenFOAM for the oral airflow simulation. This program can be compile and execute same as the rhoPimpleFoam_InSituVis program. This program doesn't require the KVS and OSMesa.
