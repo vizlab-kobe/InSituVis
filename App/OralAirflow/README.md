@@ -52,7 +52,7 @@ https://www.dropbox.com/s/aa8azaz2jt0inta/openfoam231.tar.gz?dl=0
 ```
 $ cd <download directory>
 $ tar -zxvf openfoam231.tar.gz 
-＊ Change 'g++' in wmake/rules/linux64Gcc/c++ to 'mpicxx'
+* Change 'g++' in wmake/rules/linux64Gcc/c++ to 'mpicxx'
 $ cd OpenFOAM/OpenFOAM-2.3.1
 $ source etc/bashrc
 $ cd src/PStream/mpi 
@@ -65,8 +65,34 @@ $ ./Allwmake
 
 ### InSituVis
 
-### rhoPimpleFoam
+1. Get the InSituVis source codes from the GitHub repository as follows:
+```
+$ git clone https://github.com/vizlab-kobe/InSituVis.git
+```
 
+2. Move to the application directory.
+```
+$ cd App/OralAirflow
+```
 
 ### rhoPimpleFoam_InSituVis
+The compilation and execuation of the application are done in a separate terminal.
 
+- Compilation<br>
+```
+$ cd rhoPimpleFoam_InSituVis
+$ ./make.sh
+* 'clear.sh' is a shell script for removing the compiled files.
+```
+
+- Execution<br>
+```
+$ cd realistic-s3
+$ ./run.sh
+* The rendering results will be output in the 'Output' directory.
+* 'realistic-s3' is a 8-parallel version of the application program.
+* 'realistic-s1' and 'realistic-s2' are 4- and 48-parallel versions.
+* 'clear.sh' is a shell script for removing the output directory.
+```
+
+### rhoPimpleFoam
