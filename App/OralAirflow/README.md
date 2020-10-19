@@ -5,12 +5,18 @@
 ### KVS
 KVS supports OSMesa and MPI needs to be installed.
 
-1. Get KVS source codes from the GitHub repository as follows:
+1. Install OSMesa and MPI
+
+OSMesa and MPI need to be install before compile the KVS. Please refer to the followin URLs to install them.<br>
+https://github.com/naohisas/KVS/blob/develop/Source/SupportOSMesa/README.md
+https://github.com/naohisas/KVS/blob/develop/Source/SupportMPI/README.md
+
+2. Get KVS source codes from the GitHub repository as follows:
 ```
 $ git clone https://github.com/naohisas/KVS.git
 ```
 
-2. Modify kvs.conf as follows:
+3. Modify kvs.conf as follows:
 ```
 $ cd KVS
 $ <modify kvs.conf>
@@ -28,11 +34,7 @@ KVS_ENABLE_OPENMP     = 1
 KVS_SUPPORT_PYTHON    = 1
 ```
 
-Please refer to the followin URLs to install OSMesan and MPI.<br>
-https://github.com/naohisas/KVS/blob/develop/Source/SupportOSMesa/README.md
-https://github.com/naohisas/KVS/blob/develop/Source/SupportMPI/README.md
-
-3. Compile and install the KVS
+4. Compile and install the KVS
 ```
 $ make
 $ make install
