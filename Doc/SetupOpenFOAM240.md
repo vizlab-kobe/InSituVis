@@ -81,5 +81,5 @@ $ find . -type f -exec sed -i -e 's/== \"Darwin\"/= \"Darwin\"/g' {} \;
 
 - Path errors related to `H5Cpp.H: No such file`
 ```
-$ find applications/solvers applications/utilities -name options -exec echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp\n" >> {} \;
+$ for i in `find applications/solvers applications/utilities -name options`; do echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp\n" >> $i; done
 ```
