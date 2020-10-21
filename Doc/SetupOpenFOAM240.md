@@ -125,7 +125,7 @@ $ icoFoam
 $ paraFoam -builtin
 ```
 
-ParaView is required for `paraFoam -builtin`. If you have not yet installed ParaView, please install it as follows.
+- ParaView is required for `paraFoam -builtin`. If you have not yet installed ParaView, please install it as follows.
 ```
 $ sudo apt-get install paraview
 ```
