@@ -95,5 +95,11 @@ $ echo -n -e "EXE_INC += -I\$(WM_THIRD_PARTY_DIR)/ParaView-4.1.0/Plugins/SciberQ
 ```
 
 - Compile error related to `specie class`
+Include `specie.H` in `src/thermophysicalModels/chemistryModel/chemistrySolver/equil/equil.C`
 ```
+...
+#include "equil.H"
+#include "chemistryModel.H"
+#include "specie.H" // added this line
+...
 ```
