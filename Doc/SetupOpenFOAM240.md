@@ -11,7 +11,30 @@ If compiled successfully, OpenFOAM 2.4.0 and ThirdParty 2.4.0 will be installed 
 $ cd ~/OpenFOAM
 $ ls
 OpenFOAM-2.4.0  OpenFOAM-2.4.0.tgz  ThirdParty-2.4.0  ThirdParty-2.4.0.tgz
+$ env | grep WM
+WM_PROJECT_INST_DIR=/home/xxx/OpenFOAM
+WM_THIRD_PARTY_DIR=/home/xxx/OpenFOAM/ThirdParty-2.4.0
+WM_LDFLAGS=-m64
+WM_CXXFLAGS=-m64 -fPIC
+WM_PRECISION_OPTION=DP
+WM_CC=gcc-5
+WM_PROJECT_USER_DIR=/home/xxx/OpenFOAM/naohisas-2.4.0
+WM_OPTIONS=linux64GccDPOpt
+WM_LINK_LANGUAGE=c++
+WM_OSTYPE=POSIX
+WM_PROJECT=OpenFOAM
+WM_CFLAGS=-m64 -fPIC
+WM_ARCH=linux64
+WM_COMPILER_LIB_ARCH=64
+WM_COMPILER=Gcc
+WM_DIR=/home/xxx/OpenFOAM/OpenFOAM-2.4.0/wmake
+WM_ARCH_OPTION=64
+WM_PROJECT_VERSION=2.4.0
+WM_MPLIB=SYSTEMOPENMPI
+WM_COMPILE_OPTION=Opt
+WM_CXX=g++-5
+WM_PROJECT_DIR=/home/xxx/OpenFOAM/OpenFOAM-2.4.0
 ```
 
-## OpenFOAM 2.4.0 (Customized)
+## Customized OpenFOAM 2.4.0 for the combustion simulation solver
 
