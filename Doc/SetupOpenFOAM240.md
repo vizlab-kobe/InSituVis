@@ -99,8 +99,7 @@ $ echo -n -e "EXE_INC += -I\$(SCOTCH_ARCH_PATH)/include/\$(FOAM_MPI)\nLIB_LIBS +
 $ echo -n -e "EXE_INC += -I\$(WM_THIRD_PARTY_DIR)/ParaView-4.1.0/Plugins/SciberQuestToolKit/eigen-3.0.3/eigen-eigen-3.0.3/\n" >> src/thermophysicalModels/chemistryModel/Make/options
 ```
 
-- Compile error related to `specie class`
-Include `specie.H` in `src/thermophysicalModels/chemistryModel/chemistrySolver/equil/equil.C`
+- Compile error related to `specie class`Include `specie.H` in `src/thermophysicalModels/chemistryModel/chemistrySolver/equil/equil.C`
 ```cpp
 ...
 #include "equil.H"
