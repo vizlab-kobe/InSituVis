@@ -103,3 +103,9 @@ Include `specie.H` in `src/thermophysicalModels/chemistryModel/chemistrySolver/e
 #include "specie.H" // added this line
 ...
 ```
+
+6. Compile the OpenFOAM
+```
+$ export QT_SELECT=qt4
+$ ./Allwmake > log.make 2>&1
+```
