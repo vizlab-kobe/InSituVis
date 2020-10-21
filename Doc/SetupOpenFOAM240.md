@@ -63,7 +63,11 @@ $ sudo apt-get install libptscotch-dev
 ```
 
 4. Set environment variables for HDF5
+```bash
+// Add the following settings to ~/.bashrc
+export HDF5_ARCH_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ARCH_PATH/lib
 ```
-$ export HDF5_ARCH_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial/lib
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ARCH_PATH/lib
+```
+$ source ~/.bashrc
 ```
