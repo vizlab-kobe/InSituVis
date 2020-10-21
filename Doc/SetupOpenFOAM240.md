@@ -72,7 +72,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ARCH_PATH/lib
 $ source ~/.bashrc
 ```
 
-5. Fix some problems
+5. Move to the project directory
+```
+$ cd OpenFOAM-2.4.0
+```
+
+6. Fix some problems
 
 - Script error related to `$(uname -s) == “Darwin”`
 ```
@@ -104,13 +109,13 @@ Include `specie.H` in `src/thermophysicalModels/chemistryModel/chemistrySolver/e
 ...
 ```
 
-6. Compile the OpenFOAM
+7. Compile the OpenFOAM
 ```
 $ export QT_SELECT=qt4
 $ ./Allwmake > log.make 2>&1
 ```
 
-7. Check if the OpenFOAM is working
+8. Check if the OpenFOAM is working
 ```
 $ of240
 $ tut
