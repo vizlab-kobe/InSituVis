@@ -39,7 +39,7 @@ WM_PROJECT_DIR=/home/xxx/OpenFOAM/OpenFOAM-2.4.0
 ## Customized OpenFOAM 2.4.0 for the combustion simulation solver
 Next, the compiled OpenFOAM 2.4.0 needs to be replaced with the customized one (OpenFOAM-2.4.0-sakamoto.tar.gz) for the combustion simulation solver developed by Dr. Tsukasa Hori, Osaka University.
 
-1. Untar OpenFOAM-2.4.0-sakamoto.tar.gz and copy the untared source codes to $WM_PROJECT_INST_DIR
+1. Untar and copy OpenFOAM-2.4.0-sakamoto.tar.gz
 ```
 $ tar zxvf OpenFOAM-2.4.0-sakamoto.tar.gz -C $WM_PROJECT_INST_DIR
 $ cd $WM_PROJECT_INST_DIR
@@ -71,3 +71,11 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ARCH_PATH/lib
 ```
 $ source ~/.bashrc
 ```
+
+5. Fix some problems
+
+- Script errors related to `$(uname -s) == “Darwin”`
+```
+$ find . -type f -exec sed -i -e 's/== \"Darwin\"/= \"Darwin\"/g' {} \;
+```
+
