@@ -39,10 +39,31 @@ WM_PROJECT_DIR=/home/xxx/OpenFOAM/OpenFOAM-2.4.0
 ## Customized OpenFOAM 2.4.0 for the combustion simulation solver
 Next, the compiled OpenFOAM 2.4.0 needs to be replaced with the customized one (OpenFOAM-2.4.0-sakamoto.tar.gz) for the combustion simulation solver developed by Dr. Tsukasa Hori, Osaka University.
 
-1. Copy the source codes of the customized OpenFOAM to $WM_PROJECT_INST_DIR
+1. Untar OpenFOAM-2.4.0-sakamoto.tar.gz and copy the untared source codes to $WM_PROJECT_INST_DIR
 ```
 $ tar zxvf OpenFOAM-2.4.0-sakamoto.tar.gz -C $WM_PROJECT_INST_DIR
 $ cd $WM_PROJECT_INST_DIR
 $ mv OpenFOAM-2.4.0 OpenFOAM-2.4.0.org
 $ mv OpenFOAM-2.4.0-sakamoto OpenFOAM-2.4.0
+```
+
+2. Copy some directories from the original OpenFOAM
+```
+$ cp -r OpenFOAM-2.4.0.org/etc OpenFOAM-2.4.0
+$ cp -r OpenFOAM-2.4.0.org/wmake OpenFOAM-2.4.0
+$ cp -r OpenFOAM-2.4.0.org/tutorials OpenFOAM-2.4.0
+```
+
+3. Install some packages
+```
+$ sudo apt-get install scotch
+$ sudo apt-get install fortran-5
+$ sudo apt-get install libhdf5-serial-dev
+$ sudo apt-get install libptscotch-dev
+```
+
+4. Set environment variables for HDF5
+```
+$ export HDF5_ARCH_PATH=/usr/lib/x86_64-linux-gnu/hdf5/serial/lib
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ARCH_PATH/lib
 ```
