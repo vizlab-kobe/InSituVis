@@ -109,3 +109,15 @@ Include `specie.H` in `src/thermophysicalModels/chemistryModel/chemistrySolver/e
 $ export QT_SELECT=qt4
 $ ./Allwmake > log.make 2>&1
 ```
+
+7. Check if the OpenFOAM is working
+```
+$ of240
+$ tut
+$ cd incompressible/icoFoam/cavity
+$ blockMesh
+$ icoFoam
+$ paraFoam -builtin
+```
+
+ParaView is required for `paraFoam -builtin`
