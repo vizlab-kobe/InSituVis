@@ -74,12 +74,26 @@ $ source ~/.bashrc
 
 5. Fix some problems
 
-- Script errors related to `$(uname -s) == “Darwin”`
+- Script error related to `$(uname -s) == “Darwin”`
 ```
 $ find . -type f -exec sed -i -e 's/== \"Darwin\"/= \"Darwin\"/g' {} \;
 ```
 
-- Path errors related to `H5Cpp.H: No such file`
+- Path error related to `H5Cpp.H: No such file`
 ```
 $ for i in `find applications/solvers applications/utilities -name options`; do echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp\n" >> $i; done
+```
+
+- Path error related to `ptscotch.h: No such file`
+```
+$ echo -n -e "EXE_INC += -I\$(SCOTCH_ARCH_PATH)/include/\$(FOAM_MPI)\nLIB_LIBS += -L\$(SCOTCH_ARCH_PATH)/lib/\$(FOAM_MPI)\n" >> src/parallel/decompose/ptscotchDecomp/Make/options
+```
+
+- Path error related to `Eigen/Core: No such file`
+```
+$ echo -n -e "EXE_INC += -I\$(WM_THIRD_PARTY_DIR)/ParaView-4.1.0/Plugins/SciberQuestToolKit/eigen-3.0.3/eigen-eigen-3.0.3/\n" >> src/thermophysicalModels/chemistryModel/Make/options
+```
+
+- Compile error related to `specie class`
+```
 ```
