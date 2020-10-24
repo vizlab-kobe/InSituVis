@@ -54,7 +54,7 @@ OpenFOAM 2.3.1 is required.
     * Change 'g++' in wmake/rules/linux64Gcc/c++ to 'mpicxx'
     $ cd OpenFOAM/OpenFOAM-2.3.1
     $ source etc/bashrc
-    $ cd src/PStream/mpi 
+    $ cd src/Pstream/mpi 
     $ wclean &wmake 
     $ cd ../../../
     $ ./Allwmake
