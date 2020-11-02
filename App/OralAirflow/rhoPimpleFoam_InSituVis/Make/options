@@ -22,6 +22,5 @@ EXE_LIBS = \
     -lsampling \
     -lfvOptions \
     -lgomp \
-    -L${HOME}/Work/GitHub/InSituVis/OpenfoamLib -lOpenFoamInsituVis \
     -L${KVS_DIR}/lib -lkvsSupportMPI -lkvsSupportOSMesa -lkvsCore \
     -L${KVS_OSMESA_DIR}/lib ${KVS_OSMESA_LINK_LIBRARY}
