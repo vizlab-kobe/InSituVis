@@ -45,7 +45,7 @@ OpenFOAM 2.4.0 is required. Here is an installation guid of the patched OpenFOAM
 
 1. Install original OpenFOAM 2.4.0 and ThirdParty 2.4.0 for Ubuntu 18.04 based on the following installation.
 
-[Installation/Linux/OpenFOAM-2.4.0/Ubuntu](https://openfoamwiki.net/index.php/Installation/Linux/OpenFOAM-2.4.0/Ubuntu#Ubuntu_18.04)
+    - [Installation/Linux/OpenFOAM-2.4.0/Ubuntu](https://openfoamwiki.net/index.php/Installation/Linux/OpenFOAM-2.4.0/Ubuntu#Ubuntu_18.04)
 
 2. Get OpenFOAM 2.4.0 source codes, which are patched by Dr Tsukasa Hori, Osaka University, from the following URL.
 
