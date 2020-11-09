@@ -1,0 +1,1443 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : 2.4.0-cec9b1dc888a
+Exec   : spraySootTimeFoam
+Date   : Oct 27 2020
+Time   : 09:00:42
+Host   : "horitsukasanoMacBook-Pro.local"
+PID    : 48411
+Case   : /Users/hori/Documents/research_2018/201027_mazda_traning/sprayH_2mm_O2_15
+nProcs : 1
+sigFpe : Enabling floating point exception trapping (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Foam::TimePaths::TimePaths constructor 2
+Foam::TimePaths::TimePaths constructor 2 end
+Time constructor !!!! 1 
+Create mesh for time = 0
+
+
+Reading g
+Creating combustion model
+
+Selecting combustion model laminar<psiChemistryCombustion>
+Selecting chemistry type 
+{
+    chemistrySolver speedCHEM;
+    chemistryThermo psi;
+}
+
+constructor in basicChemistry!!!
+
+Selecting thermodynamics package 
+{
+    type            hePsiThermo;
+    mixture         reactingMixture;
+    transport       sutherland;
+    thermo          janaf;
+    energy          sensibleEnthalpy;
+    equationOfState perfectGas;
+    specie          specie;
+}
+
+Selecting chemistryReader foamChemistryReader
+multiComponentMixture 1 constructor
+NUMBER of Species:: 121
+chemistryModel: Number of species = 121 and reactions = 593
+speedCHEM::chemistry_input start *******************
+speedCHEM::chemistry_input end ***************
+    using integrated reaction rate
+Creating component thermo properties:
+    multi-component carrier - 121 species
+    liquids - 1 components
+    solids - 0 components
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Creating turbulence model
+
+Selecting turbulence model type RASModel
+Selecting RAS turbulence model RNGkEpsilon
+ backwardsCompatibilityWallFunctions:: autoCreateWallFunctionField  mut
+ backwardsCompatibilityWallFunctions:: autoCreateWallFunctionField  mut
+RNGkEpsilonCoeffs
+{
+    Cmu             0.0845;
+    C1              1.42;
+    C2              1.68;
+    C3              -0.33;
+    sigmak          0.71942;
+    sigmaEps        0.71942;
+    Prt             1;
+    eta0            4.38;
+    beta            0.012;
+}
+
+Creating field dpdt
+
+Creating field kinetic energy K
+
+Initiation of sootMoment class
+Class construction OK
+MOMENT CLASS INITIATED
+Initiation of sootMoment class end
+--> FOAM Warning : 
+    From function GeometricField<Type, PatchField, GeoMesh>::readIfPresent()
+    in file /Users/hori/OpenFOAM/OpenFOAM-2.4.0/src/OpenFOAM/lnInclude/GeometricField.C at line 188
+    read option IOobject::MUST_READ or MUST_READ_IF_MODIFIED suggests that a read constructor for field sMass would be more appropriate.
+Creating finite volume options from "system/fvOptions"
+
+
+Constructing reacting cloud
+Constructing particle forces
+    Selecting particle force sphereDrag
+Constructing cloud functions
+    none
+Constructing particle injection models
+Creating injector: main
+Selecting injection model coneNozzleInjection
+    Constructing 3-D injection
+Selecting distribution model fixedValue
+Selecting dispersion model none
+Selecting patch interaction model standardWallInteraction
+Selecting stochastic collision model none
+Selecting surface film model none
+Selecting U integration scheme Euler
+Selecting heat transfer model RanzMarshall
+Selecting T integration scheme analytical
+Foam::ReactingCloud<CloudType>::ReactingCloud 1
+Selecting composition model singlePhaseMixture
+Selecting phase change model liquidEvaporationBoil
+Participating liquid species:
+    NC7H16
+Selecting AtomizationModel none
+Selecting BreakupModel WAVEMTAB
+
+ void Foam::SprayParcel<ParcelType>::readFields horihori
+ c.size() 0
+
+Average parcel mass: 5.1594203e-11
+Selecting radiationModel none
+Courant Number mean: 0 max: 0
+Total cylinder mass: 0.0040360489
+
+PIMPLE: Operating solver in PISO mode
+
+
+Starting time loop
+
+Courant Number mean: 0 max: 0
+deltaT = 1.9607843e-06
+Time = 1.96078e-06
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 -1e-08
+ t1 1.9507843e-06
+ timeStep0_ 0
+ time  1.9607843e-06
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 0
+    Current mass in system          = 0
+    Linear momentum                 = (0 0 0)
+   |Linear momentum|                = 0
+    Linear kinetic energy           = 0
+    main:
+        number of parcels added     = 0
+        mass introduced             = 0
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 0, 0
+    Mass transfer phase change      = 0
+    D10, D32, Dmax (mu)             = 0, 0, 0
+    Liquid penetration 95% mass (m) = 0
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.99999999, Final residual = 4.9042056e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.99999999, Final residual = 5.265792e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.99999999, Final residual = 5.486595e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 
+DILUPBiCG:  Solving for H, Initial residual = 0.99962028, Final residual = 1.4646002e-16, No Iterations 2
+DILUPBiCG:  Solving for O, Initial residual = 0.99999885, Final residual = 1.46518e-16, No Iterations 2
+DILUPBiCG:  Solving for OH, Initial residual = 1, Final residual = 1.4650322e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2, Initial residual = 1, Final residual = 1.4651409e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O2, Initial residual = 0.99999999, Final residual = 1.4650509e-16, No Iterations 2
+DILUPBiCG:  Solving for CH, Initial residual = 1.9240619e-41, Final residual = 1.9240619e-41, No Iterations 0
+DILUPBiCG:  Solving for HCO, Initial residual = 1.7537211e-13, Final residual = 1.7537211e-13, No Iterations 0
+DILUPBiCG:  Solving for CH2-1, Initial residual = 2.4822386e-36, Final residual = 2.4822386e-36, No Iterations 0
+DILUPBiCG:  Solving for CH2-3, Initial residual = 9.7059353e-34, Final residual = 9.7059353e-34, No Iterations 0
+DILUPBiCG:  Solving for CH2O, Initial residual = 8.9363039e-17, Final residual = 8.9363039e-17, No Iterations 0
+DILUPBiCG:  Solving for CH3, Initial residual = 1.1608896e-40, Final residual = 1.1608896e-40, No Iterations 0
+DILUPBiCG:  Solving for CH3O, Initial residual = 2.4197078e-35, Final residual = 2.4197078e-35, No Iterations 0
+DILUPBiCG:  Solving for CH3O2, Initial residual = 5.946242e-39, Final residual = 5.946242e-39, No Iterations 0
+DILUPBiCG:  Solving for CH4, Initial residual = 1.2120623e-41, Final residual = 1.2120623e-41, No Iterations 0
+DILUPBiCG:  Solving for CH3O2H, Initial residual = 4.9862235e-43, Final residual = 4.9862235e-43, No Iterations 0
+DILUPBiCG:  Solving for C2H, Initial residual = 5.7245628e-75, Final residual = 5.7245628e-75, No Iterations 0
+DILUPBiCG:  Solving for HCCO, Initial residual = 2.7934605e-55, Final residual = 2.7934605e-55, No Iterations 0
+DILUPBiCG:  Solving for C2H2, Initial residual = 3.4104734e-58, Final residual = 3.4104734e-58, No Iterations 0
+DILUPBiCG:  Solving for CH2CO, Initial residual = 1.0198884e-44, Final residual = 1.0198884e-44, No Iterations 0
+DILUPBiCG:  Solving for C2H3, Initial residual = 1.6155899e-73, Final residual = 1.6155899e-73, No Iterations 0
+DILUPBiCG:  Solving for CH2CHO, Initial residual = 2.0377471e-62, Final residual = 2.0377471e-62, No Iterations 0
+DILUPBiCG:  Solving for CH3CO, Initial residual = 1.6566414e-60, Final residual = 1.6566414e-60, No Iterations 0
+DILUPBiCG:  Solving for C2H4, Initial residual = 6.5013545e-74, Final residual = 6.5013545e-74, No Iterations 0
+DILUPBiCG:  Solving for CH3CHO, Initial residual = 2.0078582e-64, Final residual = 2.0078582e-64, No Iterations 0
+DILUPBiCG:  Solving for C2H5, Initial residual = 1.8059596e-91, Final residual = 1.8059596e-91, No Iterations 0
+DILUPBiCG:  Solving for C2H5O, Initial residual = 6.0219768e-88, Final residual = 6.0219768e-88, No Iterations 0
+DILUPBiCG:  Solving for C3H2, Initial residual = 2.9810364e-107, Final residual = 2.9810364e-107, No Iterations 0
+DILUPBiCG:  Solving for C3H3, Initial residual = 1.9637771e-114, Final residual = 1.9637771e-114, No Iterations 0
+DILUPBiCG:  Solving for C3H4, Initial residual = 1.6333413e-113, Final residual = 1.6333413e-113, No Iterations 0
+DILUPBiCG:  Solving for C3H5, Initial residual = 5.4276138e-129, Final residual = 5.4276138e-129, No Iterations 0
+DILUPBiCG:  Solving for C3H6, Initial residual = 4.6173908e-132, Final residual = 4.6173908e-132, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7, Initial residual = 1.0766448e-146, Final residual = 1.0766448e-146, No Iterations 0
+DILUPBiCG:  Solving for C3H8, Initial residual = 3.6457659e-148, Final residual = 3.6457659e-148, No Iterations 0
+DILUPBiCG:  Solving for C4H2, Initial residual = 4.3568146e-144, Final residual = 4.3568146e-144, No Iterations 0
+DILUPBiCG:  Solving for N-C4H3, Initial residual = 4.0302527e-151, Final residual = 4.0302527e-151, No Iterations 0
+DILUPBiCG:  Solving for N-C4H5, Initial residual = 4.3751273e-161, Final residual = 4.3751273e-161, No Iterations 0
+DILUPBiCG:  Solving for C4H7, Initial residual = 2.9230531e-178, Final residual = 2.9230531e-178, No Iterations 0
+DILUPBiCG:  Solving for C4H8-1, Initial residual = 6.4930155e-181, Final residual = 6.4930155e-181, No Iterations 0
+DILUPBiCG:  Solving for C4H9-1, Initial residual = 1.5929512e-200, Final residual = 1.5929512e-200, No Iterations 0
+DILUPBiCG:  Solving for C6H3, Initial residual = 4.2736951e-268, Final residual = 4.2736951e-268, No Iterations 0
+DILUPBiCG:  Solving for N-C6H5, Initial residual = 6.7526417e-248, Final residual = 6.7526417e-248, No Iterations 0
+DILUPBiCG:  Solving for C6H5O, Initial residual = 3.4369033e-205, Final residual = 3.4369033e-205, No Iterations 0
+DILUPBiCG:  Solving for C6H5OH, Initial residual = 1.9421635e-208, Final residual = 1.9421635e-208, No Iterations 0
+DILUPBiCG:  Solving for A1, Initial residual = 1.7281664e-237, Final residual = 1.7281664e-237, No Iterations 0
+DILUPBiCG:  Solving for A1-, Initial residual = 8.8765782e-238, Final residual = 8.8765782e-238, No Iterations 0
+DILUPBiCG:  Solving for A1C2H, Initial residual = 7.4588107e-279, Final residual = 7.4588107e-279, No Iterations 0
+DILUPBiCG:  Solving for A1C2H-, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for A1C2H*, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-A1C2H2, Initial residual = 2.0647924e-286, Final residual = 2.0647924e-286, No Iterations 0
+DILUPBiCG:  Solving for I-A1C2H2, Initial residual = 1.2449745e-286, Final residual = 1.2449745e-286, No Iterations 0
+DILUPBiCG:  Solving for CO, Initial residual = 0.99997456, Final residual = 1.4650066e-16, No Iterations 2
+DILUPBiCG:  Solving for CO2, Initial residual = 1, Final residual = 1.4651096e-16, No Iterations 2
+DILUPBiCG:  Solving for H2, Initial residual = 0.99990184, Final residual = 1.4651213e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O, Initial residual = 0.99999836, Final residual = 1.4652123e-16, No Iterations 2
+DILUPBiCG:  Solving for O2, Initial residual = 0.99999957, Final residual = 1.4650834e-16, No Iterations 2
+DILUPBiCG:  Solving for AR, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for HOCH2O, Initial residual = 2.6934972e-25, Final residual = 2.6934972e-25, No Iterations 0
+DILUPBiCG:  Solving for HOCHO, Initial residual = 3.8827372e-05, Final residual = 2.7066144e-13, No Iterations 1
+DILUPBiCG:  Solving for OCHO, Initial residual = 0.34285167, Final residual = 5.0229853e-17, No Iterations 2
+DILUPBiCG:  Solving for O2CHO, Initial residual = 1.2123641e-09, Final residual = 8.4507218e-18, No Iterations 1
+DILUPBiCG:  Solving for HO2CHO, Initial residual = 1.3637157e-07, Final residual = 9.5056569e-16, No Iterations 1
+DILUPBiCG:  Solving for C5H11-1, Initial residual = 1.7869796e-261, Final residual = 1.7869796e-261, No Iterations 0
+DILUPBiCG:  Solving for C5H11-2, Initial residual = 7.4804616e-262, Final residual = 7.4804616e-262, No Iterations 0
+DILUPBiCG:  Solving for L-C7H14, Initial residual = 5.6980248e-285, Final residual = 5.6980248e-285, No Iterations 0
+DILUPBiCG:  Solving for L-C7H15, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for NC7H16, Initial residual = 8.486091e-291, Final residual = 8.486091e-291, No Iterations 0
+DILUPBiCG:  Solving for L-C7H15O2, Initial residual = 1.2644653e-284, Final residual = 1.2644653e-284, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOH-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOH-S, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOH-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOH-S, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOH-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOH-S, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOHO2-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOHO2-S, Initial residual = 9.5505532e-287, Final residual = 9.5505532e-287, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOHO2-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOHO2-S, Initial residual = 2.6617881e-286, Final residual = 2.6617881e-286, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOHO2-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOHO2-S, Initial residual = 1.0726076e-285, Final residual = 1.0726076e-285, No Iterations 0
+DILUPBiCG:  Solving for R5-O-HEPOOH-P, Initial residual = 4.0860578e-286, Final residual = 4.0860578e-286, No Iterations 0
+DILUPBiCG:  Solving for R5-O-HEPOOH-S, Initial residual = 6.1113214e-286, Final residual = 6.1113214e-286, No Iterations 0
+DILUPBiCG:  Solving for R6-O-HEPOOH-P, Initial residual = 6.322472e-286, Final residual = 6.322472e-286, No Iterations 0
+DILUPBiCG:  Solving for R6-O-HEPOOH-S, Initial residual = 8.0279356e-286, Final residual = 8.0279356e-286, No Iterations 0
+DILUPBiCG:  Solving for R7-O-HEPOOH-P, Initial residual = 4.0693808e-286, Final residual = 4.0693808e-286, No Iterations 0
+DILUPBiCG:  Solving for R7-O-HEPOOH-S, Initial residual = 4.7196262e-286, Final residual = 4.7196262e-286, No Iterations 0
+DILUPBiCG:  Solving for C5H10-1, Initial residual = 3.4902952e-250, Final residual = 3.4902952e-250, No Iterations 0
+DILUPBiCG:  Solving for R5-C7H14O, Initial residual = 1.68486e-285, Final residual = 1.68486e-285, No Iterations 0
+DILUPBiCG:  Solving for N-C5H11CHO, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-C5H11CO, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-C4H9COCH2, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7CHO, Initial residual = 1.6492333e-183, Final residual = 1.6492333e-183, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7CO, Initial residual = 1.7546229e-180, Final residual = 1.7546229e-180, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7COCH2, Initial residual = 1.0073533e-230, Final residual = 1.0073533e-230, No Iterations 0
+DILUPBiCG:  Solving for C2H5CHO, Initial residual = 9.1532613e-124, Final residual = 9.1532613e-124, No Iterations 0
+DILUPBiCG:  Solving for C2H5CO, Initial residual = 2.656836e-120, Final residual = 2.656836e-120, No Iterations 0
+DILUPBiCG:  Solving for C2H5COCH2, Initial residual = 1.8499708e-170, Final residual = 1.8499708e-170, No Iterations 0
+DILUPBiCG:  Solving for C2H5COCH3, Initial residual = 3.8919753e-163, Final residual = 3.8919753e-163, No Iterations 0
+DILUPBiCG:  Solving for CH2CH2COCH3, Initial residual = 8.8253259e-168, Final residual = 8.8253259e-168, No Iterations 0
+DILUPBiCG:  Solving for C2H4COC2H5-1, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for CH2CH2CHO, Initial residual = 6.1449386e-116, Final residual = 6.1449386e-116, No Iterations 0
+DILUPBiCG:  Solving for CH3COCH2, Initial residual = 4.5793942e-115, Final residual = 4.5793942e-115, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7COC2H4-1, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for CH3CHCOCH3, Initial residual = 7.0043425e-170, Final residual = 7.0043425e-170, No Iterations 0
+DILUPBiCG:  Solving for C2H5O2, Initial residual = 1.2925145e-90, Final residual = 1.2925145e-90, No Iterations 0
+DILUPBiCG:  Solving for C2H4O2H, Initial residual = 2.8817889e-92, Final residual = 2.8817889e-92, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7O2, Initial residual = 5.1867987e-145, Final residual = 5.1867987e-145, No Iterations 0
+DILUPBiCG:  Solving for I-C3H7O2, Initial residual = 5.8789488e-157, Final residual = 5.8789488e-157, No Iterations 0
+DILUPBiCG:  Solving for A1C2HAC, Initial residual = 4.10303e-285, Final residual = 4.10303e-285, No Iterations 0
+DILUPBiCG:  Solving for A2-X, Initial residual = 2.9099312e-283, Final residual = 2.9099312e-283, No Iterations 0
+DILUPBiCG:  Solving for A2, Initial residual = 3.4617164e-281, Final residual = 3.4617164e-281, No Iterations 0
+DILUPBiCG:  Solving for A2R5, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for A2R5-, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H, Initial residual = 5.2182284e-282, Final residual = 5.2182284e-282, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H*, Initial residual = 3.8686093e-285, Final residual = 3.8686093e-285, No Iterations 0
+DILUPBiCG:  Solving for ANC2HAC, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for A3R5-, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for PAH, Initial residual = 1.1234943e-286, Final residual = 1.1234943e-286, No Iterations 0
+DILUPBiCG:  Solving for N, Initial residual = 3.7110487e-08, Final residual = 2.586846e-16, No Iterations 1
+DILUPBiCG:  Solving for NO, Initial residual = 0.00016262658, Final residual = 1.1337042e-12, No Iterations 1
+DILUPBiCG:  Solving for NO2, Initial residual = 4.206734e-10, Final residual = 2.9324601e-18, No Iterations 1
+DILUPBiCG:  Solving for h, Initial residual = 1, Final residual = 7.0549031e-09, No Iterations 1
+T gas min/max   = 1000.0009, 1000.0009
+Total PAH mass : 0
+Total M0 : 0
+DICPCG:  Solving for p, Initial residual = 1, Final residual = 0.00079721466, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.9994587, Final residual = 0.0026825152, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 1.8619212e-12, global = 7.0747637e-13, cumulative = 7.0747637e-13
+DICPCG:  Solving for p, Initial residual = 0.77716979, Final residual = 0.0026912134, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.0079949634, Final residual = 1.9782429e-09, No Iterations 5
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.3692275e-16, global = -1.1455866e-16, cumulative = 7.0736181e-13
+smoothSolver:  Solving for epsilon, Initial residual = 0.0020873356, Final residual = 3.752994e-10, No Iterations 1
+smoothSolver:  Solving for k, Initial residual = 1, Final residual = 1.7649133e-07, No Iterations 1
+Mean pressure:4250003.7
+Mean temperature:1000.0009
+Mean u':0.57722843
+total heat release: 0.0043942897
+cell Volume V:0.00027
+totalMass:0.0040360489
+totalFuel:5.1618234e-23
+Mean Cp/Cv':1.3146253
+soot mass [kg] : 0
+Wall Heat Fluxes [W]
+sideWall 0
+liner 0
+piston 0
+cylinderHead 0
+
+  time_Other 0.000476
+ time_rhoEqn 0.002945
+ time_UEqn  0.023333
+ time_YEqn  0.492351
+ time_EEqn  1.163007
+ time_pEqn  0.043981
+ time_turb  1.273925
+ time_Spray 0.668364
+ time_ODE 80.516776
+ time_soot_other 0.000232
+ time_soot_correct 0
+ time_soot_fields 0
+ time_soot_Eqn 0
+ time_soot_Mcorrect 0
+ time_soot_DYsps 0
+ time_soot_liner 0
+
+ExecutionTime = 88.07 s  ClockTime = 88 s
+
+loop times = 1
+Courant Number mean: 9.6045477e-16 max: 6.3781855e-15
+deltaT = 1.9607843e-06
+Time = 3.92157e-06
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 1.9507843e-06
+ t1 3.9115686e-06
+ timeStep0_ 1.9607843e-06
+ time  3.9215686e-06
+
+--> Cloud: sprayCloud injector: main
+    Added 98 new parcels
+
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 98
+    Current mass in system          = 1.9459264e-10
+    Linear momentum                 = (4.8885661e-09 3.2570453e-11 5.9631628e-13)
+   |Linear momentum|                = 4.8886747e-09
+    Linear kinetic energy           = 6.4814886e-08
+    main:
+        number of parcels added     = 98
+        mass introduced             = 1.9461285e-10
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 374.37484, 374.80179
+    Mass transfer phase change      = 2.0218145e-14
+    D10, D32, Dmax (mu)             = 99.107897, 99.107909, 99.166899
+    Liquid penetration 95% mass (m) = 6.6772143e-05
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.99997642, Final residual = 8.7539836e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.99307866, Final residual = 8.6864502e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.66053611, Final residual = 5.429779e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 
+DILUPBiCG:  Solving for H, Initial residual = 0.99962087, Final residual = 1.9850294e-16, No Iterations 2
+DILUPBiCG:  Solving for O, Initial residual = 0.99999889, Final residual = 1.9857526e-16, No Iterations 2
+DILUPBiCG:  Solving for OH, Initial residual = 1, Final residual = 1.9857411e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2, Initial residual = 1, Final residual = 1.9857629e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O2, Initial residual = 0.99999999, Final residual = 1.9857595e-16, No Iterations 2
+DILUPBiCG:  Solving for CH, Initial residual = 2.7734135e-41, Final residual = 2.7734135e-41, No Iterations 0
+DILUPBiCG:  Solving for HCO, Initial residual = 3.8119186e-13, Final residual = 3.8119186e-13, No Iterations 0
+DILUPBiCG:  Solving for CH2-1, Initial residual = 3.1876473e-36, Final residual = 3.1876473e-36, No Iterations 0
+DILUPBiCG:  Solving for CH2-3, Initial residual = 1.2466665e-33, Final residual = 1.2466665e-33, No Iterations 0
+DILUPBiCG:  Solving for CH2O, Initial residual = 1.3519991e-16, Final residual = 1.3519991e-16, No Iterations 0
+DILUPBiCG:  Solving for CH3, Initial residual = 1.6924235e-39, Final residual = 1.6924235e-39, No Iterations 0
+DILUPBiCG:  Solving for CH3O, Initial residual = 3.3676353e-34, Final residual = 3.3676353e-34, No Iterations 0
+DILUPBiCG:  Solving for CH3O2, Initial residual = 8.6691519e-38, Final residual = 8.6691519e-38, No Iterations 0
+DILUPBiCG:  Solving for CH4, Initial residual = 1.9115267e-40, Final residual = 1.9115267e-40, No Iterations 0
+DILUPBiCG:  Solving for CH3O2H, Initial residual = 9.696414e-41, Final residual = 9.696414e-41, No Iterations 0
+DILUPBiCG:  Solving for C2H, Initial residual = 7.1086158e-71, Final residual = 7.1086158e-71, No Iterations 0
+DILUPBiCG:  Solving for HCCO, Initial residual = 2.4153075e-52, Final residual = 2.4153075e-52, No Iterations 0
+DILUPBiCG:  Solving for C2H2, Initial residual = 5.949033e-58, Final residual = 5.949033e-58, No Iterations 0
+DILUPBiCG:  Solving for CH2CO, Initial residual = 1.7796909e-44, Final residual = 1.7796909e-44, No Iterations 0
+DILUPBiCG:  Solving for C2H3, Initial residual = 2.2228026e-71, Final residual = 2.2228026e-71, No Iterations 0
+DILUPBiCG:  Solving for CH2CHO, Initial residual = 2.535276e-58, Final residual = 2.535276e-58, No Iterations 0
+DILUPBiCG:  Solving for CH3CO, Initial residual = 4.3027943e-59, Final residual = 4.3027943e-59, No Iterations 0
+DILUPBiCG:  Solving for C2H4, Initial residual = 9.6690475e-72, Final residual = 9.6690475e-72, No Iterations 0
+DILUPBiCG:  Solving for CH3CHO, Initial residual = 5.6425672e-63, Final residual = 5.6425672e-63, No Iterations 0
+DILUPBiCG:  Solving for C2H5, Initial residual = 2.0444909e-83, Final residual = 2.0444909e-83, No Iterations 0
+DILUPBiCG:  Solving for C2H5O, Initial residual = 3.4496458e-82, Final residual = 3.4496458e-82, No Iterations 0
+DILUPBiCG:  Solving for C3H2, Initial residual = 6.5502423e-101, Final residual = 6.5502423e-101, No Iterations 0
+DILUPBiCG:  Solving for C3H3, Initial residual = 1.5318313e-105, Final residual = 1.5318313e-105, No Iterations 0
+DILUPBiCG:  Solving for C3H4, Initial residual = 4.7620372e-109, Final residual = 4.7620372e-109, No Iterations 0
+DILUPBiCG:  Solving for C3H5, Initial residual = 8.6551251e-117, Final residual = 8.6551251e-117, No Iterations 0
+DILUPBiCG:  Solving for C3H6, Initial residual = 5.8284195e-122, Final residual = 5.8284195e-122, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7, Initial residual = 4.9554604e-133, Final residual = 4.9554604e-133, No Iterations 0
+DILUPBiCG:  Solving for C3H8, Initial residual = 1.8152474e-134, Final residual = 1.8152474e-134, No Iterations 0
+DILUPBiCG:  Solving for C4H2, Initial residual = 8.0995502e-135, Final residual = 8.0995502e-135, No Iterations 0
+DILUPBiCG:  Solving for N-C4H3, Initial residual = 5.6842683e-143, Final residual = 5.6842683e-143, No Iterations 0
+DILUPBiCG:  Solving for N-C4H5, Initial residual = 4.7968677e-149, Final residual = 4.7968677e-149, No Iterations 0
+DILUPBiCG:  Solving for C4H7, Initial residual = 3.1324063e-162, Final residual = 3.1324063e-162, No Iterations 0
+DILUPBiCG:  Solving for C4H8-1, Initial residual = 7.5249068e-165, Final residual = 7.5249068e-165, No Iterations 0
+DILUPBiCG:  Solving for C4H9-1, Initial residual = 3.7196083e-181, Final residual = 3.7196083e-181, No Iterations 0
+DILUPBiCG:  Solving for C6H3, Initial residual = 7.1390971e-229, Final residual = 7.1390971e-229, No Iterations 0
+DILUPBiCG:  Solving for N-C6H5, Initial residual = 7.5486873e-228, Final residual = 7.5486873e-228, No Iterations 0
+DILUPBiCG:  Solving for C6H5O, Initial residual = 7.3695436e-196, Final residual = 7.3695436e-196, No Iterations 0
+DILUPBiCG:  Solving for C6H5OH, Initial residual = 4.5050239e-199, Final residual = 4.5050239e-199, No Iterations 0
+DILUPBiCG:  Solving for A1, Initial residual = 3.8284076e-217, Final residual = 3.8284076e-217, No Iterations 0
+DILUPBiCG:  Solving for A1-, Initial residual = 1.8263666e-217, Final residual = 1.8263666e-217, No Iterations 0
+DILUPBiCG:  Solving for A1C2H, Initial residual = 8.8885932e-279, Final residual = 8.8885932e-279, No Iterations 0
+DILUPBiCG:  Solving for A1C2H-, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for A1C2H*, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-A1C2H2, Initial residual = 1.9226058e-286, Final residual = 1.9226058e-286, No Iterations 0
+DILUPBiCG:  Solving for I-A1C2H2, Initial residual = 1.1918376e-286, Final residual = 1.1918376e-286, No Iterations 0
+DILUPBiCG:  Solving for CO, Initial residual = 0.99997751, Final residual = 1.9857188e-16, No Iterations 2
+DILUPBiCG:  Solving for CO2, Initial residual = 0.99999893, Final residual = 1.9857911e-16, No Iterations 2
+DILUPBiCG:  Solving for H2, Initial residual = 0.99991341, Final residual = 1.985601e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O, Initial residual = 1, Final residual = 1.9857996e-16, No Iterations 2
+DILUPBiCG:  Solving for O2, Initial residual = 0.99999969, Final residual = 1.9858005e-16, No Iterations 2
+DILUPBiCG:  Solving for AR, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for HOCH2O, Initial residual = 4.1643641e-25, Final residual = 4.1643641e-25, No Iterations 0
+DILUPBiCG:  Solving for HOCHO, Initial residual = 4.9546302e-05, Final residual = 5.8234521e-13, No Iterations 1
+DILUPBiCG:  Solving for OCHO, Initial residual = 0.35126772, Final residual = 6.9753552e-17, No Iterations 2
+DILUPBiCG:  Solving for O2CHO, Initial residual = 1.6562571e-09, Final residual = 1.9466942e-17, No Iterations 1
+DILUPBiCG:  Solving for HO2CHO, Initial residual = 1.5754695e-07, Final residual = 1.8517416e-15, No Iterations 1
+DILUPBiCG:  Solving for C5H11-1, Initial residual = 1.5398237e-234, Final residual = 1.5398237e-234, No Iterations 0
+DILUPBiCG:  Solving for C5H11-2, Initial residual = 6.4400577e-235, Final residual = 6.4400577e-235, No Iterations 0
+DILUPBiCG:  Solving for L-C7H14, Initial residual = 5.8073091e-285, Final residual = 5.8073091e-285, No Iterations 0
+DILUPBiCG:  Solving for L-C7H15, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for NC7H16, Initial residual = 1, Final residual = 1.6134021e-15, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15O2, Initial residual = 1.2677389e-284, Final residual = 1.2677389e-284, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOH-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOH-S, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOH-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOH-S, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOH-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOH-S, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOHO2-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R5-HEOOHO2-S, Initial residual = 7.7819669e-287, Final residual = 7.7819669e-287, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOHO2-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R6-HEOOHO2-S, Initial residual = 2.4918737e-286, Final residual = 2.4918737e-286, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOHO2-P, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for R7-HEOOHO2-S, Initial residual = 1.0588322e-285, Final residual = 1.0588322e-285, No Iterations 0
+DILUPBiCG:  Solving for R5-O-HEPOOH-P, Initial residual = 3.9231823e-286, Final residual = 3.9231823e-286, No Iterations 0
+DILUPBiCG:  Solving for R5-O-HEPOOH-S, Initial residual = 5.9608849e-286, Final residual = 5.9608849e-286, No Iterations 0
+DILUPBiCG:  Solving for R6-O-HEPOOH-P, Initial residual = 6.171689e-286, Final residual = 6.171689e-286, No Iterations 0
+DILUPBiCG:  Solving for R6-O-HEPOOH-S, Initial residual = 7.8826786e-286, Final residual = 7.8826786e-286, No Iterations 0
+DILUPBiCG:  Solving for R7-O-HEPOOH-P, Initial residual = 3.9065589e-286, Final residual = 3.9065589e-286, No Iterations 0
+DILUPBiCG:  Solving for R7-O-HEPOOH-S, Initial residual = 4.5598071e-286, Final residual = 4.5598071e-286, No Iterations 0
+DILUPBiCG:  Solving for C5H10-1, Initial residual = 8.8767907e-222, Final residual = 8.8767907e-222, No Iterations 0
+DILUPBiCG:  Solving for R5-C7H14O, Initial residual = 1.7190123e-285, Final residual = 1.7190123e-285, No Iterations 0
+DILUPBiCG:  Solving for N-C5H11CHO, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-C5H11CO, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-C4H9COCH2, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7CHO, Initial residual = 1.8132785e-164, Final residual = 1.8132785e-164, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7CO, Initial residual = 1.7834808e-161, Final residual = 1.7834808e-161, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7COCH2, Initial residual = 9.943781e-208, Final residual = 9.943781e-208, No Iterations 0
+DILUPBiCG:  Solving for C2H5CHO, Initial residual = 2.7257895e-112, Final residual = 2.7257895e-112, No Iterations 0
+DILUPBiCG:  Solving for C2H5CO, Initial residual = 7.3144756e-109, Final residual = 7.3144756e-109, No Iterations 0
+DILUPBiCG:  Solving for C2H5COCH2, Initial residual = 4.7276248e-155, Final residual = 4.7276248e-155, No Iterations 0
+DILUPBiCG:  Solving for C2H5COCH3, Initial residual = 1.9272651e-150, Final residual = 1.9272651e-150, No Iterations 0
+DILUPBiCG:  Solving for CH2CH2COCH3, Initial residual = 3.6247219e-155, Final residual = 3.6247219e-155, No Iterations 0
+DILUPBiCG:  Solving for C2H4COC2H5-1, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for CH2CH2CHO, Initial residual = 7.3165156e-107, Final residual = 7.3165156e-107, No Iterations 0
+DILUPBiCG:  Solving for CH3COCH2, Initial residual = 2.3177357e-105, Final residual = 2.3177357e-105, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7COC2H4-1, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for CH3CHCOCH3, Initial residual = 3.4700336e-157, Final residual = 3.4700336e-157, No Iterations 0
+DILUPBiCG:  Solving for C2H5O2, Initial residual = 1.4634277e-82, Final residual = 1.4634277e-82, No Iterations 0
+DILUPBiCG:  Solving for C2H4O2H, Initial residual = 3.2531443e-84, Final residual = 3.2531443e-84, No Iterations 0
+DILUPBiCG:  Solving for N-C3H7O2, Initial residual = 2.3877895e-131, Final residual = 2.3877895e-131, No Iterations 0
+DILUPBiCG:  Solving for I-C3H7O2, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for A1C2HAC, Initial residual = 4.1374546e-285, Final residual = 4.1374546e-285, No Iterations 0
+DILUPBiCG:  Solving for A2-X, Initial residual = 2.7412091e-283, Final residual = 2.7412091e-283, No Iterations 0
+DILUPBiCG:  Solving for A2, Initial residual = 3.5290312e-281, Final residual = 3.5290312e-281, No Iterations 0
+DILUPBiCG:  Solving for A2R5, Initial residual = 1.0006274e-283, Final residual = 1.0006274e-283, No Iterations 0
+DILUPBiCG:  Solving for A2R5-, Initial residual = 1.5090187e-286, Final residual = 1.5090187e-286, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H, Initial residual = 1.6150779e-281, Final residual = 1.6150779e-281, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H*, Initial residual = 3.6844777e-285, Final residual = 3.6844777e-285, No Iterations 0
+DILUPBiCG:  Solving for ANC2HAC, Initial residual = 2.4301104e-285, Final residual = 2.4301104e-285, No Iterations 0
+DILUPBiCG:  Solving for A3R5-, Initial residual = 3.7164408e-285, Final residual = 3.7164408e-285, No Iterations 0
+DILUPBiCG:  Solving for PAH, Initial residual = 2.9685633e-288, Final residual = 2.9685633e-288, No Iterations 0
+DILUPBiCG:  Solving for N, Initial residual = 3.8191085e-08, Final residual = 4.4887983e-16, No Iterations 1
+DILUPBiCG:  Solving for NO, Initial residual = 0.0001891392, Final residual = 2.2230645e-12, No Iterations 1
+DILUPBiCG:  Solving for NO2, Initial residual = 6.1235832e-10, Final residual = 7.1974096e-18, No Iterations 1
+DILUPBiCG:  Solving for h, Initial residual = 1, Final residual = 2.031319e-16, No Iterations 2
+T gas min/max   = 999.99639, 1000.002
+Total PAH mass : 0
+Total M0 : 0
+DICPCG:  Solving for p, Initial residual = 1, Final residual = 0.00080385609, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.66072865, Final residual = 0.0017856296, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 2.3430919e-12, global = 9.1524147e-13, cumulative = 1.6226033e-12
+DICPCG:  Solving for p, Initial residual = 0.0033966549, Final residual = 1.1889068e-05, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 1.1933883e-05, Final residual = 1.2980464e-09, No Iterations 3
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.3692979e-16, global = -3.4238027e-17, cumulative = 1.622569e-12
+smoothSolver:  Solving for epsilon, Initial residual = 0.0020944256, Final residual = 3.7617936e-10, No Iterations 1
+smoothSolver:  Solving for k, Initial residual = 0.89527653, Final residual = 1.4376146e-07, No Iterations 1
+Mean pressure:4250008.3
+Mean temperature:1000.002
+Mean u':0.57710665
+total heat release: 0.0087885836
+cell Volume V:0.00027
+totalMass:0.0040360489
+totalFuel:1.0331658e-22
+Mean Cp/Cv':1.3146252
+soot mass [kg] : 0
+Wall Heat Fluxes [W]
+sideWall 0
+liner 0
+piston 0
+cylinderHead 0
+
+  time_Other 1.580529
+ time_rhoEqn 0.006169
+ time_UEqn  0.044293
+ time_YEqn  0.972042
+ time_EEqn  2.322189
+ time_pEqn  0.0854
+ time_turb  2.550774
+ time_Spray 1.360956
+ time_ODE 152.67681
+ time_soot_other 0.000435
+ time_soot_correct 0
+ time_soot_fields 0
+ time_soot_Eqn 0
+ time_soot_Mcorrect 0
+ time_soot_DYsps 0
+ time_soot_liner 0
+
+ExecutionTime = 165.43 s  ClockTime = 165 s
+
+loop times = 2
+Courant Number mean: 1.7992357e-10 max: 1.6517077e-06
+deltaT = 1.9607843e-06
+Time = 5.88235e-06
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 3.9115686e-06
+ t1 5.8723529e-06
+ timeStep0_ 3.9215686e-06
+ time  5.8823529e-06
+
+--> Cloud: sprayCloud injector: main
+    Added 98 new parcels
+
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 196
+    Current mass in system          = 5.1932973e-10
+    Linear momentum                 = (1.8321381e-08 -4.3994631e-12 -1.2140518e-11)
+   |Linear momentum|                = 1.8321386e-08
+    Linear kinetic energy           = 3.5227878e-07
+    main:
+        number of parcels added     = 196
+        mass introduced             = 5.1941024e-10
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 374.8551, 375.86768
+    Mass transfer phase change      = 8.050261e-14
+    D10, D32, Dmax (mu)             = 98.428171, 98.428758, 98.757155
+    Liquid penetration 95% mass (m) = 0.00012990331
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.53792804, Final residual = 4.3649407e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.33352662, Final residual = 2.5617218e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.33388876, Final residual = 2.5659994e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 
+DILUPBiCG:  Solving for H, Initial residual = 0.99962093, Final residual = 1.985777e-16, No Iterations 2
+DILUPBiCG:  Solving for O, Initial residual = 0.9999989, Final residual = 1.9853237e-16, No Iterations 2
+DILUPBiCG:  Solving for OH, Initial residual = 1, Final residual = 1.9851462e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2, Initial residual = 1, Final residual = 1.9850781e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O2, Initial residual = 0.99999999, Final residual = 1.9860543e-16, No Iterations 2
+DILUPBiCG:  Solving for CH, Initial residual = 1.3545717e-13, Final residual = 1.3545717e-13, No Iterations 0
+DILUPBiCG:  Solving for HCO, Initial residual = 0.29294112, Final residual = 4.7225988e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2-1, Initial residual = 2.7089663e-08, Final residual = 1.555198e-15, No Iterations 1
+DILUPBiCG:  Solving for CH2-3, Initial residual = 1.0593666e-05, Final residual = 6.0817475e-13, No Iterations 1
+DILUPBiCG:  Solving for CH2O, Initial residual = 0.99957783, Final residual = 1.6110305e-15, No Iterations 2
+DILUPBiCG:  Solving for CH3, Initial residual = 0.99448246, Final residual = 1.6030359e-15, No Iterations 2
+DILUPBiCG:  Solving for CH3O, Initial residual = 0.017327254, Final residual = 2.7928273e-17, No Iterations 2
+DILUPBiCG:  Solving for CH3O2, Initial residual = 0.99989012, Final residual = 1.6117486e-15, No Iterations 2
+DILUPBiCG:  Solving for CH4, Initial residual = 0.43374215, Final residual = 6.9807552e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2H, Initial residual = 0.35069953, Final residual = 5.6526119e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H, Initial residual = 1.0771723e-17, Final residual = 1.0771723e-17, No Iterations 0
+DILUPBiCG:  Solving for HCCO, Initial residual = 8.9651259e-07, Final residual = 5.0453302e-14, No Iterations 1
+DILUPBiCG:  Solving for C2H2, Initial residual = 0.00014490723, Final residual = 8.1980752e-12, No Iterations 1
+DILUPBiCG:  Solving for CH2CO, Initial residual = 0.99984731, Final residual = 1.6114792e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H3, Initial residual = 9.8361512e-07, Final residual = 5.6047543e-14, No Iterations 1
+DILUPBiCG:  Solving for CH2CHO, Initial residual = 9.8888818e-05, Final residual = 5.6561582e-12, No Iterations 1
+DILUPBiCG:  Solving for CH3CO, Initial residual = 0.25897658, Final residual = 4.1753869e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4, Initial residual = 0.99995554, Final residual = 1.611961e-15, No Iterations 2
+DILUPBiCG:  Solving for CH3CHO, Initial residual = 0.99996752, Final residual = 1.6091691e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H5, Initial residual = 0.99969658, Final residual = 1.6118086e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H5O, Initial residual = 1.7477533e-08, Final residual = 1.0035138e-15, No Iterations 1
+DILUPBiCG:  Solving for C3H2, Initial residual = 6.7783554e-34, Final residual = 6.7783554e-34, No Iterations 0
+DILUPBiCG:  Solving for C3H3, Initial residual = 0.00014069825, Final residual = 7.9183379e-12, No Iterations 1
+DILUPBiCG:  Solving for C3H4, Initial residual = 0.34131626, Final residual = 5.4274102e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H5, Initial residual = 0.45855299, Final residual = 7.3784018e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H6, Initial residual = 0.99997297, Final residual = 1.6096777e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7, Initial residual = 0.99193128, Final residual = 1.5992441e-15, No Iterations 2
+DILUPBiCG:  Solving for C3H8, Initial residual = 0.14340577, Final residual = 2.3114561e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H2, Initial residual = 7.9375387e-35, Final residual = 7.9375387e-35, No Iterations 0
+DILUPBiCG:  Solving for N-C4H3, Initial residual = 6.0589885e-33, Final residual = 6.0589885e-33, No Iterations 0
+DILUPBiCG:  Solving for N-C4H5, Initial residual = 9.3644697e-28, Final residual = 9.3644697e-28, No Iterations 0
+DILUPBiCG:  Solving for C4H7, Initial residual = 0.38857142, Final residual = 6.2203812e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H8-1, Initial residual = 0.99997702, Final residual = 1.6094456e-15, No Iterations 2
+DILUPBiCG:  Solving for C4H9-1, Initial residual = 0.99571333, Final residual = 1.6053645e-15, No Iterations 2
+DILUPBiCG:  Solving for C6H3, Initial residual = 9.3671209e-69, Final residual = 9.3671209e-69, No Iterations 0
+DILUPBiCG:  Solving for N-C6H5, Initial residual = 1.8000472e-44, Final residual = 1.8000472e-44, No Iterations 0
+DILUPBiCG:  Solving for C6H5O, Initial residual = 3.3887017e-33, Final residual = 3.3887017e-33, No Iterations 0
+DILUPBiCG:  Solving for C6H5OH, Initial residual = 1.7903917e-34, Final residual = 1.7903917e-34, No Iterations 0
+DILUPBiCG:  Solving for A1, Initial residual = 1.7451301e-23, Final residual = 1.7451301e-23, No Iterations 0
+DILUPBiCG:  Solving for A1-, Initial residual = 4.5477877e-34, Final residual = 4.5477877e-34, No Iterations 0
+DILUPBiCG:  Solving for A1C2H, Initial residual = 9.6093056e-56, Final residual = 9.6093056e-56, No Iterations 0
+DILUPBiCG:  Solving for A1C2H-, Initial residual = 5.2595737e-66, Final residual = 5.2595737e-66, No Iterations 0
+DILUPBiCG:  Solving for A1C2H*, Initial residual = 4.9684236e-66, Final residual = 4.9684236e-66, No Iterations 0
+DILUPBiCG:  Solving for N-A1C2H2, Initial residual = 1.1156728e-55, Final residual = 1.1156728e-55, No Iterations 0
+DILUPBiCG:  Solving for I-A1C2H2, Initial residual = 7.0716843e-72, Final residual = 7.0716843e-72, No Iterations 0
+DILUPBiCG:  Solving for CO, Initial residual = 0.99998152, Final residual = 1.8880353e-15, No Iterations 2
+DILUPBiCG:  Solving for CO2, Initial residual = 0.99998868, Final residual = 1.9843295e-16, No Iterations 2
+DILUPBiCG:  Solving for H2, Initial residual = 0.99991942, Final residual = 1.9858808e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O, Initial residual = 0.9999892, Final residual = 1.9843263e-16, No Iterations 2
+DILUPBiCG:  Solving for O2, Initial residual = 0.99999117, Final residual = 1.984336e-16, No Iterations 2
+DILUPBiCG:  Solving for AR, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for HOCH2O, Initial residual = 1.1546994e-10, Final residual = 6.6297189e-18, No Iterations 1
+DILUPBiCG:  Solving for HOCHO, Initial residual = 0.00027088565, Final residual = 1.5557429e-11, No Iterations 1
+DILUPBiCG:  Solving for OCHO, Initial residual = 0.35605368, Final residual = 7.0760608e-17, No Iterations 2
+DILUPBiCG:  Solving for O2CHO, Initial residual = 0.99884883, Final residual = 1.6100967e-15, No Iterations 2
+DILUPBiCG:  Solving for HO2CHO, Initial residual = 6.4620868e-05, Final residual = 3.7110717e-12, No Iterations 1
+DILUPBiCG:  Solving for C5H11-1, Initial residual = 0.99916306, Final residual = 1.6109635e-15, No Iterations 2
+DILUPBiCG:  Solving for C5H11-2, Initial residual = 0.99780361, Final residual = 1.6087754e-15, No Iterations 2
+DILUPBiCG:  Solving for L-C7H14, Initial residual = 0.99999704, Final residual = 1.6121522e-15, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15, Initial residual = 0.99982667, Final residual = 1.6119835e-15, No Iterations 2
+DILUPBiCG:  Solving for NC7H16, Initial residual = 0.42710163, Final residual = 6.8861481e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15O2, Initial residual = 0.99997814, Final residual = 1.6122593e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-P, Initial residual = 0.95606499, Final residual = 1.5414589e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-S, Initial residual = 0.99806001, Final residual = 1.6091711e-15, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-P, Initial residual = 0.99492691, Final residual = 1.6041183e-15, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-S, Initial residual = 0.99860458, Final residual = 1.6100493e-15, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-P, Initial residual = 0.99323648, Final residual = 1.6013954e-15, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-S, Initial residual = 0.99702042, Final residual = 1.6075018e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-P, Initial residual = 0.99003215, Final residual = 1.5962361e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-S, Initial residual = 0.99972412, Final residual = 1.6118676e-15, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-P, Initial residual = 0.99881652, Final residual = 1.6104004e-15, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-S, Initial residual = 0.9997894, Final residual = 1.6119726e-15, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-P, Initial residual = 0.99901848, Final residual = 1.6107304e-15, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-S, Initial residual = 0.99956884, Final residual = 1.6116204e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-P, Initial residual = 0.99036696, Final residual = 1.5967896e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-S, Initial residual = 0.99986655, Final residual = 1.6121051e-15, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-P, Initial residual = 0.99958527, Final residual = 1.6116515e-15, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-S, Initial residual = 0.99987717, Final residual = 1.6121236e-15, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-P, Initial residual = 0.99815827, Final residual = 1.6093522e-15, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-S, Initial residual = 0.999257, Final residual = 1.6111239e-15, No Iterations 2
+DILUPBiCG:  Solving for C5H10-1, Initial residual = 0.99998835, Final residual = 1.6102281e-15, No Iterations 2
+DILUPBiCG:  Solving for R5-C7H14O, Initial residual = 0.99998333, Final residual = 1.6121282e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CHO, Initial residual = 0.99623493, Final residual = 1.6056556e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CO, Initial residual = 0.16113985, Final residual = 2.5979303e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C4H9COCH2, Initial residual = 0.99978666, Final residual = 1.6117757e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CHO, Initial residual = 0.99998191, Final residual = 1.6093896e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CO, Initial residual = 0.84944139, Final residual = 1.3695431e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COCH2, Initial residual = 0.99991135, Final residual = 1.611821e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H5CHO, Initial residual = 0.99997811, Final residual = 1.6094349e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H5CO, Initial residual = 0.86672275, Final residual = 1.3974064e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH2, Initial residual = 0.98248618, Final residual = 1.5840205e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH3, Initial residual = 0.99991334, Final residual = 1.6117433e-15, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2COCH3, Initial residual = 0.52517669, Final residual = 8.4673324e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4COC2H5-1, Initial residual = 0.99675755, Final residual = 1.6070524e-15, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2CHO, Initial residual = 0.33133579, Final residual = 5.3420044e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3COCH2, Initial residual = 0.99283525, Final residual = 1.6007059e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COC2H4-1, Initial residual = 0.94271838, Final residual = 1.5199102e-15, No Iterations 2
+DILUPBiCG:  Solving for CH3CHCOCH3, Initial residual = 0.0018174697, Final residual = 2.9294659e-18, No Iterations 2
+DILUPBiCG:  Solving for C2H5O2, Initial residual = 0.99995462, Final residual = 1.612226e-15, No Iterations 2
+DILUPBiCG:  Solving for C2H4O2H, Initial residual = 0.96527554, Final residual = 1.5563127e-15, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7O2, Initial residual = 0.99982229, Final residual = 1.6119648e-15, No Iterations 2
+DILUPBiCG:  Solving for I-C3H7O2, Initial residual = 2.8071042e-09, Final residual = 1.6115046e-16, No Iterations 1
+DILUPBiCG:  Solving for A1C2HAC, Initial residual = 4.0225914e-92, Final residual = 4.0225914e-92, No Iterations 0
+DILUPBiCG:  Solving for A2-X, Initial residual = 5.2231621e-91, Final residual = 5.2231621e-91, No Iterations 0
+DILUPBiCG:  Solving for A2, Initial residual = 2.5404184e-90, Final residual = 2.5404184e-90, No Iterations 0
+DILUPBiCG:  Solving for A2R5, Initial residual = 4.1519806e-112, Final residual = 4.1519806e-112, No Iterations 0
+DILUPBiCG:  Solving for A2R5-, Initial residual = 6.6064753e-125, Final residual = 6.6064753e-125, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H, Initial residual = 4.9976743e-151, Final residual = 4.9976743e-151, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H*, Initial residual = 4.0132074e-167, Final residual = 4.0132074e-167, No Iterations 0
+DILUPBiCG:  Solving for ANC2HAC, Initial residual = 3.3447387e-198, Final residual = 3.3447387e-198, No Iterations 0
+DILUPBiCG:  Solving for A3R5-, Initial residual = 4.2939686e-197, Final residual = 4.2939686e-197, No Iterations 0
+DILUPBiCG:  Solving for PAH, Initial residual = 8.3247854e-196, Final residual = 8.3247854e-196, No Iterations 0
+DILUPBiCG:  Solving for N, Initial residual = 3.8840077e-08, Final residual = 4.5658311e-16, No Iterations 1
+DILUPBiCG:  Solving for NO, Initial residual = 0.00020614442, Final residual = 2.4246236e-12, No Iterations 1
+DILUPBiCG:  Solving for NO2, Initial residual = 7.5738689e-10, Final residual = 8.912194e-18, No Iterations 1
+DILUPBiCG:  Solving for h, Initial residual = 0.99944945, Final residual = 2.0891579e-16, No Iterations 2
+T gas min/max   = 999.97675, 1000.0032
+Total PAH mass : 0
+Total M0 : 0
+DICPCG:  Solving for p, Initial residual = 0.99938606, Final residual = 0.00084271662, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.28175731, Final residual = 0.00082672364, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 2.7923625e-12, global = 1.1714373e-12, cumulative = 2.7940064e-12
+DICPCG:  Solving for p, Initial residual = 0.00084667708, Final residual = 2.951655e-06, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 2.9522578e-06, Final residual = 3.0468249e-10, No Iterations 3
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.3143706e-16, global = 6.7109914e-18, cumulative = 2.7940131e-12
+smoothSolver:  Solving for epsilon, Initial residual = 0.0020952354, Final residual = 3.7622298e-10, No Iterations 1
+smoothSolver:  Solving for k, Initial residual = 0.81040861, Final residual = 1.3009847e-07, No Iterations 1
+Mean pressure:4250013.1
+Mean temperature:1000.0032
+Mean u':0.57698493
+total heat release: 0.013182882
+cell Volume V:0.00027
+totalMass:0.0040360489
+totalFuel:1.5502278e-22
+Mean Cp/Cv':1.3146251
+soot mass [kg] : 0
+Wall Heat Fluxes [W]
+sideWall 0
+liner 0
+piston 0
+cylinderHead 0
+
+  time_Other 3.211145
+ time_rhoEqn 0.00895
+ time_UEqn  0.066027
+ time_YEqn  1.687603
+ time_EEqn  3.557425
+ time_pEqn  0.131017
+ time_turb  3.875372
+ time_Spray 2.137879
+ time_ODE 220.38417
+ time_soot_other 0.000658
+ time_soot_correct 0
+ time_soot_fields 0
+ time_soot_Eqn 0
+ time_soot_Mcorrect 0
+ time_soot_DYsps 0
+ time_soot_liner 0
+
+ExecutionTime = 238.5 s  ClockTime = 239 s
+
+loop times = 3
+Courant Number mean: 8.9908043e-10 max: 7.027304e-06
+deltaT = 1.9607843e-06
+Time = 7.84314e-06
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 5.8723529e-06
+ t1 7.8331373e-06
+ timeStep0_ 5.8823529e-06
+ time  7.8431373e-06
+
+--> Cloud: sprayCloud injector: main
+    Added 98 new parcels
+
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 294
+    Current mass in system          = 9.7418527e-10
+    Linear momentum                 = (4.4185025e-08 3.4283699e-11 6.1798881e-11)
+   |Linear momentum|                = 4.4185082e-08
+    Linear kinetic energy           = 1.1110311e-06
+    main:
+        number of parcels added     = 294
+        mass introduced             = 9.7439215e-10
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 375.29137, 377.34435
+    Mass transfer phase change      = 2.0688124e-13
+    D10, D32, Dmax (mu)             = 97.626368, 97.629138, 98.352047
+    Liquid penetration 95% mass (m) = 0.00019579284
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.412312, Final residual = 3.3045347e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.29075692, Final residual = 2.158731e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.29119846, Final residual = 2.1536067e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 
+DILUPBiCG:  Solving for H, Initial residual = 0.99954084, Final residual = 1.9850342e-16, No Iterations 2
+DILUPBiCG:  Solving for O, Initial residual = 0.99989878, Final residual = 1.9849948e-16, No Iterations 2
+DILUPBiCG:  Solving for OH, Initial residual = 0.99999945, Final residual = 1.9843484e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2, Initial residual = 0.99999765, Final residual = 1.9843576e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O2, Initial residual = 0.99965049, Final residual = 1.9848945e-16, No Iterations 2
+DILUPBiCG:  Solving for CH, Initial residual = 6.9915248e-13, Final residual = 6.9915248e-13, No Iterations 0
+DILUPBiCG:  Solving for HCO, Initial residual = 0.34070435, Final residual = 5.4878763e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2-1, Initial residual = 1.1033196e-07, Final residual = 6.3320619e-15, No Iterations 1
+DILUPBiCG:  Solving for CH2-3, Initial residual = 4.3146802e-05, Final residual = 2.4762383e-12, No Iterations 1
+DILUPBiCG:  Solving for CH2O, Initial residual = 0.51291718, Final residual = 8.2604917e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3, Initial residual = 0.50931052, Final residual = 8.2029428e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O, Initial residual = 0.068157611, Final residual = 1.0976945e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2, Initial residual = 0.51054338, Final residual = 8.2227867e-16, No Iterations 2
+DILUPBiCG:  Solving for CH4, Initial residual = 0.46836287, Final residual = 7.5374719e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2H, Initial residual = 0.43177391, Final residual = 6.9538191e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H, Initial residual = 8.5263372e-17, Final residual = 8.5263372e-17, No Iterations 0
+DILUPBiCG:  Solving for HCCO, Initial residual = 3.3414868e-06, Final residual = 1.9044827e-13, No Iterations 1
+DILUPBiCG:  Solving for C2H2, Initial residual = 0.00056346919, Final residual = 3.2191074e-11, No Iterations 1
+DILUPBiCG:  Solving for CH2CO, Initial residual = 0.50435923, Final residual = 8.1225591e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H3, Initial residual = 4.3892899e-06, Final residual = 2.5133685e-13, No Iterations 1
+DILUPBiCG:  Solving for CH2CHO, Initial residual = 0.000515954, Final residual = 2.9586377e-11, No Iterations 1
+DILUPBiCG:  Solving for CH3CO, Initial residual = 0.31317552, Final residual = 5.0447265e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4, Initial residual = 0.52627611, Final residual = 8.4767112e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3CHO, Initial residual = 0.48449885, Final residual = 7.7957578e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5, Initial residual = 0.48124718, Final residual = 7.7523281e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5O, Initial residual = 9.1968498e-08, Final residual = 5.2791461e-15, No Iterations 1
+DILUPBiCG:  Solving for C3H2, Initial residual = 1.2487893e-32, Final residual = 1.2487893e-32, No Iterations 0
+DILUPBiCG:  Solving for C3H3, Initial residual = 0.00052411425, Final residual = 2.9872219e-11, No Iterations 1
+DILUPBiCG:  Solving for C3H4, Initial residual = 0.39717427, Final residual = 6.3717669e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H5, Initial residual = 0.46443491, Final residual = 7.4738913e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H6, Initial residual = 0.49355083, Final residual = 7.9428616e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7, Initial residual = 0.47981968, Final residual = 7.7290539e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H8, Initial residual = 0.31241646, Final residual = 5.0316889e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H2, Initial residual = 5.108369e-33, Final residual = 5.108369e-33, No Iterations 0
+DILUPBiCG:  Solving for N-C4H3, Initial residual = 1.0809841e-31, Final residual = 1.0809841e-31, No Iterations 0
+DILUPBiCG:  Solving for N-C4H5, Initial residual = 2.155992e-26, Final residual = 2.155992e-26, No Iterations 0
+DILUPBiCG:  Solving for C4H7, Initial residual = 0.42874443, Final residual = 6.8900832e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H8-1, Initial residual = 0.48970451, Final residual = 7.8803202e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H9-1, Initial residual = 0.44194877, Final residual = 7.1191715e-16, No Iterations 2
+DILUPBiCG:  Solving for C6H3, Initial residual = 3.8430226e-65, Final residual = 3.8430226e-65, No Iterations 0
+DILUPBiCG:  Solving for N-C6H5, Initial residual = 9.8422132e-42, Final residual = 9.8422132e-42, No Iterations 0
+DILUPBiCG:  Solving for C6H5O, Initial residual = 1.4683682e-30, Final residual = 1.4683682e-30, No Iterations 0
+DILUPBiCG:  Solving for C6H5OH, Initial residual = 8.0440966e-32, Final residual = 8.0440966e-32, No Iterations 0
+DILUPBiCG:  Solving for A1, Initial residual = 3.2537304e-22, Final residual = 3.2537304e-22, No Iterations 0
+DILUPBiCG:  Solving for A1-, Initial residual = 2.4941753e-31, Final residual = 2.4941753e-31, No Iterations 0
+DILUPBiCG:  Solving for A1C2H, Initial residual = 2.0134219e-51, Final residual = 2.0134219e-51, No Iterations 0
+DILUPBiCG:  Solving for A1C2H-, Initial residual = 2.9562242e-60, Final residual = 2.9562242e-60, No Iterations 0
+DILUPBiCG:  Solving for A1C2H*, Initial residual = 2.8241345e-60, Final residual = 2.8241345e-60, No Iterations 0
+DILUPBiCG:  Solving for N-A1C2H2, Initial residual = 3.1682869e-51, Final residual = 3.1682869e-51, No Iterations 0
+DILUPBiCG:  Solving for I-A1C2H2, Initial residual = 6.4098698e-66, Final residual = 6.4098698e-66, No Iterations 0
+DILUPBiCG:  Solving for CO, Initial residual = 0.85903578, Final residual = 1.5653444e-15, No Iterations 2
+DILUPBiCG:  Solving for CO2, Initial residual = 0.99991525, Final residual = 1.9785564e-16, No Iterations 2
+DILUPBiCG:  Solving for H2, Initial residual = 0.9995769, Final residual = 1.9846072e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O, Initial residual = 0.99991599, Final residual = 1.9785594e-16, No Iterations 2
+DILUPBiCG:  Solving for O2, Initial residual = 0.99991637, Final residual = 1.9785483e-16, No Iterations 2
+DILUPBiCG:  Solving for AR, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for HOCH2O, Initial residual = 6.0401192e-10, Final residual = 3.4665967e-17, No Iterations 1
+DILUPBiCG:  Solving for HOCHO, Initial residual = 0.00128928, Final residual = 7.3589279e-11, No Iterations 1
+DILUPBiCG:  Solving for OCHO, Initial residual = 0.36047397, Final residual = 1.3169123e-16, No Iterations 2
+DILUPBiCG:  Solving for O2CHO, Initial residual = 0.49832642, Final residual = 8.026036e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2CHO, Initial residual = 0.001259777, Final residual = 7.2317989e-11, No Iterations 1
+DILUPBiCG:  Solving for C5H11-1, Initial residual = 0.45046629, Final residual = 7.2565656e-16, No Iterations 2
+DILUPBiCG:  Solving for C5H11-2, Initial residual = 0.4639307, Final residual = 7.4734933e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H14, Initial residual = 0.51123369, Final residual = 8.2348692e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15, Initial residual = 0.43980491, Final residual = 7.0846259e-16, No Iterations 2
+DILUPBiCG:  Solving for NC7H16, Initial residual = 0.28188607, Final residual = 4.5409288e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15O2, Initial residual = 0.44027517, Final residual = 7.09231e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-P, Initial residual = 0.43741544, Final residual = 7.0462451e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-S, Initial residual = 0.44023181, Final residual = 7.0916287e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-P, Initial residual = 0.43997095, Final residual = 7.0874208e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-S, Initial residual = 0.44027894, Final residual = 7.0923886e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-P, Initial residual = 0.43998048, Final residual = 7.0875853e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-S, Initial residual = 0.44057814, Final residual = 7.0972368e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-P, Initial residual = 0.43994765, Final residual = 7.0870832e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-S, Initial residual = 0.44088479, Final residual = 7.1022032e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-P, Initial residual = 0.44053884, Final residual = 7.0966115e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-S, Initial residual = 0.44086015, Final residual = 7.1018049e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-P, Initial residual = 0.440896, Final residual = 7.1023864e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-S, Initial residual = 0.44139402, Final residual = 7.1104226e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-P, Initial residual = 0.44893717, Final residual = 7.2319761e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-S, Initial residual = 0.4618431, Final residual = 7.4398857e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-P, Initial residual = 0.46091121, Final residual = 7.4248721e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-S, Initial residual = 0.45041987, Final residual = 7.2558648e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-P, Initial residual = 0.45054359, Final residual = 7.2578585e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-S, Initial residual = 0.45164182, Final residual = 7.2755523e-16, No Iterations 2
+DILUPBiCG:  Solving for C5H10-1, Initial residual = 0.49697764, Final residual = 7.9998593e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-C7H14O, Initial residual = 0.512008, Final residual = 8.2473389e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CHO, Initial residual = 0.49694622, Final residual = 8.00313e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CO, Initial residual = 0.25107434, Final residual = 4.0442766e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C4H9COCH2, Initial residual = 0.5077451, Final residual = 8.1784013e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CHO, Initial residual = 0.48778612, Final residual = 7.8491906e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CO, Initial residual = 0.44229214, Final residual = 7.1246791e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COCH2, Initial residual = 0.49799814, Final residual = 8.0207806e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5CHO, Initial residual = 0.48821824, Final residual = 7.8562744e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5CO, Initial residual = 0.44266057, Final residual = 7.1306063e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH2, Initial residual = 0.43535476, Final residual = 7.0127351e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH3, Initial residual = 0.50024924, Final residual = 8.0568329e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2COCH3, Initial residual = 0.38950908, Final residual = 6.2743821e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4COC2H5-1, Initial residual = 0.44178446, Final residual = 7.1163968e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2CHO, Initial residual = 0.34044614, Final residual = 5.4839705e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3COCH2, Initial residual = 0.43542917, Final residual = 7.0139105e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COC2H4-1, Initial residual = 0.43277998, Final residual = 6.9712805e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3CHCOCH3, Initial residual = 0.0074075533, Final residual = 1.1930141e-17, No Iterations 2
+DILUPBiCG:  Solving for C2H5O2, Initial residual = 0.48576159, Final residual = 7.8250567e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4O2H, Initial residual = 0.48230203, Final residual = 7.7693256e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7O2, Initial residual = 0.48480924, Final residual = 7.8094183e-16, No Iterations 2
+DILUPBiCG:  Solving for I-C3H7O2, Initial residual = 1.6901888e-08, Final residual = 9.6714726e-16, No Iterations 1
+DILUPBiCG:  Solving for A1C2HAC, Initial residual = 3.1818807e-83, Final residual = 3.1818807e-83, No Iterations 0
+DILUPBiCG:  Solving for A2-X, Initial residual = 4.1303777e-82, Final residual = 4.1303777e-82, No Iterations 0
+DILUPBiCG:  Solving for A2, Initial residual = 1.5264432e-81, Final residual = 1.5264432e-81, No Iterations 0
+DILUPBiCG:  Solving for A2R5, Initial residual = 9.0260376e-101, Final residual = 9.0260376e-101, No Iterations 0
+DILUPBiCG:  Solving for A2R5-, Initial residual = 2.0972164e-111, Final residual = 2.0972164e-111, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H, Initial residual = 2.8034006e-130, Final residual = 2.8034006e-130, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H*, Initial residual = 2.0697248e-141, Final residual = 2.0697248e-141, No Iterations 0
+DILUPBiCG:  Solving for ANC2HAC, Initial residual = 3.5993984e-164, Final residual = 3.5993984e-164, No Iterations 0
+DILUPBiCG:  Solving for A3R5-, Initial residual = 4.6197408e-163, Final residual = 4.6197408e-163, No Iterations 0
+DILUPBiCG:  Solving for PAH, Initial residual = 6.8743135e-162, Final residual = 6.8743135e-162, No Iterations 0
+DILUPBiCG:  Solving for N, Initial residual = 3.9417438e-08, Final residual = 4.633866e-16, No Iterations 1
+DILUPBiCG:  Solving for NO, Initial residual = 0.00022201153, Final residual = 2.6114367e-12, No Iterations 1
+DILUPBiCG:  Solving for NO2, Initial residual = 9.0859658e-10, Final residual = 1.0691403e-17, No Iterations 1
+DILUPBiCG:  Solving for h, Initial residual = 0.99763385, Final residual = 2.9700867e-16, No Iterations 2
+T gas min/max   = 999.9372, 1000.0044
+Total PAH mass : 0
+Total M0 : 0
+DICPCG:  Solving for p, Initial residual = 0.99724894, Final residual = 0.00089996008, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.11326614, Final residual = 0.00034850462, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.1667068e-12, global = 1.3448294e-12, cumulative = 4.1388425e-12
+DICPCG:  Solving for p, Initial residual = 0.00035936203, Final residual = 1.2416179e-06, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 1.2427174e-06, Final residual = 4.9822663e-09, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.3032443e-16, global = 3.7681548e-17, cumulative = 4.1388802e-12
+smoothSolver:  Solving for epsilon, Initial residual = 0.0020960449, Final residual = 3.7626741e-10, No Iterations 1
+smoothSolver:  Solving for k, Initial residual = 0.74023971, Final residual = 1.1880234e-07, No Iterations 1
+Mean pressure:4250017.9
+Mean temperature:1000.0044
+Mean u':0.57686327
+total heat release: 0.017577184
+cell Volume V:0.00027
+totalMass:0.0040360489
+totalFuel:2.0673764e-22
+Mean Cp/Cv':1.314625
+soot mass [kg] : 0
+Wall Heat Fluxes [W]
+sideWall 0
+liner 0
+piston 0
+cylinderHead 0
+
+  time_Other 4.842954
+ time_rhoEqn 0.011899
+ time_UEqn  0.088446
+ time_YEqn  2.340237
+ time_EEqn  4.702988
+ time_pEqn  0.170814
+ time_turb  5.142887
+ time_Spray 2.986944
+ time_ODE 264.3409
+ time_soot_other 0.000857
+ time_soot_correct 0
+ time_soot_fields 0
+ time_soot_Eqn 0
+ time_soot_Mcorrect 0
+ time_soot_DYsps 0
+ time_soot_liner 0
+
+ExecutionTime = 287.92 s  ClockTime = 288 s
+
+loop times = 4
+Courant Number mean: 2.522238e-09 max: 1.693015e-05
+deltaT = 1.9607843e-06
+Time = 9.80392e-06
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 7.8331373e-06
+ t1 9.7939216e-06
+ timeStep0_ 7.8431373e-06
+ time  9.8039216e-06
+
+--> Cloud: sprayCloud injector: main
+    Added 98 new parcels
+
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 392
+    Current mass in system          = 1.5591271e-09
+    Linear momentum                 = (8.5865637e-08 1.6092019e-10 8.2038788e-11)
+   |Linear momentum|                = 8.5865827e-08
+    Linear kinetic energy           = 2.651415e-06
+    main:
+        number of parcels added     = 392
+        mass introduced             = 1.5595586e-09
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 375.7015, 378.85035
+    Mass transfer phase change      = 4.3154201e-13
+    D10, D32, Dmax (mu)             = 96.710235, 96.718264, 97.951793
+    Liquid penetration 95% mass (m) = 0.00028488516
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.33986883, Final residual = 2.7678619e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.25391218, Final residual = 1.7504221e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.25339559, Final residual = 1.7517791e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 
+DILUPBiCG:  Solving for H, Initial residual = 0.99927698, Final residual = 1.9751525e-16, No Iterations 2
+DILUPBiCG:  Solving for O, Initial residual = 0.99981255, Final residual = 1.9855457e-16, No Iterations 2
+DILUPBiCG:  Solving for OH, Initial residual = 0.99999735, Final residual = 1.9835803e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2, Initial residual = 0.99998836, Final residual = 1.983689e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O2, Initial residual = 0.99911073, Final residual = 1.9831422e-16, No Iterations 2
+DILUPBiCG:  Solving for CH, Initial residual = 2.5555693e-12, Final residual = 2.5555693e-12, No Iterations 0
+DILUPBiCG:  Solving for HCO, Initial residual = 0.28217559, Final residual = 4.5385694e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2-1, Initial residual = 3.054704e-07, Final residual = 1.7525509e-14, No Iterations 1
+DILUPBiCG:  Solving for CH2-3, Initial residual = 0.0001194548, Final residual = 6.8533853e-12, No Iterations 1
+DILUPBiCG:  Solving for CH2O, Initial residual = 0.36093238, Final residual = 5.8047726e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3, Initial residual = 0.35878577, Final residual = 5.7704498e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O, Initial residual = 0.14216945, Final residual = 2.2864935e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2, Initial residual = 0.35969888, Final residual = 5.7851315e-16, No Iterations 2
+DILUPBiCG:  Solving for CH4, Initial residual = 0.38278025, Final residual = 6.1540023e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2H, Initial residual = 0.35556966, Final residual = 5.7185822e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H, Initial residual = 3.6408738e-16, Final residual = 3.6408738e-16, No Iterations 0
+DILUPBiCG:  Solving for HCCO, Initial residual = 1.0718147e-05, Final residual = 6.1335926e-13, No Iterations 1
+DILUPBiCG:  Solving for C2H2, Initial residual = 0.0017222247, Final residual = 9.8639868e-11, No Iterations 1
+DILUPBiCG:  Solving for CH2CO, Initial residual = 0.35739615, Final residual = 5.7478301e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H3, Initial residual = 1.3888425e-05, Final residual = 7.9614549e-13, No Iterations 1
+DILUPBiCG:  Solving for CH2CHO, Initial residual = 0.0017490086, Final residual = 2.8121109e-18, No Iterations 2
+DILUPBiCG:  Solving for CH3CO, Initial residual = 0.26061686, Final residual = 4.1919686e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4, Initial residual = 0.36791579, Final residual = 5.9175322e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3CHO, Initial residual = 0.34412121, Final residual = 5.5313617e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5, Initial residual = 0.32099253, Final residual = 5.1631847e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5O, Initial residual = 3.0903093e-07, Final residual = 1.7732203e-14, No Iterations 1
+DILUPBiCG:  Solving for C3H2, Initial residual = 1.246232e-31, Final residual = 1.246232e-31, No Iterations 0
+DILUPBiCG:  Solving for C3H3, Initial residual = 0.0016756849, Final residual = 9.5893496e-11, No Iterations 1
+DILUPBiCG:  Solving for C3H4, Initial residual = 0.3653793, Final residual = 5.868397e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H5, Initial residual = 0.36465645, Final residual = 5.8622403e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H6, Initial residual = 0.34683908, Final residual = 5.5756022e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7, Initial residual = 0.32172136, Final residual = 5.1748162e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H8, Initial residual = 0.31998891, Final residual = 5.1464488e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H2, Initial residual = 6.4958128e-32, Final residual = 6.4958128e-32, No Iterations 0
+DILUPBiCG:  Solving for N-C4H3, Initial residual = 1.0360106e-30, Final residual = 1.0360106e-30, No Iterations 0
+DILUPBiCG:  Solving for N-C4H5, Initial residual = 2.375322e-25, Final residual = 2.375322e-25, No Iterations 0
+DILUPBiCG:  Solving for C4H7, Initial residual = 0.36118299, Final residual = 5.8037393e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H8-1, Initial residual = 0.34473775, Final residual = 5.5415303e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H9-1, Initial residual = 0.29651813, Final residual = 4.769467e-16, No Iterations 2
+DILUPBiCG:  Solving for C6H3, Initial residual = 1.4623925e-63, Final residual = 1.4623925e-63, No Iterations 0
+DILUPBiCG:  Solving for N-C6H5, Initial residual = 1.3248116e-40, Final residual = 1.3248116e-40, No Iterations 0
+DILUPBiCG:  Solving for C6H5O, Initial residual = 1.5070512e-29, Final residual = 1.5070512e-29, No Iterations 0
+DILUPBiCG:  Solving for C6H5OH, Initial residual = 8.6950287e-31, Final residual = 8.6950287e-31, No Iterations 0
+DILUPBiCG:  Solving for A1, Initial residual = 3.2534347e-21, Final residual = 3.2534347e-21, No Iterations 0
+DILUPBiCG:  Solving for A1-, Initial residual = 3.3692033e-30, Final residual = 3.3692033e-30, No Iterations 0
+DILUPBiCG:  Solving for A1C2H, Initial residual = 7.787538e-50, Final residual = 7.787538e-50, No Iterations 0
+DILUPBiCG:  Solving for A1C2H-, Initial residual = 2.2841814e-58, Final residual = 2.2841814e-58, No Iterations 0
+DILUPBiCG:  Solving for A1C2H*, Initial residual = 2.2017556e-58, Final residual = 2.2017556e-58, No Iterations 0
+DILUPBiCG:  Solving for N-A1C2H2, Initial residual = 1.89343e-49, Final residual = 1.89343e-49, No Iterations 0
+DILUPBiCG:  Solving for I-A1C2H2, Initial residual = 8.1069905e-64, Final residual = 8.1069905e-64, No Iterations 0
+DILUPBiCG:  Solving for CO, Initial residual = 0.65828997, Final residual = 1.1424135e-15, No Iterations 2
+DILUPBiCG:  Solving for CO2, Initial residual = 0.99978752, Final residual = 1.9645626e-16, No Iterations 2
+DILUPBiCG:  Solving for H2, Initial residual = 0.99907979, Final residual = 1.982885e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O, Initial residual = 0.99978559, Final residual = 1.9645543e-16, No Iterations 2
+DILUPBiCG:  Solving for O2, Initial residual = 0.99978515, Final residual = 1.9645515e-16, No Iterations 2
+DILUPBiCG:  Solving for AR, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for HOCH2O, Initial residual = 2.1736705e-09, Final residual = 1.2470933e-16, No Iterations 1
+DILUPBiCG:  Solving for HOCHO, Initial residual = 0.0044491639, Final residual = 7.1625693e-18, No Iterations 2
+DILUPBiCG:  Solving for OCHO, Initial residual = 0.36641354, Final residual = 3.9094537e-16, No Iterations 2
+DILUPBiCG:  Solving for O2CHO, Initial residual = 0.35077953, Final residual = 5.6416681e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2CHO, Initial residual = 0.0098734047, Final residual = 1.5883153e-17, No Iterations 2
+DILUPBiCG:  Solving for C5H11-1, Initial residual = 0.29782102, Final residual = 4.7905218e-16, No Iterations 2
+DILUPBiCG:  Solving for C5H11-2, Initial residual = 0.30446932, Final residual = 4.8974809e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H14, Initial residual = 0.35136963, Final residual = 5.6516128e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15, Initial residual = 0.29436458, Final residual = 4.7348306e-16, No Iterations 2
+DILUPBiCG:  Solving for NC7H16, Initial residual = 0.21354566, Final residual = 3.4350057e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15O2, Initial residual = 0.29464564, Final residual = 4.739398e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-P, Initial residual = 0.29395481, Final residual = 4.7282867e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-S, Initial residual = 0.29455184, Final residual = 4.7378979e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-P, Initial residual = 0.29449674, Final residual = 4.7370085e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-S, Initial residual = 0.29458995, Final residual = 4.7385112e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-P, Initial residual = 0.2944971, Final residual = 4.7370202e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-S, Initial residual = 0.29462586, Final residual = 4.7391042e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-P, Initial residual = 0.29466973, Final residual = 4.7398108e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-S, Initial residual = 0.29487957, Final residual = 4.7431993e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-P, Initial residual = 0.29480191, Final residual = 4.7419395e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-S, Initial residual = 0.29488934, Final residual = 4.7433557e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-P, Initial residual = 0.29487847, Final residual = 4.7431832e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-S, Initial residual = 0.29499301, Final residual = 4.7450336e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-P, Initial residual = 0.29797844, Final residual = 4.7930827e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-S, Initial residual = 0.30464718, Final residual = 4.9003583e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-P, Initial residual = 0.30425213, Final residual = 4.8940026e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-S, Initial residual = 0.29848598, Final residual = 4.8012494e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-P, Initial residual = 0.29854408, Final residual = 4.8021845e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-S, Initial residual = 0.2989569, Final residual = 4.8088265e-16, No Iterations 2
+DILUPBiCG:  Solving for C5H10-1, Initial residual = 0.34656088, Final residual = 5.5720539e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-C7H14O, Initial residual = 0.35192251, Final residual = 5.6605043e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CHO, Initial residual = 0.35122925, Final residual = 5.6486097e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CO, Initial residual = 0.23804033, Final residual = 3.8287709e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C4H9COCH2, Initial residual = 0.35103832, Final residual = 5.6461434e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CHO, Initial residual = 0.34590691, Final residual = 5.5602424e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CO, Initial residual = 0.29798238, Final residual = 4.7930123e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COCH2, Initial residual = 0.35048795, Final residual = 5.6369906e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5CHO, Initial residual = 0.34612592, Final residual = 5.5638048e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5CO, Initial residual = 0.29854133, Final residual = 4.8019989e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH2, Initial residual = 0.29205543, Final residual = 4.6976221e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH3, Initial residual = 0.35264058, Final residual = 5.6715367e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2COCH3, Initial residual = 0.2815088, Final residual = 4.5280224e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4COC2H5-1, Initial residual = 0.29807124, Final residual = 4.7944028e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2CHO, Initial residual = 0.26869058, Final residual = 4.3218168e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3COCH2, Initial residual = 0.29267349, Final residual = 4.7075533e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COC2H4-1, Initial residual = 0.29176695, Final residual = 4.6929852e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3CHCOCH3, Initial residual = 0.019718749, Final residual = 3.1713484e-17, No Iterations 2
+DILUPBiCG:  Solving for C2H5O2, Initial residual = 0.32383221, Final residual = 5.208865e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4O2H, Initial residual = 0.32264224, Final residual = 5.1897232e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7O2, Initial residual = 0.32500339, Final residual = 5.2276048e-16, No Iterations 2
+DILUPBiCG:  Solving for I-C3H7O2, Initial residual = 6.5242278e-08, Final residual = 3.7378906e-15, No Iterations 1
+DILUPBiCG:  Solving for A1C2HAC, Initial residual = 2.1609381e-80, Final residual = 2.1609381e-80, No Iterations 0
+DILUPBiCG:  Solving for A2-X, Initial residual = 2.8039695e-79, Final residual = 2.8039695e-79, No Iterations 0
+DILUPBiCG:  Solving for A2, Initial residual = 7.8059413e-79, Final residual = 7.8059413e-79, No Iterations 0
+DILUPBiCG:  Solving for A2R5, Initial residual = 2.5309211e-97, Final residual = 2.5309211e-97, No Iterations 0
+DILUPBiCG:  Solving for A2R5-, Initial residual = 1.2281005e-107, Final residual = 1.2281005e-107, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H, Initial residual = 1.0481277e-125, Final residual = 1.0481277e-125, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H*, Initial residual = 1.7065134e-136, Final residual = 1.7065134e-136, No Iterations 0
+DILUPBiCG:  Solving for ANC2HAC, Initial residual = 1.6822001e-158, Final residual = 1.6822001e-158, No Iterations 0
+DILUPBiCG:  Solving for A3R5-, Initial residual = 2.1583759e-157, Final residual = 2.1583759e-157, No Iterations 0
+DILUPBiCG:  Solving for PAH, Initial residual = 2.5105804e-156, Final residual = 2.5105804e-156, No Iterations 0
+DILUPBiCG:  Solving for N, Initial residual = 3.994714e-08, Final residual = 4.6997797e-16, No Iterations 1
+DILUPBiCG:  Solving for NO, Initial residual = 0.00023715378, Final residual = 2.7894296e-12, No Iterations 1
+DILUPBiCG:  Solving for NO2, Initial residual = 1.0675748e-09, Final residual = 1.2561589e-17, No Iterations 1
+DILUPBiCG:  Solving for h, Initial residual = 0.99354716, Final residual = 4.010475e-16, No Iterations 2
+T gas min/max   = 999.86469, 1000.0057
+Total PAH mass : 0
+Total M0 : 0
+DICPCG:  Solving for p, Initial residual = 0.99272899, Final residual = 0.0010226695, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.058484176, Final residual = 0.00019184379, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.8642541e-12, global = 1.6895475e-12, cumulative = 5.8284277e-12
+DICPCG:  Solving for p, Initial residual = 0.00020152589, Final residual = 7.4483124e-07, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 7.4510005e-07, Final residual = 2.7951836e-09, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.3712697e-16, global = -1.5259935e-17, cumulative = 5.8284125e-12
+smoothSolver:  Solving for epsilon, Initial residual = 0.0020968538, Final residual = 3.7631264e-10, No Iterations 1
+smoothSolver:  Solving for k, Initial residual = 0.68125521, Final residual = 1.0930724e-07, No Iterations 1
+Mean pressure:4250022.8
+Mean temperature:1000.0056
+Mean u':0.57674167
+total heat release: 0.02197149
+cell Volume V:0.00027
+totalMass:0.0040360489
+totalFuel:2.5846497e-22
+Mean Cp/Cv':1.3146249
+soot mass [kg] : 0
+Wall Heat Fluxes [W]
+sideWall 0
+liner 0
+piston 0
+cylinderHead 0
+
+  time_Other 6.399888
+ time_rhoEqn 0.014956
+ time_UEqn  0.109851
+ time_YEqn  2.995792
+ time_EEqn  5.84122
+ time_pEqn  0.21073
+ time_turb  6.414979
+ time_Spray 3.805611
+ time_ODE 307.87962
+ time_soot_other 0.00106
+ time_soot_correct 0
+ time_soot_fields 0
+ time_soot_Eqn 0
+ time_soot_Mcorrect 0
+ time_soot_DYsps 0
+ time_soot_liner 0
+
+ExecutionTime = 336.91 s  ClockTime = 337 s
+
+loop times = 5
+Courant Number mean: 5.9235182e-09 max: 3.7827709e-05
+deltaT = 1.9607843e-06
+Time = 1.17647e-05
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 9.7939216e-06
+ t1 1.1754706e-05
+ timeStep0_ 9.8039216e-06
+ time  1.1764706e-05
+
+--> Cloud: sprayCloud injector: main
+    Added 98 new parcels
+
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 490
+    Current mass in system          = 2.2741158e-09
+    Linear momentum                 = (1.462182e-07 -1.2331935e-10 -1.1512478e-10)
+   |Linear momentum|                = 1.462183e-07
+    Linear kinetic energy           = 5.3135437e-06
+    main:
+        number of parcels added     = 490
+        mass introduced             = 2.2749096e-09
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 376.09271, 380.8326
+    Mass transfer phase change      = 7.9380543e-13
+    D10, D32, Dmax (mu)             = 95.688722, 95.706726, 97.556839
+    Liquid penetration 95% mass (m) = 0.00038077914
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.28983717, Final residual = 2.4374679e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.22823987, Final residual = 1.4892752e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.22821844, Final residual = 1.4890995e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 
+DILUPBiCG:  Solving for H, Initial residual = 0.99868226, Final residual = 2.1414438e-16, No Iterations 2
+DILUPBiCG:  Solving for O, Initial residual = 0.99960963, Final residual = 1.9817232e-16, No Iterations 2
+DILUPBiCG:  Solving for OH, Initial residual = 0.99999212, Final residual = 1.9828423e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2, Initial residual = 0.99996418, Final residual = 1.9834053e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O2, Initial residual = 0.99858919, Final residual = 1.9813161e-16, No Iterations 2
+DILUPBiCG:  Solving for CH, Initial residual = 7.6644914e-12, Final residual = 7.6644914e-12, No Iterations 0
+DILUPBiCG:  Solving for HCO, Initial residual = 0.22768812, Final residual = 3.6521569e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2-1, Initial residual = 6.7916408e-07, Final residual = 3.8951611e-14, No Iterations 1
+DILUPBiCG:  Solving for CH2-3, Initial residual = 0.00026554122, Final residual = 1.5229397e-11, No Iterations 1
+DILUPBiCG:  Solving for CH2O, Initial residual = 0.27974442, Final residual = 4.4869279e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3, Initial residual = 0.27729161, Final residual = 4.4476658e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O, Initial residual = 0.18896449, Final residual = 3.0308962e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2, Initial residual = 0.27816793, Final residual = 4.461721e-16, No Iterations 2
+DILUPBiCG:  Solving for CH4, Initial residual = 0.3180343, Final residual = 5.10029e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3O2H, Initial residual = 0.28727532, Final residual = 4.6077542e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H, Initial residual = 1.2717579e-15, Final residual = 1.2717579e-15, No Iterations 0
+DILUPBiCG:  Solving for HCCO, Initial residual = 3.0047652e-05, Final residual = 1.7217519e-12, No Iterations 1
+DILUPBiCG:  Solving for C2H2, Initial residual = 0.0044335984, Final residual = 7.1092722e-18, No Iterations 2
+DILUPBiCG:  Solving for CH2CO, Initial residual = 0.27777346, Final residual = 4.4552845e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H3, Initial residual = 3.6145745e-05, Final residual = 2.0724011e-12, No Iterations 1
+DILUPBiCG:  Solving for CH2CHO, Initial residual = 0.0047228673, Final residual = 7.5745372e-18, No Iterations 2
+DILUPBiCG:  Solving for CH3CO, Initial residual = 0.20925553, Final residual = 3.3565773e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4, Initial residual = 0.28577979, Final residual = 4.5839098e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3CHO, Initial residual = 0.26682519, Final residual = 4.2787407e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5, Initial residual = 0.24121418, Final residual = 3.8692414e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5O, Initial residual = 8.4457576e-07, Final residual = 4.8442437e-14, No Iterations 1
+DILUPBiCG:  Solving for C3H2, Initial residual = 8.3930243e-31, Final residual = 8.3930243e-31, No Iterations 0
+DILUPBiCG:  Solving for C3H3, Initial residual = 0.00465223, Final residual = 7.4598244e-18, No Iterations 2
+DILUPBiCG:  Solving for C3H4, Initial residual = 0.32258871, Final residual = 5.172728e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H5, Initial residual = 0.29338093, Final residual = 4.7047933e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H6, Initial residual = 0.26882118, Final residual = 4.3107558e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7, Initial residual = 0.23995045, Final residual = 3.8489372e-16, No Iterations 2
+DILUPBiCG:  Solving for C3H8, Initial residual = 0.27540858, Final residual = 4.4174569e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H2, Initial residual = 5.6407876e-31, Final residual = 5.6407876e-31, No Iterations 0
+DILUPBiCG:  Solving for N-C4H3, Initial residual = 8.590007e-30, Final residual = 8.590007e-30, No Iterations 0
+DILUPBiCG:  Solving for N-C4H5, Initial residual = 2.0302668e-24, Final residual = 2.0302668e-24, No Iterations 0
+DILUPBiCG:  Solving for C4H7, Initial residual = 0.30263601, Final residual = 4.8528729e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H8-1, Initial residual = 0.26730111, Final residual = 4.2863645e-16, No Iterations 2
+DILUPBiCG:  Solving for C4H9-1, Initial residual = 0.22749599, Final residual = 3.6491858e-16, No Iterations 2
+DILUPBiCG:  Solving for C6H3, Initial residual = 4.8394622e-62, Final residual = 4.8394622e-62, No Iterations 0
+DILUPBiCG:  Solving for N-C6H5, Initial residual = 1.5283798e-39, Final residual = 1.5283798e-39, No Iterations 0
+DILUPBiCG:  Solving for C6H5O, Initial residual = 1.5424111e-28, Final residual = 1.5424111e-28, No Iterations 0
+DILUPBiCG:  Solving for C6H5OH, Initial residual = 9.1421645e-30, Final residual = 9.1421645e-30, No Iterations 0
+DILUPBiCG:  Solving for A1, Initial residual = 3.0519631e-20, Final residual = 3.0519631e-20, No Iterations 0
+DILUPBiCG:  Solving for A1-, Initial residual = 3.8993337e-29, Final residual = 3.8993337e-29, No Iterations 0
+DILUPBiCG:  Solving for A1C2H, Initial residual = 1.9589201e-48, Final residual = 1.9589201e-48, No Iterations 0
+DILUPBiCG:  Solving for A1C2H-, Initial residual = 7.9286435e-57, Final residual = 7.9286435e-57, No Iterations 0
+DILUPBiCG:  Solving for A1C2H*, Initial residual = 7.6981231e-57, Final residual = 7.6981231e-57, No Iterations 0
+DILUPBiCG:  Solving for N-A1C2H2, Initial residual = 5.9042325e-48, Final residual = 5.9042325e-48, No Iterations 0
+DILUPBiCG:  Solving for I-A1C2H2, Initial residual = 4.4549337e-62, Final residual = 4.4549337e-62, No Iterations 0
+DILUPBiCG:  Solving for CO, Initial residual = 0.40949891, Final residual = 6.8445197e-16, No Iterations 2
+DILUPBiCG:  Solving for CO2, Initial residual = 0.9995536, Final residual = 2.0119244e-16, No Iterations 2
+DILUPBiCG:  Solving for H2, Initial residual = 0.99865107, Final residual = 1.9816652e-16, No Iterations 2
+DILUPBiCG:  Solving for H2O, Initial residual = 0.99955253, Final residual = 2.0119332e-16, No Iterations 2
+DILUPBiCG:  Solving for O2, Initial residual = 0.99955309, Final residual = 2.0119326e-16, No Iterations 2
+DILUPBiCG:  Solving for AR, Initial residual = 0, Final residual = 0, No Iterations 0
+DILUPBiCG:  Solving for HOCH2O, Initial residual = 6.1876419e-09, Final residual = 3.5487744e-16, No Iterations 1
+DILUPBiCG:  Solving for HOCHO, Initial residual = 0.013017961, Final residual = 2.0886779e-17, No Iterations 2
+DILUPBiCG:  Solving for OCHO, Initial residual = 0.37995118, Final residual = 6.827248e-16, No Iterations 2
+DILUPBiCG:  Solving for O2CHO, Initial residual = 0.27015978, Final residual = 4.333266e-16, No Iterations 2
+DILUPBiCG:  Solving for HO2CHO, Initial residual = 0.046112046, Final residual = 7.3974943e-17, No Iterations 2
+DILUPBiCG:  Solving for C5H11-1, Initial residual = 0.22659892, Final residual = 3.6348158e-16, No Iterations 2
+DILUPBiCG:  Solving for C5H11-2, Initial residual = 0.22987257, Final residual = 3.6873309e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H14, Initial residual = 0.2712959, Final residual = 4.3516789e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15, Initial residual = 0.22593715, Final residual = 3.6241853e-16, No Iterations 2
+DILUPBiCG:  Solving for NC7H16, Initial residual = 0.17347905, Final residual = 2.7827858e-16, No Iterations 2
+DILUPBiCG:  Solving for L-C7H15O2, Initial residual = 0.22634098, Final residual = 3.6306712e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-P, Initial residual = 0.22594869, Final residual = 3.6243785e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOH-S, Initial residual = 0.22617723, Final residual = 3.6280458e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-P, Initial residual = 0.22615376, Final residual = 3.6276688e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOH-S, Initial residual = 0.22623587, Final residual = 3.6289865e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-P, Initial residual = 0.22615608, Final residual = 3.627707e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOH-S, Initial residual = 0.22621847, Final residual = 3.6287099e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-P, Initial residual = 0.22650718, Final residual = 3.6333412e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-HEOOHO2-S, Initial residual = 0.22661826, Final residual = 3.6351251e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-P, Initial residual = 0.22656992, Final residual = 3.634348e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-HEOOHO2-S, Initial residual = 0.22664417, Final residual = 3.6355407e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-P, Initial residual = 0.22661431, Final residual = 3.635062e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-HEOOHO2-S, Initial residual = 0.22668089, Final residual = 3.6361315e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-P, Initial residual = 0.22851286, Final residual = 3.6655233e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-O-HEPOOH-S, Initial residual = 0.23175975, Final residual = 3.717607e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-P, Initial residual = 0.23159454, Final residual = 3.7149567e-16, No Iterations 2
+DILUPBiCG:  Solving for R6-O-HEPOOH-S, Initial residual = 0.22886867, Final residual = 3.6712314e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-P, Initial residual = 0.22889705, Final residual = 3.6716867e-16, No Iterations 2
+DILUPBiCG:  Solving for R7-O-HEPOOH-S, Initial residual = 0.22913312, Final residual = 3.675474e-16, No Iterations 2
+DILUPBiCG:  Solving for C5H10-1, Initial residual = 0.26817025, Final residual = 4.3006771e-16, No Iterations 2
+DILUPBiCG:  Solving for R5-C7H14O, Initial residual = 0.2717142, Final residual = 4.3583879e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CHO, Initial residual = 0.27142289, Final residual = 4.3534072e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C5H11CO, Initial residual = 0.20126895, Final residual = 3.2284346e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C4H9COCH2, Initial residual = 0.26616656, Final residual = 4.2693512e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CHO, Initial residual = 0.26800906, Final residual = 4.2977163e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7CO, Initial residual = 0.22110221, Final residual = 3.5466174e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COCH2, Initial residual = 0.26985207, Final residual = 4.3283352e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5CHO, Initial residual = 0.26814705, Final residual = 4.299927e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5CO, Initial residual = 0.22187168, Final residual = 3.5589579e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH2, Initial residual = 0.22035948, Final residual = 3.5346756e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H5COCH3, Initial residual = 0.27230456, Final residual = 4.367642e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2COCH3, Initial residual = 0.21630612, Final residual = 3.4696782e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4COC2H5-1, Initial residual = 0.22402966, Final residual = 3.5935556e-16, No Iterations 2
+DILUPBiCG:  Solving for CH2CH2CHO, Initial residual = 0.21234564, Final residual = 3.4061355e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3COCH2, Initial residual = 0.22085678, Final residual = 3.542647e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7COC2H4-1, Initial residual = 0.22025615, Final residual = 3.5330195e-16, No Iterations 2
+DILUPBiCG:  Solving for CH3CHCOCH3, Initial residual = 0.039589998, Final residual = 6.3500297e-17, No Iterations 2
+DILUPBiCG:  Solving for C2H5O2, Initial residual = 0.24313234, Final residual = 3.9000106e-16, No Iterations 2
+DILUPBiCG:  Solving for C2H4O2H, Initial residual = 0.24247429, Final residual = 3.8894547e-16, No Iterations 2
+DILUPBiCG:  Solving for N-C3H7O2, Initial residual = 0.24226705, Final residual = 3.8860959e-16, No Iterations 2
+DILUPBiCG:  Solving for I-C3H7O2, Initial residual = 2.1339844e-07, Final residual = 1.2232208e-14, No Iterations 1
+DILUPBiCG:  Solving for A1C2HAC, Initial residual = 2.3184333e-78, Final residual = 2.3184333e-78, No Iterations 0
+DILUPBiCG:  Solving for A2-X, Initial residual = 3.007373e-77, Final residual = 3.007373e-77, No Iterations 0
+DILUPBiCG:  Solving for A2, Initial residual = 6.7271975e-77, Final residual = 6.7271975e-77, No Iterations 0
+DILUPBiCG:  Solving for A2R5, Initial residual = 6.1163888e-95, Final residual = 6.1163888e-95, No Iterations 0
+DILUPBiCG:  Solving for A2R5-, Initial residual = 5.0282818e-105, Final residual = 5.0282818e-105, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H, Initial residual = 9.4555371e-123, Final residual = 9.4555371e-123, No Iterations 0
+DILUPBiCG:  Solving for A2R5C2H*, Initial residual = 3.3071098e-133, Final residual = 3.3071098e-133, No Iterations 0
+DILUPBiCG:  Solving for ANC2HAC, Initial residual = 8.5404168e-155, Final residual = 8.5404168e-155, No Iterations 0
+DILUPBiCG:  Solving for A3R5-, Initial residual = 1.0952974e-153, Final residual = 1.0952974e-153, No Iterations 0
+DILUPBiCG:  Solving for PAH, Initial residual = 9.6554686e-153, Final residual = 9.6554686e-153, No Iterations 0
+DILUPBiCG:  Solving for N, Initial residual = 4.0441369e-08, Final residual = 4.7701742e-16, No Iterations 1
+DILUPBiCG:  Solving for NO, Initial residual = 0.00025174533, Final residual = 2.9607686e-12, No Iterations 1
+DILUPBiCG:  Solving for NO2, Initial residual = 1.2346277e-09, Final residual = 1.4526519e-17, No Iterations 1
+DILUPBiCG:  Solving for h, Initial residual = 0.98611918, Final residual = 4.9004337e-16, No Iterations 2
+T gas min/max   = 999.74524, 1000.0077
+Total PAH mass : 0
+Total M0 : 0
+DICPCG:  Solving for p, Initial residual = 0.98408696, Final residual = 0.0011248757, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 0.03349005, Final residual = 0.00011139164, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 4.3529786e-12, global = 2.0485198e-12, cumulative = 7.8769323e-12
+DICPCG:  Solving for p, Initial residual = 0.00012060265, Final residual = 5.3549815e-07, No Iterations 2
+DICPCG:  Solving for p, Initial residual = 5.3545828e-07, Final residual = 1.6923572e-09, No Iterations 2
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+time step continuity errors : sum local = 3.4051063e-16, global = 3.8065335e-17, cumulative = 7.8769704e-12
+smoothSolver:  Solving for epsilon, Initial residual = 0.0020976614, Final residual = 3.7635954e-10, No Iterations 1
+smoothSolver:  Solving for k, Initial residual = 0.63097814, Final residual = 1.0121446e-07, No Iterations 1
+Mean pressure:4250027.6
+Mean temperature:1000.0067
+Mean u':0.57662012
+total heat release: 0.026365801
+cell Volume V:0.00027
+totalMass:0.0040360489
+totalFuel:3.1020991e-22
+Mean Cp/Cv':1.3146248
+soot mass [kg] : 0
+Wall Heat Fluxes [W]
+sideWall 0
+liner 0
+piston 0
+cylinderHead 0
+
+  time_Other 7.969469
+ time_rhoEqn 0.017738
+ time_UEqn  0.130381
+ time_YEqn  3.664794
+ time_EEqn  7.007093
+ time_pEqn  0.251528
+ time_turb  7.676707
+ time_Spray 4.672553
+ time_ODE 351.4665
+ time_soot_other 0.001264
+ time_soot_correct 0
+ time_soot_fields 0
+ time_soot_Eqn 0
+ time_soot_Mcorrect 0
+ time_soot_DYsps 0
+ time_soot_liner 0
+
+ExecutionTime = 386.07 s  ClockTime = 387 s
+
+loop times = 6
+Courant Number mean: 1.2217421e-08 max: 7.4469178e-05
+deltaT = 1.9607843e-06
+Time = 1.37255e-05
+
+SprayCloud.C:: evolve************
+
+Solving 3-D cloud sprayCloud
+ t0 1.1754706e-05
+ t1 1.371549e-05
+ timeStep0_ 1.1764706e-05
+ time  1.372549e-05
+
+--> Cloud: sprayCloud injector: main
+    Added 98 new parcels
+
+KinematicCloud::info()*****************
+Cloud: sprayCloud
+    Current number of parcels       = 588
+    Current mass in system          = 3.1191037e-09
+    Linear momentum                 = (2.2743178e-07 -2.6896093e-11 1.4895251e-10)
+   |Linear momentum|                = 2.2743183e-07
+    Linear kinetic energy           = 9.4329859e-06
+    main:
+        number of parcels added     = 588
+        mass introduced             = 3.1204451e-09
+  this->surfaceFilm().info(Info); 
+    Parcels absorbed into film      = 0
+    New film detached parcels       = 0
+  this->patchInteraction().info(Info); 
+    Parcel fate (number, mass)
+      - escape                      = 0, 0
+      - stick                       = 0, 0
+    Temperature min/max             = 376.46872, 382.92202
+    Mass transfer phase change      = 1.3413821e-12
+    D10, D32, Dmax (mu)             = 94.571831, 94.606155, 97.168009
+    Liquid penetration 95% mass (m) = 0.00049081073
+diagonal:  Solving for rho, Initial residual = 0, Final residual = 0, No Iterations 0
+PIMPLE: iteration 1
+smoothSolver:  Solving for Ux, Initial residual = 0.25275145, Final residual = 2.2499069e-08, No Iterations 1
+smoothSolver:  Solving for Uy, Initial residual = 0.20866018, Final residual = 1.3150556e-08, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 0.20895225, Final residual = 1.31162e-08, No Iterations 1
+ Foam::scalar Foam::chemistryModel<CompType, ThermoType>::solve 

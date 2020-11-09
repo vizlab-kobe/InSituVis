@@ -1,0 +1,166 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+numberOfSubdomains 36;
+
+//method          multiLevel;
+//method structured;
+//method scotch;
+method simple;
+
+/*preservePatches
+(
+    side1   
+    side2
+);*/
+
+/*singleProcessorFaceSets
+(
+    (f1 -1)      //(f1 -1) means automatically selected
+    (f2 -1)
+);*/
+
+//- Keep owner and neighbour on same processor for faces in zones:
+/*preserveFaceZones 
+(
+    f1Zone 
+    f2Zone
+);*/
+
+//- Keep owner and neighbour of baffles on same processor (i.e. keep it
+//  detectable as a baffle). Baffles are two boundary face sharing the
+//  same points.
+preserveBaffles true;
+
+
+simpleCoeffs
+{
+    n               ( 9 2 2 );
+    delta           0.0001;
+}
+
+structuredCoeffs
+{
+    // Patches to do 2D decomposition on. Structured mesh only; cells have
+    // to be in 'columns' on top of patches.
+    patches     (sideWall);
+
+    // Method to use on the 2D subset
+    method      simple;
+
+    simpleCoeffs
+    {
+        n               ( 44 1 1 );
+        delta           0.0001;
+    }
+}
+
+hierarchicalCoeffs
+{
+    n               ( 1 1 1 );
+    delta           0.001;
+    order           xyz;
+}
+
+manualCoeffs
+{
+    dataFile        "";
+}
+
+metisCoeffs
+{
+    processorWeights
+    (
+        1
+        1
+        1
+        1
+    );
+}
+
+scotchCoeffs
+{
+/*
+    processorWeights
+    (
+        2
+        1
+        1
+        1
+    );
+*/
+}
+
+
+multiLevelCoeffs
+{
+    level0
+    {
+        numberOfSubdomains  50;
+        //method structured;
+        method simple;
+        
+        simpleCoeffs
+        {
+            n               ( 50 0 1 );
+            delta           0.0001;
+        }
+
+        structuredCoeffs
+        {
+            patches     (sideWall);
+            method      simple;
+
+            simpleCoeffs
+            {
+                n               ( 1 1 5 );
+                delta           0.0001;
+            }
+        }
+    }
+
+    level1
+    {
+        numberOfSubdomains  5;
+        method simple;
+
+        structuredCoeffs
+        {
+            patches     (sideWall);
+            method      simple;
+
+            simpleCoeffs
+            {
+                n               ( 3 1 1 );
+                delta           0.0001;
+            }
+        }
+
+        simpleCoeffs
+        {
+            n               ( 1 5 1 );
+            delta           0.0001;
+        }
+    }
+}
+
+distributed     no;
+
+roots           ( );
+
+
+// ************************************************************************* //
