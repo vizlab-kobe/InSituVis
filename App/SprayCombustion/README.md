@@ -140,10 +140,6 @@ The compilation and execuation of the application are done in a separate termina
     ```
     $ cd sprayH_2mm_O2_15
     $ ./run.sh
-    * The rendering results will be output in the 'Output' directory.
-    * 'realistic-s3' is a 8-parallel version of the application program.
-    * 'realistic-s1' and 'realistic-s2' are 4- and 48-parallel versions.
-    * 'clear.sh' is a shell script for removing the output directory.
     ```
 
 ### sprayH_2mm_O2_15
