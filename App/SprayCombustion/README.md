@@ -111,3 +111,40 @@ OpenFOAM 2.4.0 is required. Here is an installation guid of the patched OpenFOAM
     $ icoFoam
     $ paraFoam -builtin
     ```
+
+## Execution
+
+### InSituVis
+
+1. Get the InSituVis source codes from the GitHub repository as follows:
+    ```
+    $ git clone https://github.com/vizlab-kobe/InSituVis.git
+    ```
+
+2. Move to the application directory.
+    ```
+    $ cd App/SprayCombustion
+    ```
+
+### sprayH_2mm_O2_15_InSituVis
+The compilation and execuation of the application are done in a separate terminal.
+
+- Compilation<br>
+    ```
+    $ cd sprayH_2mm_O2_15_InSituVis
+    $ ./make.sh
+    * 'clear.sh' is a shell script for removing the compiled files.
+    ```
+
+- Execution<br>
+    ```
+    $ cd sprayH_2mm_O2_15
+    $ ./run.sh
+    * The rendering results will be output in the 'Output' directory.
+    * 'realistic-s3' is a 8-parallel version of the application program.
+    * 'realistic-s1' and 'realistic-s2' are 4- and 48-parallel versions.
+    * 'clear.sh' is a shell script for removing the output directory.
+    ```
+
+### sprayH_2mm_O2_15
+The sprayH_2mm_O2_15 is an original program based OpenFOAM for the spray combustion simulation. This program can be compile and execute same as the sprayH_2mm_O2_15_InSituVis program. This program doesn't require the KVS and OSMesa.
