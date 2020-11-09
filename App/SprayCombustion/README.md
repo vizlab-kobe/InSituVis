@@ -83,7 +83,7 @@ OpenFOAM 2.4.0 is required. Here is an installation guid of the patched OpenFOAM
     $ find . -type f -exec sed -i -e 's/== \"Darwin\"/= \"Darwin\"/g' {} \;
 
     // Modify H5Cpp.H related errors
-    $ for i in `find applications/solvers applications/utilities -name options`; do echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp\n" >> $i; done
+    $ for i in `find applications/solvers applications/utilities -name options`; do echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -lhdf5 -lhdf5_hl -lhdf5_cpp\n" >> $i; done
 
     // Modify ptscotch.h related errors
     $ echo -n -e "EXE_INC += -I\$(SCOTCH_ARCH_PATH)/include/\$(FOAM_MPI)\nLIB_LIBS += -L\$(SCOTCH_ARCH_PATH)/lib/\$(FOAM_MPI)\n" >> src/parallel/decompose/ptscotchDecomp/Make/options
