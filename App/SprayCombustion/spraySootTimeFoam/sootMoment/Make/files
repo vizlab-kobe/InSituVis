@@ -1,3 +1,0 @@
-sootMoment.C
-
-LIB = $(FOAM_LIBBIN)/libsootMoment
