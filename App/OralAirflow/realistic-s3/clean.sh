@@ -1,7 +1,7 @@
 #!/bin/sh
-PS_COUNT=`ps aux | grep rhoPimpleFoam_InSituVis | grep -v grep | wc -l`
+PS_COUNT=`ps aux | grep rhoPimpleFoam | grep -v grep | wc -l`
 if [ $PS_COUNT -gt 0 ]; then
-    killall rhoPimpleFoam_InSituVis
+    killall rhoPimpleFoam
 fi
 
 OUTPUT_DIR=Output

@@ -1,4 +1,4 @@
 rhoPimpleFoam.C
 
 //EXE = $(FOAM_APPBIN)/rhoPimpleFoam
-EXE = rhoPimpleFoam_InSituVis
+EXE = rhoPimpleFoam
