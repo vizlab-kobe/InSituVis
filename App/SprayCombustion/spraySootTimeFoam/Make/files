@@ -1,3 +1,4 @@
 spraySootTimeFoam.C
 
-EXE = $(FOAM_APPBIN)/spraySootTimeFoam
+//EXE = $(FOAM_APPBIN)/spraySootTimeFoam
+EXE = spraySootTimeFoam

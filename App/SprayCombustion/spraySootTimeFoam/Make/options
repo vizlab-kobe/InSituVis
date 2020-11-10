@@ -58,5 +58,5 @@ EXE_LIBS = \
     -lcombustionModels \
     -lsootMoment
 
-EXE_INC += -I$(HDF5_ARCH_PATH)/include
+EXE_INC += -I$(HDF5_ARCH_PATH)/include -fopenmp
 LIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp

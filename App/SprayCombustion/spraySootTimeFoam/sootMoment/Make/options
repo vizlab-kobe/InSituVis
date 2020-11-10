@@ -55,5 +55,5 @@ LIB_LIBS = \
     -lfvOptions \
     -lcombustionModels 
 
-EXE_INC += -I$(HDF5_ARCH_PATH)/include
+EXE_INC += -I$(HDF5_ARCH_PATH)/include -fopenmp
 LIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -lhdf5 -lhdf5_hl -lhdf5_cpp

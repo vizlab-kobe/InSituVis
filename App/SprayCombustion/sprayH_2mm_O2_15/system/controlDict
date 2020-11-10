@@ -17,8 +17,8 @@ FoamFile
 
 application     spraySootFoam;
 
-//startFrom       startTime;
-startFrom       latestTime;
+startFrom       startTime;
+//startFrom       latestTime;
 
 stopAt          endTime;
 
@@ -26,7 +26,8 @@ startTime       0;
 
 endTime         0.0075;
 
-deltaT          2.0e-06;
+//deltaT          2.0e-06;
+deltaT          1.0e-05;
 
 writeControl    adjustableRunTime;
 
@@ -49,7 +50,8 @@ adjustTimeStep  yes;
 
 maxCo		0.1;
 
-maxDeltaT       2.0e-06;
+//maxDeltaT       2.0e-06;
+maxDeltaT       1.0e-05;
 
 runTimeModifiable yes;
 
