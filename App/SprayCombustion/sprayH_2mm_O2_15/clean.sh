@@ -5,3 +5,4 @@ if [ $PS_COUNT -gt 0 ]; then
 fi
 
 rm -rf 0.0*
+rm -rf *e-*
