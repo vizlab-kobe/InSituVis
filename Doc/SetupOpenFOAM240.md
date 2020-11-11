@@ -86,7 +86,7 @@ $ find . -type f -exec sed -i -e 's/== \"Darwin\"/= \"Darwin\"/g' {} \;
 
 - Path error related to `H5Cpp.H: No such file`
 ```
-$ for i in `find applications/solvers applications/utilities -name options`; do echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp\n" >> $i; done
+$ for i in `find applications/solvers applications/utilities -name options`; do echo -n -e "EXE_INC += -I\$(HDF5_ARCH_PATH)/include\nLIB_LIBS += -L\$(HDF5_ARCH_PATH)/lib -lhdf5 -lhdf5_hl -lhdf5_cpp\n" >> $i; done
 ```
 
 - Path error related to `ptscotch.h: No such file`
