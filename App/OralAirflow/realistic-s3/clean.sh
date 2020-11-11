@@ -7,5 +7,7 @@ fi
 OUTPUT_DIR=Output
 if [ -e $OUTPUT_DIR ]; then
     rm -rf $OUTPUT_DIR
-    rm -rf processor?/0.0*
 fi
+
+rm -rf 0.0*
+rm -rf processor?/0.0*
