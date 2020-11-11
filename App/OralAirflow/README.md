@@ -87,7 +87,7 @@ The compilation and execuation of the application are done in a separate termina
 - Execution<br>
     ```
     $ cd realistic-s3
-    $ ./run.sh
+    $ ./run_insitu.sh
     * The rendering results will be output in the 'Output' directory.
     * 'realistic-s3' is a 8-parallel version of the application program.
     * 'realistic-s1' and 'realistic-s2' are 4- and 48-parallel versions.
@@ -95,6 +95,16 @@ The compilation and execuation of the application are done in a separate termina
     ```
 
 ### rhoPimpleFoam
-The rhoPimpleFoam is an original program based OpenFOAM for the oral airflow simulation. This program can be compile and execute same as the rhoPimpleFoam_InSituVis program. This program doesn't require the KVS and OSMesa.
+The rhoPimpleFoam is an original program based OpenFOAM for the oral airflow simulation. This program can be compiled and executed same as the rhoPimpleFoam_InSituVis program.
 
+- Compilation<br>
+    ```
+    $ cd rhoPimpleFoam
+    $ ./make.sh
+    ```
 
+- Execution<br>
+    ```
+    $ cd realistic-s3
+    $ ./run.sh
+    ```
