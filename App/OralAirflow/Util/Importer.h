@@ -19,86 +19,88 @@ namespace Util
 class Importer : public kvs::UnstructuredVolumeObject
 {
     using SuperClass = kvs::UnstructuredVolumeObject;
+    using CellType = SuperClass::CellType;
 
 public:
     Importer(
         const Foam::fvMesh& mesh,
-        const Foam::volScalarField& field )
+        const Foam::volScalarField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        this->import( mesh, field );
+        this->import( mesh, field, type );
     }
 
     Importer(
         const Foam::fvMesh& mesh,
-        const Foam::volVectorField& field )
+        const Foam::volVectorField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        this->import( mesh, field );
-    }
-
-    Importer(
-        kvs::mpi::Communicator& world,
-        const Foam::fvMesh& mesh,
-        const Foam::volScalarField& field )
-    {
-        this->import( world, mesh, field );
+        this->import( mesh, field, type );
     }
 
     Importer(
         kvs::mpi::Communicator& world,
         const Foam::fvMesh& mesh,
-        const Foam::volVectorField& field )
+        const Foam::volScalarField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        this->import( world, mesh, field );
+        this->import( world, mesh, field, type );
+    }
+
+    Importer(
+        kvs::mpi::Communicator& world,
+        const Foam::fvMesh& mesh,
+        const Foam::volVectorField& field,
+        const CellType type = CellType::Hexahedra )
+    {
+        this->import( world, mesh, field, type );
     }
 
     SuperClass* import(
         const Foam::fvMesh& mesh,
-        const Foam::volScalarField& field )
+        const Foam::volScalarField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        const auto coords = this->calculate_coords( mesh );
-        const auto values = this->calculate_values( mesh, field );
-        const auto connections = this->calculate_connections( mesh );
-        const auto nnodes = coords.size() / 3;
-        const auto ncells = connections.size() / 8;
-        this->setCellTypeToHexahedra();
-        this->setVeclen( 1 );
-        this->setNumberOfNodes( nnodes );
-        this->setNumberOfCells( ncells );
-        this->setValues( values );
-        this->setCoords( coords );
-        this->setConnections( connections );
-        this->updateMinMaxValues();
-        this->updateMinMaxCoords();
+        switch ( type )
+        {
+        case CellType::Hexahedra:
+            this->import_hex( mesh, field );
+            break;
+        case CellType::Tetrahedra:
+            this->import_tet( mesh, field );
+            break;
+        default:
+            break;
+        }
         return this;
     }
 
     SuperClass* import(
         const Foam::fvMesh& mesh,
-        const Foam::volVectorField& field )
+        const Foam::volVectorField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        const auto coords = this->calculate_coords( mesh );
-        const auto values = this->calculate_values( mesh, field );
-        const auto connections = this->calculate_connections( mesh );
-        const auto nnodes = coords.size() / 3;
-        const auto ncells = connections.size() / 8;
-        this->setCellTypeToHexahedra();
-        this->setVeclen( 1 );
-        this->setNumberOfNodes( nnodes );
-        this->setNumberOfCells( ncells );
-        this->setValues( values );
-        this->setCoords( coords );
-        this->setConnections( connections );
-        this->updateMinMaxValues();
-        this->updateMinMaxCoords();
+        switch ( type )
+        {
+        case CellType::Hexahedra:
+            this->import_hex( mesh, field );
+            break;
+        case CellType::Tetrahedra:
+            this->import_tet( mesh, field );
+            break;
+        default:
+            break;
+        }
         return this;
     }
 
     SuperClass* import(
         kvs::mpi::Communicator& world,
         const Foam::fvMesh& mesh,
-        const Foam::volScalarField& field )
+        const Foam::volScalarField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        this->import( mesh, field );
+        this->import( mesh, field, type );
         this->update_min_max_values( world );
         this->update_min_max_coords( world );
         return this;
@@ -107,15 +109,106 @@ public:
     SuperClass* import(
         kvs::mpi::Communicator& world,
         const Foam::fvMesh& mesh,
-        const Foam::volVectorField& field )
+        const Foam::volVectorField& field,
+        const CellType type = CellType::Hexahedra )
     {
-        this->import( mesh, field );
+        this->import( mesh, field, type );
         this->update_min_max_values( world );
         this->update_min_max_coords( world );
         return this;
     }
 
 private:
+    SuperClass* import_hex(
+        const Foam::fvMesh& mesh,
+        const Foam::volScalarField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_hex_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 8;
+        this->setCellTypeToHexahedra();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        this->updateMinMaxValues();
+        this->updateMinMaxCoords();
+        return this;
+    }
+
+    SuperClass* import_hex(
+        const Foam::fvMesh& mesh,
+        const Foam::volVectorField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_hex_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 8;
+        this->setCellTypeToHexahedra();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        this->updateMinMaxValues();
+        this->updateMinMaxCoords();
+        return this;
+    }
+
+    SuperClass* import_tet(
+        const Foam::fvMesh& mesh,
+        const Foam::volScalarField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_tet_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 4;
+        this->setCellTypeToHexahedra();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        if ( ncells > 0 )
+        {
+            this->updateMinMaxValues();
+            this->updateMinMaxCoords();
+        }
+        return this;
+    }
+
+    SuperClass* import_tet(
+        const Foam::fvMesh& mesh,
+        const Foam::volVectorField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_tet_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 4;
+        this->setCellTypeToHexahedra();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        if ( ncells > 0 )
+        {
+            this->updateMinMaxValues();
+            this->updateMinMaxCoords();
+        }
+        return this;
+    }
+
     kvs::ValueArray<kvs::Real32> calculate_coords(
         const Foam::fvMesh& mesh )
     {
@@ -182,7 +275,39 @@ private:
         return idw.serialize();
     }
 
-    kvs::ValueArray<kvs::UInt32> calculate_connections(
+    kvs::ValueArray<kvs::UInt32> calculate_tet_connections(
+        const Foam::fvMesh& mesh )
+    {
+        const size_t ncells = mesh.nCells(); // number of cells
+
+        std::vector<kvs::UInt32> connections;
+        for ( size_t i = 0; i < ncells; ++i )
+        {
+            // For only hex cells.
+            const auto cell_nnodes = mesh.cellPoints()[i].size();
+            const auto cell_nfaces = mesh.cells()[i].size();
+//            if ( cell_nfaces == 4 )
+//            {
+//                std::cout << "cell nnodes = " << cell_nnodes << std::endl;
+//                std::cout << "cell nfaces = " << cell_nfaces << std::endl;
+//                std::cout << std::endl;
+//            }
+            if ( cell_nnodes == 4 && cell_nfaces == 4 )
+            {
+                Foam::label id[4];
+                std::copy_n( mesh.cellPoints()[i].begin(), 4, id );
+
+                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+            }
+        }
+
+        return kvs::ValueArray<kvs::UInt32>( connections );
+    }
+
+    kvs::ValueArray<kvs::UInt32> calculate_hex_connections(
         const Foam::fvMesh& mesh )
     {
         const size_t ncells = mesh.nCells(); // number of cells

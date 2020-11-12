@@ -10,9 +10,15 @@ namespace local
 
 class InSituVis : public Util::InSituVis
 {
+private:
+    kvs::Real32 m_min_value;
+    kvs::Real32 m_max_value;
+
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
-        Util::InSituVis( world, root )
+        Util::InSituVis( world, root ),
+        m_min_value( 0.0f ),
+        m_max_value( 0.0f )
     {
         this->setSize( 1024, 1024 );
         this->setOutputDirectoryName( "Output", "Proc" );
@@ -20,25 +26,37 @@ public:
         this->setOutputSubImageEnabled( false );
         this->setOutputSubVolumeEnabled( false );
         this->setPipeline(
-            [&] ( Util::InSituVis::Screen& screen, Util::InSituVis::Volume& volume )
+            [&] ( Util::InSituVis::Screen& screen, const Util::InSituVis::Volume& volume )
             {
-                // Create new slice objects.
                 auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
+                if ( !t.hasRange() )
+                {
+                    if ( kvs::Math::Equal( m_min_value, m_max_value ) )
+                    {
+                        t.setRange( volume.minValue(), volume.maxValue() );
+                    }
+                    else
+                    {
+                        t.setRange( m_min_value, m_max_value );
+                    }
+                }
+
+                // Create new slice objects.
                 auto py = ( volume.minObjectCoord().y() + volume.maxObjectCoord().y() ) * 0.5f;
                 auto ay = kvs::OrthoSlice::YAxis;
                 auto* object_y = new kvs::OrthoSlice( &volume, py, ay, t );
-                object_y->setName("ObjectY");
+                object_y->setName( volume.name() + "ObjectY");
 
                 auto pz = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
                 auto az = kvs::OrthoSlice::ZAxis;
                 auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
-                object_z->setName("ObjectZ");
+                object_z->setName( volume.name() + "ObjectZ");
 
-                if ( screen.scene()->hasObject("ObjectY") )
+                if ( screen.scene()->hasObject( volume.name() + "ObjectY") )
                 {
                     // Update the objects.
-                    screen.scene()->replaceObject( "ObjectY", object_y );
-                    screen.scene()->replaceObject( "ObjectZ", object_z );
+                    screen.scene()->replaceObject( volume.name() + "ObjectY", object_y );
+                    screen.scene()->replaceObject( volume.name() + "ObjectZ", object_z );
                 }
                 else
                 {
@@ -51,6 +69,12 @@ public:
                     screen.registerObject( object_z, new kvs::Bounds() );
                 }
             } );
+    }
+
+    void setMinMaxValues( const kvs::Real32 min_value, const kvs::Real32 max_value )
+    {
+        m_min_value = min_value;
+        m_max_value = max_value;
     }
 };
 

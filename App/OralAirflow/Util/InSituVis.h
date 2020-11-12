@@ -25,7 +25,7 @@ class InSituVis
 public:
     using Volume = kvs::UnstructuredVolumeObject;
     using Screen = kvs::OffScreen;
-    using Pipeline = std::function<void(Screen&,Volume&)>;
+    using Pipeline = std::function<void(Screen&,const Volume&)>;
 
 private:
     kvs::mpi::Communicator m_world; ///< MPI communicator
@@ -41,7 +41,6 @@ private:
     bool m_enable_output_subimage_alpha; ///< flag for writing sub-volume rendering image (alpha image)
     bool m_enable_output_subvolume; ///< flag for writing sub-volume data
     Pipeline m_pipeline; ///< visualization pipeline
-    Volume* m_volume; ///< sub-volume data imported from OpenFOAM data
 
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -54,8 +53,7 @@ public:
         m_enable_output_subimage( false ),
         m_enable_output_subimage_depth( false ),
         m_enable_output_subimage_alpha( false ),
-        m_enable_output_subvolume( false ),
-        m_volume( nullptr )
+        m_enable_output_subvolume( false )
     {
     }
 
@@ -134,6 +132,74 @@ public:
         return m_compositor.destroy();
     }
 
+    void exec( const Volume* volume )
+    {
+        m_pipeline( m_screen, *volume );
+    }
+
+    //void draw( const kvs::Real64 time_index )
+    void draw( const Foam::Time& time )
+    {
+        const auto current_time_index = time.timeIndex();
+        const std::string output_number = kvs::String::From( current_time_index, 6, '0' );
+        const std::string output_basename( "output" );
+        const std::string output_filename = output_basename + "_" + output_number;
+        const std::string output_dirname = m_output_directory.name();
+        const std::string output_base_dirname = m_output_directory.baseDirectoryName();
+
+        // Draw image
+        m_screen.draw();
+
+        // Read-back image
+        auto color_buffer = m_screen.readbackColorBuffer();
+        auto depth_buffer = m_screen.readbackDepthBuffer();
+
+        // Output rendering image
+        if ( m_enable_output_subimage )
+        {
+            // RGB image
+            {
+                const auto filename = output_dirname + output_filename + ".bmp";
+                kvs::ColorImage image( m_width, m_height, color_buffer );
+                image.write( filename );
+            }
+
+            // Depth image
+            if ( m_enable_output_subimage_depth )
+            {
+                const auto filename = output_dirname + output_basename + "_depth_" + output_number + ".bmp";
+                kvs::GrayImage depth_image( m_width, m_height, depth_buffer );
+                depth_image.write( filename );
+            }
+
+            // Alpha image
+            if ( m_enable_output_subimage_alpha )
+            {
+                const auto filename = output_dirname + output_basename + "_alpha_" + output_number + ".bmp";
+                kvs::GrayImage alpha_image( m_width, m_height, color_buffer, 3 );
+                alpha_image.write( filename );
+            }
+        }
+
+        // Image composition
+        if ( !m_compositor.run( color_buffer, depth_buffer ) )
+        {
+            this->log() << "ERROR: " << "Cannot compose images." << std::endl;
+        }
+
+        // Output composite image
+        if ( m_world.rank() == m_world.root() )
+        {
+            if ( m_enable_output_image )
+            {
+                const auto filename = output_base_dirname + "/" + output_filename + ".bmp";
+                kvs::ColorImage image( m_width, m_height, color_buffer );
+                image.write( filename );
+            }
+        }
+    }
+
+    /*
     void exec( const Foam::Time& time, const Foam::fvMesh& mesh, const Foam::volScalarField& field )
     {
         this->exec_pipeline( time, new Util::Importer( m_world, mesh, field ) );
@@ -143,8 +209,10 @@ public:
     {
         this->exec_pipeline( time, new Util::Importer( m_world, mesh, field ) );
     }
+    */
 
 private:
+    /*
     void exec_pipeline( const Foam::Time& time, Volume* volume )
     {
         const auto current_time_index = time.timeIndex();
@@ -216,6 +284,7 @@ private:
             }
         }
     }
+    */
 };
 
 } // end of namespace Util
