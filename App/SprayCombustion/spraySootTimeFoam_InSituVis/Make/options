@@ -56,8 +56,24 @@ EXE_LIBS = \
     -lfvOptions \
     -lcombustionModels
 
+/* sootMoment settings */
 EXE_INC += -I./sootMoment/lnInclude
 EXE_LIBS += -L./sootMoment/Make/$(WM_OPTIONS) -lsootMoment
 
+/* HDF5 settings */
 EXE_INC += -I$(HDF5_ARCH_PATH)/include -fopenmp
-LIB_LIBS += -L$(HDF5_ARCH_PATH)/lib -hdf5 -lhdf5_hl -lhdf5_cpp
+LIB_LIBS += -L$(HDF5_ARCH_PATH)/lib -lhdf5 -lhdf5_hl -lhdf5_cpp
+
+/* KVS settings */
+EXE_INC += \
+    -std=c++11 \
+    -I${KVS_DIR}/include \
+    -I${KVS_OSMESA_DIR}/include -DKVS_SUPPORT_OSMESA
+EXE_LIBS += \
+    -L${KVS_DIR}/lib -lkvsSupportOSMesa -lkvsCore \
+    -L${KVS_OSMESA_DIR}/lib ${KVS_OSMESA_LINK_LIBRARY}
+
+/* Local settings */
+EXE_INC += \
+    -I../Util \
+    -I${HOME}/Work/GitHub/InSituVis/OpenfoamLib

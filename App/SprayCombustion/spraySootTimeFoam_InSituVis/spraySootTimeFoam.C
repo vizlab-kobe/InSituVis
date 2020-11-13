@@ -61,6 +61,12 @@ Description
 #include "sootMoment.H"
 // #include "sootMomentTest.H"
 
+// In-situ visualization
+#include "InSituVis.h"
+#include "../Util/Importer.h"
+#define IN_SITU_VIS
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 int main(int argc, char *argv[])
 {
@@ -108,6 +114,35 @@ int main(int argc, char *argv[])
 
     scalar loopN = 0;
 
+
+#if defined( IN_SITU_VIS )
+    // In-situ visualization setup
+    Foam::messageStream::level = 0; // Disable Foam::Info
+    const kvs::Indent indent(4); // indent for log stream
+    kvs::Timer timer; // timer for measuring sim and vis processing times
+    local::InSituVis vis;
+    vis.screen().scene()->camera()->setPosition( kvs::Vec3( -4, 4, 8 ) );
+    vis.screen().scene()->light()->setPosition( kvs::Vec3( -4, 4, 8 ) );
+    if ( !vis.initialize() )
+    {
+        vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
+    }
+#endif // IN_SITU_VIS
+
+#if defined( IN_SITU_VIS )
+    // Time-loop information
+    const auto start_time = runTime.startTime().value();
+    const auto start_time_index = runTime.startTimeIndex();
+    const auto end_time = runTime.endTime().value();
+    const auto end_time_index = static_cast<int>( end_time / runTime.deltaT().value() );
+    vis.log() << std::endl;
+    vis.log() << "STARTING TIME LOOP" << std::endl;
+    vis.log() << indent << "Start time and index: " << start_time << ", " << start_time_index << std::endl;
+    vis.log() << indent << "End time and index: " << end_time << ", " << end_time_index << std::endl;
+    vis.log() << std::endl;
+#endif // IN_SITU_VIS
+
+
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     Info<< "\nStarting time loop\n" << endl;
@@ -119,6 +154,17 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
 
         runTime++;
+
+#if defined( IN_SITU_VIS )
+        // Loop information
+        const auto current_time = runTime.timeName();
+        const auto current_time_index = runTime.timeIndex();
+        vis.log() << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
+        vis.log() << indent << "T: " << current_time << std::endl;
+        vis.log() << indent << "End T: " << end_time << std::endl;
+        vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
+        timer.start(); // begin sim.
+#endif // IN_SITU_VIS
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
@@ -171,6 +217,62 @@ int main(int argc, char *argv[])
             combustion->dQ()().write();
         }
 
+#if defined( IN_SITU_VIS )
+        timer.stop(); // end sim.
+        const auto ts = timer.sec();
+        const auto Ts = kvs::String::From( ts, 4 );
+        vis.log() << indent << "Processing Times:" << std::endl;
+        vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
+
+        // Execute in-situ visualization process
+        timer.start(); // begin vis.
+        {
+            // p: pressure
+            // {
+            //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
+            //vis.setMinMaxValues( 13000.0, 100000.0 );
+            //vis.setMinMaxValues( 999.98, 1000.02 );
+            //auto* vol_tet = new Util::Importer( vis.world(), mesh, p, Util::Importer::Tetrahedra );
+            //auto* vol_hex = new Util::Importer( vis.world(), mesh, p, Util::Importer::Hexahedra );
+            // }
+
+            // U: velocity magnitude
+            // {
+            //vis.setMinMaxValues( 0.0224, 70.9 );
+            //vis.setMinMaxValues( 10, 20 );
+            //auto* vol_tet = new Util::Importer( vis.world(), mesh, U, Util::Importer::Tetrahedra );
+            //auto* vol_hex = new Util::Importer( vis.world(), mesh, U, Util::Importer::Hexahedra );
+            // }
+
+            // T: temperature
+            // {
+            //vis.setMinMaxValues( 293, 295 );
+            //auto* vol_tet = new Util::Importer( vis.world(), mesh, thermo.T(), Util::Importer::Tetrahedra );
+            auto* vol_hex = new Util::Importer( mesh, thermo.T(), Util::Importer::Hexahedra );
+            // }
+
+            //vol_tet->setName("Tet");
+            vol_hex->setName("Hex");
+
+            //if ( vol_tet->numberOfCells() > 0 ) vis.exec( vol_tet );
+            if ( vol_hex->numberOfCells() > 0 ) vis.exec( vol_hex );
+
+            //delete vol_tet;
+            delete vol_hex;
+
+            vis.draw( runTime );
+        }
+        timer.stop(); // end vis.
+
+        const auto tv = timer.sec();
+        const auto Tv = kvs::String::From( tv, 4 );
+        vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
+
+        const auto elapsed_time = runTime.elapsedCpuTime();
+        vis.log() << indent << "Elapsed Time: " << elapsed_time << " s" << std::endl;
+        vis.log() << std::endl;
+#endif // IN_SITU_VIS
+
         #include "logSummary_.H"
 
          Info<<"\n "
@@ -204,6 +306,13 @@ int main(int argc, char *argv[])
 
         //if (loopN > 9 ){break;}
     }
+
+#if defined( IN_SITU_VIS )
+    if ( !vis.finalize() )
+    {
+        vis.log() << "ERROR: " << "Cannot finalize visualization process." << std::endl;
+    }
+#endif // IN_SITU_VIS
 
     Info<< "End\n" << endl;
 
