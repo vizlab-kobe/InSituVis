@@ -170,7 +170,7 @@ private:
         const auto connections = this->calculate_tet_connections( mesh );
         const auto nnodes = coords.size() / 3;
         const auto ncells = connections.size() / 4;
-        this->setCellTypeToHexahedra();
+        this->setCellTypeToTetrahedra();
         this->setVeclen( 1 );
         this->setNumberOfNodes( nnodes );
         this->setNumberOfCells( ncells );
@@ -194,7 +194,7 @@ private:
         const auto connections = this->calculate_tet_connections( mesh );
         const auto nnodes = coords.size() / 3;
         const auto ncells = connections.size() / 4;
-        this->setCellTypeToHexahedra();
+        this->setCellTypeToTetrahedra();
         this->setVeclen( 1 );
         this->setNumberOfNodes( nnodes );
         this->setNumberOfCells( ncells );
@@ -292,7 +292,8 @@ private:
 //                std::cout << "cell nfaces = " << cell_nfaces << std::endl;
 //                std::cout << std::endl;
 //            }
-            if ( cell_nnodes == 4 && cell_nfaces == 4 )
+//            if ( cell_nnodes == 4 && cell_nfaces == 4 )
+            if ( cell_nfaces == 4 )
             {
                 Foam::label id[4];
                 std::copy_n( mesh.cellPoints()[i].begin(), 4, id );
