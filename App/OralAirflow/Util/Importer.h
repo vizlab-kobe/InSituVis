@@ -5,6 +5,9 @@
 // OpenFOAM related headers
 #include "fvMesh.H"
 #include "volFields.H"
+#include "volPointInterpolation.H"
+#include "cellShape.H"
+#include "cellModeller.H"
 
 // KVS related headers
 #include <kvs/mpi/Communicator>
@@ -69,6 +72,12 @@ public:
         case CellType::Tetrahedra:
             this->import_tet( mesh, field );
             break;
+        case CellType::Pyramid:
+            this->import_pyr( mesh, field );
+            break;
+        case CellType::Prism:
+            this->import_prism( mesh, field );
+            break;
         default:
             break;
         }
@@ -87,6 +96,12 @@ public:
             break;
         case CellType::Tetrahedra:
             this->import_tet( mesh, field );
+            break;
+        case CellType::Pyramid:
+            this->import_pyr( mesh, field );
+            break;
+        case CellType::Prism:
+            this->import_prism( mesh, field );
             break;
         default:
             break;
@@ -209,6 +224,102 @@ private:
         return this;
     }
 
+    SuperClass* import_pyr(
+        const Foam::fvMesh& mesh,
+        const Foam::volScalarField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_pyr_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 5;
+        this->setCellTypeToPyramid();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        if ( ncells > 0 )
+        {
+            this->updateMinMaxValues();
+            this->updateMinMaxCoords();
+        }
+        return this;
+    }
+
+    SuperClass* import_pyr(
+        const Foam::fvMesh& mesh,
+        const Foam::volVectorField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_pyr_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 5;
+        this->setCellTypeToPyramid();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        if ( ncells > 0 )
+        {
+            this->updateMinMaxValues();
+            this->updateMinMaxCoords();
+        }
+        return this;
+    }
+
+    SuperClass* import_prism(
+        const Foam::fvMesh& mesh,
+        const Foam::volScalarField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_prism_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 6;
+        this->setCellTypeToPrism();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        if ( ncells > 0 )
+        {
+            this->updateMinMaxValues();
+            this->updateMinMaxCoords();
+        }
+        return this;
+    }
+
+    SuperClass* import_prism(
+        const Foam::fvMesh& mesh,
+        const Foam::volVectorField& field )
+    {
+        const auto coords = this->calculate_coords( mesh );
+        const auto values = this->calculate_values( mesh, field );
+        const auto connections = this->calculate_prism_connections( mesh );
+        const auto nnodes = coords.size() / 3;
+        const auto ncells = connections.size() / 6;
+        this->setCellTypeToPrism();
+        this->setVeclen( 1 );
+        this->setNumberOfNodes( nnodes );
+        this->setNumberOfCells( ncells );
+        this->setValues( values );
+        this->setCoords( coords );
+        this->setConnections( connections );
+        if ( ncells > 0 )
+        {
+            this->updateMinMaxValues();
+            this->updateMinMaxCoords();
+        }
+        return this;
+    }
+
     kvs::ValueArray<kvs::Real32> calculate_coords(
         const Foam::fvMesh& mesh )
     {
@@ -227,104 +338,128 @@ private:
         const Foam::fvMesh& mesh,
         const Foam::volScalarField& field )
     {
-        const size_t ncells = mesh.nCells(); // number of cells
-        const size_t nnodes = mesh.nPoints(); // number of nodes
-
-        // Calculate values on each grid point.
-        kvs::InverseDistanceWeighting<kvs::Real32> idw( nnodes );
-        for ( size_t i = 0; i < ncells; ++i )
+        Foam::volPointInterpolation p( mesh );
+        const Foam::pointScalarField v = p.interpolate( field );
+        kvs::ValueArray<kvs::Real32> values( v.size() );
+        for ( size_t i = 0; i < values.size(); ++i )
         {
-            const auto& c = mesh.C()[i];
-            const kvs::Vec3 center( c.x(), c.y() , c.z() );
-            const float value = static_cast<float>( field[i] );
-            for ( auto& id : mesh.cellPoints()[i] )
-            {
-                const auto& p = mesh.points()[id];
-                const kvs::Vec3 vertex( p.x(), p.y(), p.z() );
-                const auto distance = ( center - vertex ).length();
-                idw.insert( id, value, distance );
-            }
+            values[i] = static_cast<kvs::Real32>( v[i] );
         }
-
-        return idw.serialize();
+        return values;
     }
 
     kvs::ValueArray<kvs::Real32> calculate_values(
         const Foam::fvMesh& mesh,
         const Foam::volVectorField& field )
     {
-        const size_t ncells = mesh.nCells(); // number of cells
-        const size_t nnodes = mesh.nPoints(); // number of nodes
-
-        // Calculate values on each grid point.
-        kvs::InverseDistanceWeighting<kvs::Real32> idw( nnodes );
-        for ( size_t i = 0; i < ncells; ++i )
+        Foam::volPointInterpolation p( mesh );
+        const Foam::pointVectorField v = p.interpolate( field );
+        kvs::ValueArray<kvs::Real32> values( v.size() );
+        for ( size_t i = 0; i < values.size(); ++i )
         {
-            const auto& c = mesh.C()[i];
-            const kvs::Vec3 center( c.x(), c.y() , c.z() );
-            const float value = static_cast<float>( Foam::mag( field[i] ) );
-            for ( auto& id : mesh.cellPoints()[i] )
-            {
-                const auto& p = mesh.points()[id];
-                const kvs::Vec3 vertex( p.x(), p.y(), p.z() );
-                const auto distance = ( center - vertex ).length();
-                idw.insert( id, value, distance );
-            }
+            values[i] = static_cast<kvs::Real32>( Foam::mag( v[i] ) );
         }
-
-        return idw.serialize();
+        return values;
     }
 
     kvs::ValueArray<kvs::UInt32> calculate_tet_connections(
         const Foam::fvMesh& mesh )
     {
-        const size_t ncells = mesh.nCells(); // number of cells
-
         std::vector<kvs::UInt32> connections;
+        const auto& tet = *(Foam::cellModeller::lookup("tet"));
+        const auto& cell_shapes = mesh.cellShapes();
+        const size_t ncells = cell_shapes.size();
         for ( size_t i = 0; i < ncells; ++i )
         {
-            // For only hex cells.
-            const auto cell_nnodes = mesh.cellPoints()[i].size();
-            const auto cell_nfaces = mesh.cells()[i].size();
-//            if ( cell_nfaces == 4 )
-//            {
-//                std::cout << "cell nnodes = " << cell_nnodes << std::endl;
-//                std::cout << "cell nfaces = " << cell_nfaces << std::endl;
-//                std::cout << std::endl;
-//            }
-//            if ( cell_nnodes == 4 && cell_nfaces == 4 )
-            if ( cell_nfaces == 4 )
+            const auto& cell_shape = cell_shapes[i];
+            const auto& cell_model = cell_shape.model();
+            if ( cell_model == tet )
             {
-                Foam::label id[4];
-                std::copy_n( mesh.cellPoints()[i].begin(), 4, id );
-
+                const auto& id = cell_shape;
                 connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
             }
         }
+        return kvs::ValueArray<kvs::UInt32>( connections );
+    }
 
+    kvs::ValueArray<kvs::UInt32> calculate_pyr_connections(
+        const Foam::fvMesh& mesh )
+    {
+        std::vector<kvs::UInt32> connections;
+        const auto& pyr = *(Foam::cellModeller::lookup("pyr"));
+        const auto& cell_shapes = mesh.cellShapes();
+        const size_t ncells = cell_shapes.size();
+        for ( size_t i = 0; i < ncells; ++i )
+        {
+            const auto& cell_shape = cell_shapes[i];
+            const auto& cell_model = cell_shape.model();
+            if ( cell_model == pyr )
+            {
+                const auto& id = cell_shape;
+                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+            }
+        }
+        return kvs::ValueArray<kvs::UInt32>( connections );
+    }
+
+    kvs::ValueArray<kvs::UInt32> calculate_prism_connections(
+        const Foam::fvMesh& mesh )
+    {
+        std::vector<kvs::UInt32> connections;
+        const auto& prism = *(Foam::cellModeller::lookup("prism"));
+        const auto& ttwed = *(Foam::cellModeller::lookup("tetWedge"));
+        const auto& cell_shapes = mesh.cellShapes();
+        const size_t ncells = cell_shapes.size();
+        for ( size_t i = 0; i < ncells; ++i )
+        {
+            const auto& cell_shape = cell_shapes[i];
+            const auto& cell_model = cell_shape.model();
+            if ( cell_model == prism )
+            {
+                const auto& id = cell_shape;
+                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
+            }
+            else if ( cell_model == ttwed )
+            {
+                const auto& id = cell_shape;
+                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+            }
+        }
         return kvs::ValueArray<kvs::UInt32>( connections );
     }
 
     kvs::ValueArray<kvs::UInt32> calculate_hex_connections(
         const Foam::fvMesh& mesh )
     {
-        const size_t ncells = mesh.nCells(); // number of cells
-
         std::vector<kvs::UInt32> connections;
+        const auto& hex = *(Foam::cellModeller::lookup("hex"));
+        const auto& wed = *(Foam::cellModeller::lookup("wedge"));
+        const auto& cell_shapes = mesh.cellShapes();
+        const size_t ncells = cell_shapes.size();
         for ( size_t i = 0; i < ncells; ++i )
         {
-            // For only hex cells.
-            const auto cell_nnodes = mesh.cellPoints()[i].size();
-            const auto cell_nfaces = mesh.cells()[i].size();
-            if ( cell_nnodes == 8 && cell_nfaces == 6 )
+            const auto& cell_shape = cell_shapes[i];
+            const auto& cell_model = cell_shape.model();
+            if ( cell_model == hex )
             {
-                Foam::label id[8];
-                std::copy_n( mesh.cellPoints()[i].begin(), 8, id );
-
-                /*
+                const auto& id = cell_shape;
                 connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[6] ) );
@@ -333,27 +468,18 @@ private:
                 connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
-                */
-
-                /*
+            }
+            else if ( cell_model == wed )
+            {
+                const auto& id = cell_shape;
                 connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[7] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[6] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
-                */
-
-                connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[6] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[7] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
             }
         }
 

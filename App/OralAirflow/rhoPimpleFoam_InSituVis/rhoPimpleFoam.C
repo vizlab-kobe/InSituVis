@@ -146,19 +146,23 @@ int main(int argc, char *argv[])
         {
             // p: pressure
             // {
-            //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
+            vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
             //vis.setMinMaxValues( 13000.0, 100000.0 );
             //vis.setMinMaxValues( 999.98, 1000.02 );
-            //auto* vol_tet = new Util::Importer( vis.world(), mesh, p, Util::Importer::Tetrahedra );
-            //auto* vol_hex = new Util::Importer( vis.world(), mesh, p, Util::Importer::Hexahedra );
+            //vis.setMinMaxValues( 12500, 13500 );
+            auto* vol_tet = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Tetrahedra );
+            auto* vol_hex = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Hexahedra );
+            auto* vol_pri = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Prism );
+            auto* vol_pyr = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Pyramid );
+//            auto* vol_tet = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Tetrahedra );
+//            auto* vol_hex = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Hexahedra );
             // }
 
             // U: velocity magnitude
             // {
             //vis.setMinMaxValues( 0.0224, 70.9 );
-            //vis.setMinMaxValues( 10, 20 );
-            auto* vol_tet = new Util::Importer( vis.world(), mesh, U, Util::Importer::Tetrahedra );
-            auto* vol_hex = new Util::Importer( vis.world(), mesh, U, Util::Importer::Hexahedra );
+            //auto* vol_tet = new Util::Importer( vis.world(), mesh, U, Util::Importer::Tetrahedra );
+            //auto* vol_hex = new Util::Importer( vis.world(), mesh, U, Util::Importer::Hexahedra );
             // }
 
             // T: temperature
@@ -170,14 +174,25 @@ int main(int argc, char *argv[])
 
             vol_tet->setName("Tet");
             vol_hex->setName("Hex");
+            vol_pri->setName("Pri");
+            vol_pyr->setName("Pyr");
+
+            vol_tet->print( vis.log() ); vis.log() << std::endl;
+            vol_hex->print( vis.log() ); vis.log() << std::endl;
+            vol_pri->print( vis.log() ); vis.log() << std::endl;
+            vol_pyr->print( vis.log() ); vis.log() << std::endl;
 
             if ( vol_tet->numberOfCells() > 0 ) vis.exec( vol_tet );
             if ( vol_hex->numberOfCells() > 0 ) vis.exec( vol_hex );
+            if ( vol_pri->numberOfCells() > 0 ) vis.exec( vol_pri );
+            if ( vol_pyr->numberOfCells() > 0 ) vis.exec( vol_pyr );
+
+            vis.draw( runTime );
 
             delete vol_tet;
             delete vol_hex;
-
-            vis.draw( runTime );
+            delete vol_pri;
+            delete vol_pyr;
         }
         timer.stop(); // end vis.
 
