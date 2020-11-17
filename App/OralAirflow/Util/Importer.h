@@ -24,11 +24,15 @@ class Importer : public kvs::UnstructuredVolumeObject
     using SuperClass = kvs::UnstructuredVolumeObject;
     using CellType = SuperClass::CellType;
 
+private:
+    bool m_decompose; // flag for decomposing polyhedral cells
+
 public:
     Importer(
         const Foam::fvMesh& mesh,
         const Foam::volScalarField& field,
-        const CellType type = CellType::Hexahedra )
+        const CellType type = CellType::Hexahedra ):
+        m_decompose( true )
     {
         this->import( mesh, field, type );
     }
@@ -36,7 +40,8 @@ public:
     Importer(
         const Foam::fvMesh& mesh,
         const Foam::volVectorField& field,
-        const CellType type = CellType::Hexahedra )
+        const CellType type = CellType::Hexahedra ):
+        m_decompose( true )
     {
         this->import( mesh, field, type );
     }
@@ -45,7 +50,8 @@ public:
         kvs::mpi::Communicator& world,
         const Foam::fvMesh& mesh,
         const Foam::volScalarField& field,
-        const CellType type = CellType::Hexahedra )
+        const CellType type = CellType::Hexahedra ):
+        m_decompose( true )
     {
         this->import( world, mesh, field, type );
     }
@@ -54,7 +60,8 @@ public:
         kvs::mpi::Communicator& world,
         const Foam::fvMesh& mesh,
         const Foam::volVectorField& field,
-        const CellType type = CellType::Hexahedra )
+        const CellType type = CellType::Hexahedra ):
+        m_decompose( true )
     {
         this->import( world, mesh, field, type );
     }
@@ -324,14 +331,34 @@ private:
         const Foam::fvMesh& mesh )
     {
         const size_t nnodes = mesh.nPoints(); // number of nodes
-        kvs::ValueArray<float> coords( nnodes * 3 );
+        std::vector<kvs::Real32> coords;
         for ( size_t i = 0; i < nnodes; ++i )
         {
-            coords[ 3 * i + 0 ] = mesh.points()[i].x();
-            coords[ 3 * i + 1 ] = mesh.points()[i].y();
-            coords[ 3 * i + 2 ] = mesh.points()[i].z();
+            coords.push_back( mesh.points()[i].x() );
+            coords.push_back( mesh.points()[i].y() );
+            coords.push_back( mesh.points()[i].z() );
         }
-        return coords;
+
+        if ( m_decompose )
+        {
+            const auto& ukn = *(Foam::cellModeller::lookup("unknown"));
+            const auto& cell_shapes = mesh.cellShapes();
+            const size_t ncells = cell_shapes.size();
+            for ( size_t i = 0; i < ncells; ++i )
+            {
+                const auto& cell_shape = cell_shapes[i];
+                const auto& cell_model = cell_shape.model();
+                if ( cell_model == ukn )
+                {
+                    const auto& center = mesh.C()[i];
+                    coords.push_back( center.x() );
+                    coords.push_back( center.y() );
+                    coords.push_back( center.z() );
+                }
+            }
+        }
+
+        return kvs::ValueArray<kvs::Real32>( coords );
     }
 
     kvs::ValueArray<kvs::Real32> calculate_values(
@@ -340,12 +367,31 @@ private:
     {
         Foam::volPointInterpolation p( mesh );
         const Foam::pointScalarField v = p.interpolate( field );
-        kvs::ValueArray<kvs::Real32> values( v.size() );
-        for ( size_t i = 0; i < values.size(); ++i )
+
+        std::vector<kvs::Real32> values;
+        for ( int i = 0; i < v.size(); ++i )
         {
-            values[i] = static_cast<kvs::Real32>( v[i] );
+            values.push_back( static_cast<kvs::Real32>( v[i] ) );
         }
-        return values;
+
+        if ( m_decompose )
+        {
+            const auto& ukn = *(Foam::cellModeller::lookup("unknown"));
+            const auto& cell_shapes = mesh.cellShapes();
+            const size_t ncells = cell_shapes.size();
+            for ( size_t i = 0; i < ncells; ++i )
+            {
+                const auto& cell_shape = cell_shapes[i];
+                const auto& cell_model = cell_shape.model();
+                if ( cell_model == ukn )
+                {
+                    const auto value = static_cast<kvs::Real32>( field[i] );
+                    values.push_back( value );
+                }
+            }
+        }
+
+        return kvs::ValueArray<kvs::Real32>( values );
     }
 
     kvs::ValueArray<kvs::Real32> calculate_values(
@@ -354,12 +400,31 @@ private:
     {
         Foam::volPointInterpolation p( mesh );
         const Foam::pointVectorField v = p.interpolate( field );
-        kvs::ValueArray<kvs::Real32> values( v.size() );
-        for ( size_t i = 0; i < values.size(); ++i )
+
+        std::vector<kvs::Real32> values;
+        for ( int i = 0; i < v.size(); ++i )
         {
-            values[i] = static_cast<kvs::Real32>( Foam::mag( v[i] ) );
+            values.push_back( static_cast<kvs::Real32>( Foam::mag( v[i] ) ) );
         }
-        return values;
+
+        if ( m_decompose )
+        {
+            const auto& ukn = *(Foam::cellModeller::lookup("unknown"));
+            const auto& cell_shapes = mesh.cellShapes();
+            const size_t ncells = cell_shapes.size();
+            for ( size_t i = 0; i < ncells; ++i )
+            {
+                const auto& cell_shape = cell_shapes[i];
+                const auto& cell_model = cell_shape.model();
+                if ( cell_model == ukn )
+                {
+                    const auto value = static_cast<kvs::Real32>( Foam::mag( field[i] ) );
+                    values.push_back( value );
+                }
+            }
+        }
+
+        return kvs::ValueArray<kvs::Real32>( values );
     }
 
     kvs::ValueArray<kvs::UInt32> calculate_tet_connections(
@@ -367,8 +432,11 @@ private:
     {
         std::vector<kvs::UInt32> connections;
         const auto& tet = *(Foam::cellModeller::lookup("tet"));
+        const auto& ukn = *(Foam::cellModeller::lookup("unknown"));
         const auto& cell_shapes = mesh.cellShapes();
+        const auto& owner = mesh.faceOwner();
         const size_t ncells = cell_shapes.size();
+        size_t ukn_cells = 0;
         for ( size_t i = 0; i < ncells; ++i )
         {
             const auto& cell_shape = cell_shapes[i];
@@ -376,10 +444,45 @@ private:
             if ( cell_model == tet )
             {
                 const auto& id = cell_shape;
+                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+            }
+            else if ( cell_model == ukn )
+            {
+                if ( m_decompose )
+                {
+                    const auto new_id = mesh.nPoints() + ukn_cells;
+                    const auto& faces = mesh.cells()[i];
+                    for ( const auto face : faces )
+                    {
+                        const auto& f = mesh.faces()[ face ];
+                        const bool is_owner = ( owner[ face ] == int(i) );
+
+                        const auto ntris = f.nTriangles( mesh.points() );
+                        Foam::faceList tri_faces( ntris );
+                        Foam::label trii = 0;
+                        f.triangles( mesh.points(), trii, tri_faces );
+                        for ( const auto& id : tri_faces )
+                        {
+                            connections.push_back( static_cast<kvs::UInt32>( new_id ) );
+                            if ( is_owner )
+                            {
+                                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                            }
+                            else
+                            {
+                                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                            }
+                        }
+                    }
+                    ukn_cells++;
+                }
             }
         }
         return kvs::ValueArray<kvs::UInt32>( connections );
@@ -390,8 +493,11 @@ private:
     {
         std::vector<kvs::UInt32> connections;
         const auto& pyr = *(Foam::cellModeller::lookup("pyr"));
+        const auto& ukn = *(Foam::cellModeller::lookup("unknown"));
         const auto& cell_shapes = mesh.cellShapes();
+        const auto& owner = mesh.faceOwner();
         const size_t ncells = cell_shapes.size();
+        size_t ukn_cells = 0;
         for ( size_t i = 0; i < ncells; ++i )
         {
             const auto& cell_shape = cell_shapes[i];
@@ -399,11 +505,55 @@ private:
             if ( cell_model == pyr )
             {
                 const auto& id = cell_shape;
+                connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+            }
+            else if ( cell_model == ukn )
+            {
+                if ( m_decompose )
+                {
+                    const auto new_id = mesh.nPoints() + ukn_cells;
+                    const auto& faces = mesh.cells()[i];
+                    for ( const auto face : faces )
+                    {
+                        const auto& f = mesh.faces()[ face ];
+                        const bool is_owner = ( owner[ face ] == int(i) );
+
+                        Foam::label ntris = 0;
+                        Foam::label nquads = 0;
+                        f.nTrianglesQuads( mesh.points(), ntris, nquads );
+
+                        Foam::faceList tri_faces( ntris );
+                        Foam::faceList quad_faces( nquads );
+
+                        Foam::label trii = 0;
+                        Foam::label quadi = 0;
+                        f.trianglesQuads( mesh.points(), trii, quadi, tri_faces, quad_faces );
+
+                        for ( const auto& id : quad_faces )
+                        {
+                            connections.push_back( static_cast<kvs::UInt32>( new_id ) );
+                            if ( is_owner )
+                            {
+                                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                            }
+                            else
+                            {
+                                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
+                                connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
+                            }
+                        }
+                    }
+                    ukn_cells++;
+                }
             }
         }
         return kvs::ValueArray<kvs::UInt32>( connections );
@@ -424,22 +574,22 @@ private:
             if ( cell_model == prism )
             {
                 const auto& id = cell_shape;
-                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[5] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
             }
             else if ( cell_model == ttwed )
             {
                 const auto& id = cell_shape;
-                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
-                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[3] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
                 connections.push_back( static_cast<kvs::UInt32>( id[4] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[0] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[1] ) );
+                connections.push_back( static_cast<kvs::UInt32>( id[2] ) );
             }
         }
         return kvs::ValueArray<kvs::UInt32>( connections );
