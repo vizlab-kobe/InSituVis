@@ -22,7 +22,7 @@ EXE_LIBS = \
 
 /* KVS settings */
 EXE_INC += \
-    -I${KVS_DIR}/include \
+    -I${KVS_DIR}/include -DKVS_SUPPORT_MPI \
     -I${KVS_OSMESA_DIR}/include -DKVS_SUPPORT_OSMESA
 EXE_LIBS += \
     -L${KVS_DIR}/lib -lkvsSupportMPI -lkvsSupportOSMesa -lkvsCore \
@@ -31,4 +31,4 @@ EXE_LIBS += \
 /* Local settings */
 EXE_INC += \
     -I../Util \
-    -I${HOME}/Work/GitHub/InSituVis/OpenfoamLib
+    -I${HOME}/Work/GitHub/

@@ -42,6 +42,7 @@ Description
 
 // In-situ visualization
 #include "InSituVis.h"
+#include <InSituVis/Lib.foam/FoamToKVS.h>
 #define IN_SITU_VIS
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -145,42 +146,33 @@ int main(int argc, char *argv[])
         timer.start(); // begin vis.
         {
             // p: pressure
-            // {
+            auto& field = p;
             vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
-            //vis.setMinMaxValues( 13000.0, 100000.0 );
-            //vis.setMinMaxValues( 999.98, 1000.02 );
-            //vis.setMinMaxValues( 12500, 13500 );
-            auto* vol_tet = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Tetrahedra );
-            auto* vol_hex = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Hexahedra );
-            auto* vol_pri = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Prism );
-            auto* vol_pyr = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Pyramid );
-//            auto* vol_tet = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Tetrahedra );
-//            auto* vol_hex = new Util::Importer( vis.world(), p.mesh(), p, Util::Importer::Hexahedra );
-            // }
 
-            // U: velocity magnitude
-            // {
+            // U: velocity
+            //auto& field = U;
             //vis.setMinMaxValues( 0.0224, 70.9 );
-            //auto* vol_tet = new Util::Importer( vis.world(), mesh, U, Util::Importer::Tetrahedra );
-            //auto* vol_hex = new Util::Importer( vis.world(), mesh, U, Util::Importer::Hexahedra );
-            // }
 
             // T: temperature
-            // {
+            //auto& field = thermo.T();
             //vis.setMinMaxValues( 293, 295 );
-            //auto* vol_tet = new Util::Importer( vis.world(), mesh, thermo.T(), Util::Importer::Tetrahedra );
-            //auto* vol_hex = new Util::Importer( vis.world(), mesh, thermo.T(), Util::Importer::Hexahedra );
-            // }
+
+            InSituVis::foam::FoamToKVS converter( field );
+            using CellType = InSituVis::foam::FoamToKVS::CellType;
+            auto* vol_tet = converter.exec( vis.world(), field, CellType::Tetrahedra );
+            auto* vol_hex = converter.exec( vis.world(), field, CellType::Hexahedra );
+            auto* vol_pri = converter.exec( vis.world(), field, CellType::Prism );
+            auto* vol_pyr = converter.exec( vis.world(), field, CellType::Pyramid );
 
             vol_tet->setName("Tet");
             vol_hex->setName("Hex");
             vol_pri->setName("Pri");
             vol_pyr->setName("Pyr");
 
-            vol_tet->print( vis.log() ); vis.log() << std::endl;
-            vol_hex->print( vis.log() ); vis.log() << std::endl;
-            vol_pri->print( vis.log() ); vis.log() << std::endl;
-            vol_pyr->print( vis.log() ); vis.log() << std::endl;
+            vol_tet->print( vis.log() << std::endl );
+            vol_hex->print( vis.log() << std::endl );
+            vol_pri->print( vis.log() << std::endl );
+            vol_pyr->print( vis.log() << std::endl );
 
             if ( vol_tet->numberOfCells() > 0 ) vis.exec( vol_tet );
             if ( vol_hex->numberOfCells() > 0 ) vis.exec( vol_hex );
