@@ -174,10 +174,10 @@ int main(int argc, char *argv[])
             vol_pri->print( vis.log() << std::endl );
             vol_pyr->print( vis.log() << std::endl );
 
-            if ( vol_tet->numberOfCells() > 0 ) vis.exec( vol_tet );
-            if ( vol_hex->numberOfCells() > 0 ) vis.exec( vol_hex );
-            if ( vol_pri->numberOfCells() > 0 ) vis.exec( vol_pri );
-            if ( vol_pyr->numberOfCells() > 0 ) vis.exec( vol_pyr );
+            vis.exec( vol_tet );
+            vis.exec( vol_hex );
+            vis.exec( vol_pri );
+            vis.exec( vol_pyr );
 
             vis.draw( runTime );
 

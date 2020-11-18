@@ -91,6 +91,8 @@ public:
 
     void exec( const Volume* volume )
     {
+        if ( !volume ) return;
+        if ( volume->numberOfCells() == 0 ) return;
         m_pipeline( m_screen, *volume );
     }
 

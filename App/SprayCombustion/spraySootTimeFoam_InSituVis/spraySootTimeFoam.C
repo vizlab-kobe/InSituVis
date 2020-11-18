@@ -233,9 +233,8 @@ int main(int argc, char *argv[])
             InSituVis::foam::FoamToKVS converter( field, false );
             using CellType = InSituVis::foam::FoamToKVS::CellType;
             auto* vol = converter.exec( field, CellType::Hexahedra );
-            if ( vol->numberOfCells() > 0 ) vis.exec( vol );
+            vis.exec( vol );
             vis.draw( runTime );
-
             delete vol;
         }
         timer.stop(); // end vis.
