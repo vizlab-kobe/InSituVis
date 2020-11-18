@@ -76,4 +76,4 @@ EXE_LIBS += \
 /* Local settings */
 EXE_INC += \
     -I../Util \
-    -I${HOME}/Work/GitHub/InSituVis/OpenfoamLib
+    -I${HOME}/Work/GitHub/

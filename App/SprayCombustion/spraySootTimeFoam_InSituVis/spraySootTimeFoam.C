@@ -63,7 +63,7 @@ Description
 
 // In-situ visualization
 #include "InSituVis.h"
-#include "../Util/Importer.h"
+#include <InSituVis/Lib.foam/FoamToKVS.h>
 #define IN_SITU_VIS
 
 
@@ -227,40 +227,16 @@ int main(int argc, char *argv[])
         // Execute in-situ visualization process
         timer.start(); // begin vis.
         {
-            // p: pressure
-            // {
-            //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
-            //vis.setMinMaxValues( 13000.0, 100000.0 );
-            //vis.setMinMaxValues( 999.98, 1000.02 );
-            //auto* vol_tet = new Util::Importer( vis.world(), mesh, p, Util::Importer::Tetrahedra );
-            //auto* vol_hex = new Util::Importer( vis.world(), mesh, p, Util::Importer::Hexahedra );
-            // }
+            //auto& field = p;
+            auto& field = thermo.T();
 
-            // U: velocity magnitude
-            // {
-            //vis.setMinMaxValues( 0.0224, 70.9 );
-            //vis.setMinMaxValues( 10, 20 );
-            //auto* vol_tet = new Util::Importer( vis.world(), mesh, U, Util::Importer::Tetrahedra );
-            //auto* vol_hex = new Util::Importer( vis.world(), mesh, U, Util::Importer::Hexahedra );
-            // }
-
-            // T: temperature
-            // {
-            //vis.setMinMaxValues( 293, 295 );
-            //auto* vol_tet = new Util::Importer( vis.world(), mesh, thermo.T(), Util::Importer::Tetrahedra );
-            auto* vol_hex = new Util::Importer( mesh, thermo.T(), Util::Importer::Hexahedra );
-            // }
-
-            //vol_tet->setName("Tet");
-            vol_hex->setName("Hex");
-
-            //if ( vol_tet->numberOfCells() > 0 ) vis.exec( vol_tet );
-            if ( vol_hex->numberOfCells() > 0 ) vis.exec( vol_hex );
-
-            //delete vol_tet;
-            delete vol_hex;
-
+            InSituVis::foam::FoamToKVS converter( field, false );
+            using CellType = InSituVis::foam::FoamToKVS::CellType;
+            auto* vol = converter.exec( field, CellType::Hexahedra );
+            if ( vol->numberOfCells() > 0 ) vis.exec( vol );
             vis.draw( runTime );
+
+            delete vol;
         }
         timer.stop(); // end vis.
 
