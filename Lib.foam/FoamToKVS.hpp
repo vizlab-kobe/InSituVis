@@ -6,7 +6,6 @@
  */
 /*****************************************************************************/
 
-
 /*===========================================================================*/
 /**
  *  @brief  Constructs a new FoamToKVS class.
@@ -429,7 +428,8 @@ inline kvs::ValueArray<kvs::Real32> FoamToKVS::calculate_values(
     return kvs::ValueArray<kvs::Real32>( values );
 }
 
-inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_hex_connections( const Foam::fvMesh& mesh )
+inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_hex_connections(
+    const Foam::fvMesh& mesh )
 {
     std::vector<kvs::UInt32> connections;
     const auto& hex = *(Foam::cellModeller::lookup("hex"));
@@ -469,7 +469,8 @@ inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_hex_connections( const 
     return kvs::ValueArray<kvs::UInt32>( connections );
 }
 
-inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_tet_connections( const Foam::fvMesh& mesh )
+inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_tet_connections(
+    const Foam::fvMesh& mesh )
 {
     std::vector<kvs::UInt32> connections;
     const auto& tet = *(Foam::cellModeller::lookup("tet"));
@@ -529,7 +530,8 @@ inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_tet_connections( const 
     return kvs::ValueArray<kvs::UInt32>( connections );
 }
 
-inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_pyr_connections( const Foam::fvMesh& mesh )
+inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_pyr_connections(
+    const Foam::fvMesh& mesh )
 {
     std::vector<kvs::UInt32> connections;
     const auto& pyr = *(Foam::cellModeller::lookup("pyr"));
@@ -599,7 +601,8 @@ inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_pyr_connections( const 
     return kvs::ValueArray<kvs::UInt32>( connections );
 }
 
-inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_pri_connections( const Foam::fvMesh& mesh )
+inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_pri_connections(
+    const Foam::fvMesh& mesh )
 {
     std::vector<kvs::UInt32> connections;
     const auto& prism = *(Foam::cellModeller::lookup("prism"));
@@ -635,7 +638,9 @@ inline kvs::ValueArray<kvs::UInt32> FoamToKVS::calculate_pri_connections( const 
 }
 
 #if defined( KVS_SUPPORT_MPI )
-void FoamToKVS::update_min_max_coords( kvs::mpi::Communicator& world, VolumeObject* volume )
+void FoamToKVS::update_min_max_coords(
+    kvs::mpi::Communicator& world,
+    VolumeObject* volume )
 {
     auto min_coord = volume->minObjectCoord();
     auto max_coord = volume->maxObjectCoord();
@@ -649,7 +654,9 @@ void FoamToKVS::update_min_max_coords( kvs::mpi::Communicator& world, VolumeObje
     volume->setMinMaxExternalCoords( min_coord, max_coord );
 }
 
-void FoamToKVS::update_min_max_values( kvs::mpi::Communicator& world, VolumeObject* volume )
+void FoamToKVS::update_min_max_values(
+    kvs::mpi::Communicator& world,
+    VolumeObject* volume )
 {
     auto min_value = volume->minValue();
     auto max_value = volume->maxValue();

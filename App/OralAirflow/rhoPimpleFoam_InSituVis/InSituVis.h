@@ -1,5 +1,5 @@
 #pragma once
-#include "../Util/InSituVis.h"
+#include <InSituVis/Lib/Adaptor.h>
 #include <kvs/OrthoSlice>
 #include <kvs/PolygonRenderer>
 #include <kvs/Bounds>
@@ -8,25 +8,28 @@
 namespace local
 {
 
-class InSituVis : public Util::InSituVis
+class InSituVis : public ::InSituVis::mpi::Adaptor
 {
+    using BaseClass = ::InSituVis::mpi::Adaptor;
+    using Volume = BaseClass::Volume;
+    using Screen = BaseClass::Screen;
+
 private:
     kvs::Real32 m_min_value;
     kvs::Real32 m_max_value;
 
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
-        Util::InSituVis( world, root ),
+        BaseClass( world, root ),
         m_min_value( 0.0f ),
         m_max_value( 0.0f )
     {
-        this->setSize( 1024, 1024 );
-        this->setOutputDirectoryName( "Output", "Proc" );
+        this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false );
-        this->setOutputSubVolumeEnabled( false );
+
         this->setPipeline(
-            [&] ( Util::InSituVis::Screen& screen, const Util::InSituVis::Volume& volume )
+            [&] ( Screen& screen, const Volume& volume )
             {
                 auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
                 if ( !t.hasRange() )

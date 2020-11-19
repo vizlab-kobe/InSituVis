@@ -1,29 +1,33 @@
 #pragma once
-#include "../Util/InSituVis.h"
 #include <kvs/OrthoSlice>
 #include <kvs/PolygonRenderer>
 #include <kvs/Bounds>
+#include <InSituVis/Lib/Adaptor.h>
 
 
 namespace local
 {
 
-class InSituVis : public Util::InSituVis
+class InSituVis : public ::InSituVis::Adaptor
 {
+    using BaseClass = ::InSituVis::Adaptor;
+    using Volume = BaseClass::Volume;
+    using Screen = BaseClass::Screen;
+
 private:
     kvs::Real32 m_min_value;
     kvs::Real32 m_max_value;
 
 public:
     InSituVis():
+        BaseClass(),
         m_min_value( 0.0f ),
         m_max_value( 0.0f )
     {
-        this->setSize( 1024, 1024 );
-        this->setOutputDirectoryName( "Output" );
+        this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setPipeline(
-            [&] ( Util::InSituVis::Screen& screen, const Util::InSituVis::Volume& volume )
+            [&] ( Screen& screen, const Volume& volume )
             {
                 auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
                 if ( !t.hasRange() )

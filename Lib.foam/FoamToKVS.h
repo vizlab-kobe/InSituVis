@@ -15,8 +15,10 @@
 #endif
 
 // OpenFOAM headers
-#include "volFields.H"
-#include "fvMesh.H"
+#include <fvMesh.H>
+#include <volFields.H>
+#include <volPointInterpolation.H>
+#include <cellModeller.H>
 
 
 namespace InSituVis

@@ -157,6 +157,7 @@ int main(int argc, char *argv[])
             //auto& field = thermo.T();
             //vis.setMinMaxValues( 293, 295 );
 
+            // Convert OpenFOAM data to KVS data
             InSituVis::foam::FoamToKVS converter( field );
             using CellType = InSituVis::foam::FoamToKVS::CellType;
             auto* vol_tet = converter.exec( vis.world(), field, CellType::Tetrahedra );
@@ -169,17 +170,17 @@ int main(int argc, char *argv[])
             vol_pri->setName("Pri");
             vol_pyr->setName("Pyr");
 
-            vol_tet->print( vis.log() << std::endl );
-            vol_hex->print( vis.log() << std::endl );
-            vol_pri->print( vis.log() << std::endl );
-            vol_pyr->print( vis.log() << std::endl );
+            //vol_tet->print( vis.log() << std::endl );
+            //vol_hex->print( vis.log() << std::endl );
+            //vol_pri->print( vis.log() << std::endl );
+            //vol_pyr->print( vis.log() << std::endl );
 
-            vis.exec( vol_tet );
-            vis.exec( vol_hex );
-            vis.exec( vol_pri );
-            vis.exec( vol_pyr );
-
-            vis.draw( runTime );
+            // Execute visualization pipeline and rendering
+            vis.put( vol_tet );
+            vis.put( vol_hex );
+            vis.put( vol_pri );
+            vis.put( vol_pyr );
+            vis.exec( runTime.timeIndex() );
 
             delete vol_tet;
             delete vol_hex;
