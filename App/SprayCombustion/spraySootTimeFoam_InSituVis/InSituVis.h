@@ -26,6 +26,7 @@ public:
     {
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
+
         this->setPipeline(
             [&] ( Screen& screen, const Volume& volume )
             {

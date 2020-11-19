@@ -227,18 +227,15 @@ int main(int argc, char *argv[])
         // Execute in-situ visualization process
         timer.start(); // begin vis.
         {
-            //auto& field = p;
-
             // T: temperature
             auto& field = thermo.T();
             vis.setMinMaxValues( 731.341, 1031.611 );
 
             InSituVis::foam::FoamToKVS converter( field, false );
             using CellType = InSituVis::foam::FoamToKVS::CellType;
-            auto* vol = converter.exec( field, CellType::Hexahedra );
+            auto vol = converter.exec( field, CellType::Hexahedra );
             vis.put( vol );
             vis.exec( runTime.timeIndex() );
-            delete vol;
         }
         timer.stop(); // end vis.
 

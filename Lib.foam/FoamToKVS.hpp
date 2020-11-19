@@ -56,60 +56,99 @@ inline FoamToKVS::FoamToKVS(
     m_values = this->calculate_values( field );
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::exec(
+/*===========================================================================*/
+/**
+ *  @brief  Executes data conversion.
+ *  @param  field [in] scalar field data in OpenFOAM format
+ *  @param  type [in] importing cell type
+ *  @return converted volume data in KVS format
+ */
+/*===========================================================================*/
+inline FoamToKVS::VolumeObject FoamToKVS::exec(
     const Foam::volScalarField& field,
     const CellType type )
 {
+    VolumeObject volume;
     switch ( type )
     {
-    case CellType::Hexahedra: return this->import_hex( field );
-    case CellType::Tetrahedra: return this->import_tet( field );
-    case CellType::Pyramid: return this->import_pyr( field );
-    case CellType::Prism: return this->import_pri( field );
-    default: return nullptr;
+    case CellType::Hexahedra: this->import_hex( field, &volume ); break;
+    case CellType::Tetrahedra: this->import_tet( field, &volume ); break;
+    case CellType::Pyramid: this->import_pyr( field, &volume ); break;
+    case CellType::Prism: this->import_pri( field, &volume ); break;
+    default: break;
     }
-}
-
-inline FoamToKVS::VolumeObject* FoamToKVS::exec(
-    const Foam::volVectorField& field,
-    const CellType type )
-{
-    switch ( type )
-    {
-    case CellType::Hexahedra: return this->import_hex( field );
-    case CellType::Tetrahedra: return this->import_tet( field );
-    case CellType::Pyramid: return this->import_pyr( field );
-    case CellType::Prism: return this->import_pri( field );
-    default: return nullptr;
-    }
-}
-
-#if defined( KVS_SUPPORT_MPI )
-inline FoamToKVS::VolumeObject* FoamToKVS::exec(
-    kvs::mpi::Communicator& world,
-    const Foam::volScalarField& field,
-    const CellType type )
-{
-    auto* volume = this->exec( field, type );
-    this->update_min_max_coords( world, volume );
-    this->update_min_max_values( world, volume );
     return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::exec(
+/*===========================================================================*/
+/**
+ *  @brief  Executes data conversion.
+ *  @param  field [in] vector field data in OpenFOAM format
+ *  @param  type [in] importing cell type
+ *  @return converted volume data in KVS format
+ */
+/*===========================================================================*/
+inline FoamToKVS::VolumeObject FoamToKVS::exec(
+    const Foam::volVectorField& field,
+    const CellType type )
+{
+    VolumeObject volume;
+    switch ( type )
+    {
+    case CellType::Hexahedra: this->import_hex( field, &volume ); break;
+    case CellType::Tetrahedra: this->import_tet( field, &volume ); break;
+    case CellType::Pyramid: this->import_pyr( field, &volume ); break;
+    case CellType::Prism: this->import_pri( field, &volume ); break;
+    default: break;
+    }
+    return volume;
+}
+
+#if defined( KVS_SUPPORT_MPI )
+/*===========================================================================*/
+/**
+ *  @brief  Executes data conversion.
+ *  @param  world [in] MPI communicator
+ *  @param  field [in] scalar field data in OpenFOAM format
+ *  @param  type [in] importing cell type
+ *  @return converted volume data in KVS format
+ */
+/*===========================================================================*/
+inline FoamToKVS::VolumeObject FoamToKVS::exec(
+    kvs::mpi::Communicator& world,
+    const Foam::volScalarField& field,
+    const CellType type )
+{
+    auto volume = this->exec( field, type );
+    this->update_min_max_coords( world, &volume );
+    this->update_min_max_values( world, &volume );
+    return volume;
+}
+
+/*===========================================================================*/
+/**
+ *  @brief  Executes data conversion.
+ *  @param  world [in] MPI communicator
+ *  @param  field [in] vector field data in OpenFOAM format
+ *  @param  type [in] importing cell type
+ *  @return converted volume data in KVS format
+ */
+/*===========================================================================*/
+inline FoamToKVS::VolumeObject FoamToKVS::exec(
     kvs::mpi::Communicator& world,
     const Foam::volVectorField& field,
     const CellType type )
 {
-    auto* volume = this->exec( field, type );
-    this->update_min_max_coords( world, volume );
-    this->update_min_max_values( world, volume );
+    auto volume = this->exec( field, type );
+    this->update_min_max_coords( world, &volume );
+    this->update_min_max_values( world, &volume );
     return volume;
 }
 #endif // KVS_SUPPORT_MPI
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_hex(
-    const Foam::volScalarField& field )
+inline void FoamToKVS::import_hex(
+    const Foam::volScalarField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -117,7 +156,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_hex(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 8;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToHexahedra();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -130,11 +168,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_hex(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_hex(
-    const Foam::volVectorField& field )
+inline void FoamToKVS::import_hex(
+    const Foam::volVectorField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -142,7 +180,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_hex(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 8;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToHexahedra();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -155,11 +192,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_hex(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_tet(
-    const Foam::volScalarField& field )
+inline void FoamToKVS::import_tet(
+    const Foam::volScalarField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -167,7 +204,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_tet(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 4;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToTetrahedra();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -180,11 +216,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_tet(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_tet(
-    const Foam::volVectorField& field )
+inline void FoamToKVS::import_tet(
+    const Foam::volVectorField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -192,7 +228,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_tet(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 4;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToTetrahedra();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -205,11 +240,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_tet(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_pyr(
-    const Foam::volScalarField& field )
+inline void FoamToKVS::import_pyr(
+    const Foam::volScalarField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -217,7 +252,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pyr(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 5;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToPyramid();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -230,11 +264,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pyr(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_pyr(
-    const Foam::volVectorField& field )
+inline void FoamToKVS::import_pyr(
+    const Foam::volVectorField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -242,7 +276,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pyr(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 5;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToPyramid();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -255,11 +288,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pyr(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_pri(
-    const Foam::volScalarField& field )
+inline void FoamToKVS::import_pri(
+    const Foam::volScalarField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -267,7 +300,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pri(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 6;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToPrism();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -280,11 +312,11 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pri(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
-inline FoamToKVS::VolumeObject* FoamToKVS::import_pri(
-    const Foam::volVectorField& field )
+inline void FoamToKVS::import_pri(
+    const Foam::volVectorField& field,
+    VolumeObject* volume )
 {
     const auto coords = m_coords.empty() ? this->calculate_coords( field.mesh() ) : m_coords;
     const auto values = m_values.empty() ? this->calculate_values( field ) : m_values;
@@ -292,7 +324,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pri(
     const auto nnodes = coords.size() / 3;
     const auto ncells = connections.size() / 6;
 
-    auto* volume = new VolumeObject();
     volume->setCellTypeToPrism();
     volume->setVeclen( 1 );
     volume->setNumberOfNodes( nnodes );
@@ -305,7 +336,6 @@ inline FoamToKVS::VolumeObject* FoamToKVS::import_pri(
         volume->updateMinMaxValues();
         volume->updateMinMaxCoords();
     }
-    return volume;
 }
 
 /*===========================================================================*/

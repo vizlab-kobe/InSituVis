@@ -87,11 +87,10 @@ public:
         return true;
     }
 
-    virtual void put( const Volume* volume )
+    virtual void put( const Volume& volume )
     {
-        if ( !volume ) return;
-        if ( volume->numberOfCells() == 0 ) return;
-        m_pipeline( m_screen, *volume );
+        if ( volume.numberOfCells() == 0 ) return;
+        m_pipeline( m_screen, volume );
     }
 
     virtual void exec( const kvs::UInt32 time_index )

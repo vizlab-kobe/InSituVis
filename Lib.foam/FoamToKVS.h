@@ -53,30 +53,30 @@ public:
     const kvs::ValueArray<kvs::Real32>& coords() const { return m_coords; }
     const kvs::ValueArray<kvs::Real32>& values() const { return m_values; }
 
-    VolumeObject* exec( const Foam::volScalarField& field, const CellType type = CellType::Hexahedra );
-    VolumeObject* exec( const Foam::volVectorField& field, const CellType type = CellType::Hexahedra );
+    VolumeObject exec( const Foam::volScalarField& field, const CellType type = CellType::Hexahedra );
+    VolumeObject exec( const Foam::volVectorField& field, const CellType type = CellType::Hexahedra );
 
 #if defined( KVS_SUPPORT_MPI )
-    VolumeObject* exec(
+    VolumeObject exec(
         kvs::mpi::Communicator& world,
         const Foam::volScalarField& field,
         const CellType type = CellType::Hexahedra );
 
-    VolumeObject* exec(
+    VolumeObject exec(
         kvs::mpi::Communicator& world,
         const Foam::volVectorField& field,
         const CellType type = CellType::Hexahedra );
 #endif // KVS_SUPPORT_MPI
 
 private:
-    VolumeObject* import_hex( const Foam::volScalarField& field );
-    VolumeObject* import_hex( const Foam::volVectorField& field );
-    VolumeObject* import_tet( const Foam::volScalarField& field );
-    VolumeObject* import_tet( const Foam::volVectorField& field );
-    VolumeObject* import_pyr( const Foam::volScalarField& field );
-    VolumeObject* import_pyr( const Foam::volVectorField& field );
-    VolumeObject* import_pri( const Foam::volScalarField& field );
-    VolumeObject* import_pri( const Foam::volVectorField& field );
+    void import_hex( const Foam::volScalarField& field, VolumeObject* volume );
+    void import_hex( const Foam::volVectorField& field, VolumeObject* volume );
+    void import_tet( const Foam::volScalarField& field, VolumeObject* volume );
+    void import_tet( const Foam::volVectorField& field, VolumeObject* volume );
+    void import_pyr( const Foam::volScalarField& field, VolumeObject* volume );
+    void import_pyr( const Foam::volVectorField& field, VolumeObject* volume );
+    void import_pri( const Foam::volScalarField& field, VolumeObject* volume );
+    void import_pri( const Foam::volVectorField& field, VolumeObject* volume );
 
     kvs::ValueArray<kvs::Real32> calculate_coords( const Foam::fvMesh& mesh );
     kvs::ValueArray<kvs::Real32> calculate_values( const Foam::volScalarField& field );

@@ -160,15 +160,15 @@ int main(int argc, char *argv[])
             // Convert OpenFOAM data to KVS data
             InSituVis::foam::FoamToKVS converter( field );
             using CellType = InSituVis::foam::FoamToKVS::CellType;
-            auto* vol_tet = converter.exec( vis.world(), field, CellType::Tetrahedra );
-            auto* vol_hex = converter.exec( vis.world(), field, CellType::Hexahedra );
-            auto* vol_pri = converter.exec( vis.world(), field, CellType::Prism );
-            auto* vol_pyr = converter.exec( vis.world(), field, CellType::Pyramid );
+            auto vol_tet = converter.exec( vis.world(), field, CellType::Tetrahedra );
+            auto vol_hex = converter.exec( vis.world(), field, CellType::Hexahedra );
+            auto vol_pri = converter.exec( vis.world(), field, CellType::Prism );
+            auto vol_pyr = converter.exec( vis.world(), field, CellType::Pyramid );
 
-            vol_tet->setName("Tet");
-            vol_hex->setName("Hex");
-            vol_pri->setName("Pri");
-            vol_pyr->setName("Pyr");
+            vol_tet.setName("Tet");
+            vol_hex.setName("Hex");
+            vol_pri.setName("Pri");
+            vol_pyr.setName("Pyr");
 
             //vol_tet->print( vis.log() << std::endl );
             //vol_hex->print( vis.log() << std::endl );
@@ -182,10 +182,10 @@ int main(int argc, char *argv[])
             vis.put( vol_pyr );
             vis.exec( runTime.timeIndex() );
 
-            delete vol_tet;
-            delete vol_hex;
-            delete vol_pri;
-            delete vol_pyr;
+//            delete vol_tet;
+//            delete vol_hex;
+//            delete vol_pri;
+//            delete vol_pyr;
         }
         timer.stop(); // end vis.
 
