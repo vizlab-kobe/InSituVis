@@ -121,8 +121,6 @@ int main(int argc, char *argv[])
     const kvs::Indent indent(4); // indent for log stream
     kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis;
-    vis.screen().scene()->camera()->setPosition( kvs::Vec3( -4, 4, 8 ) );
-    vis.screen().scene()->light()->setPosition( kvs::Vec3( -4, 4, 8 ) );
     if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;

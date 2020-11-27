@@ -5,6 +5,7 @@
 #include <kvs/ColorImage>
 #include <kvs/GrayImage>
 #include <kvs/String>
+#include <kvs/Type>
 #include "OutputDirectory.h"
 
 #if defined( KVS_SUPPORT_MPI )
@@ -31,12 +32,16 @@ private:
     size_t m_image_width; ///< width of rendering image
     size_t m_image_height; ///< height of rendering image
     bool m_enable_output_image; ///< flag for writing final rendering image data
+    size_t m_time_counter; ///< time step counter (t)
+    size_t m_time_interval; ///< visualization time interval (dt)
 
 public:
     Adaptor():
         m_image_width( 512 ),
         m_image_height( 512 ),
-        m_enable_output_image( true )
+        m_enable_output_image( true ),
+        m_time_counter( 0 ),
+        m_time_interval( 1 )
     {
     }
 
@@ -48,6 +53,13 @@ public:
     std::ostream& log() { return std::cout; }
     Screen& screen() { return m_screen; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
+    size_t timeCounter() const { return m_time_counter; }
+    size_t timeInterval() const { return m_time_interval; }
+
+    void setTimeInterval( const size_t interval )
+    {
+        m_time_interval = interval;
+    }
 
     void setPipeline( Pipeline pipeline )
     {
@@ -89,30 +101,42 @@ public:
 
     virtual void put( const Volume& volume )
     {
-        if ( volume.numberOfCells() == 0 ) return;
-        m_pipeline( m_screen, volume );
+        if ( this->canVisualize() )
+        {
+            if ( volume.numberOfCells() == 0 ) return;
+            m_pipeline( m_screen, volume );
+        }
     }
 
     virtual void exec( const kvs::UInt32 time_index )
     {
-        const std::string output_number = kvs::String::From( time_index, 6, '0' );
-        const std::string output_basename( "output" );
-        const std::string output_filename = output_basename + "_" + output_number;
-
-        // Draw image
-        m_screen.draw();
-
-        // Read-back framebuffer.
-        auto color_buffer = m_screen.readbackColorBuffer();
-
-        // Output framebuffer to image file
-        if ( m_enable_output_image )
+        if ( this->canVisualize() )
         {
-            const auto filename = m_output_directory.name() + "/" + output_filename + ".bmp";
-            kvs::ColorImage image( m_image_width, m_image_height, color_buffer );
-            image.write( filename );
+            const std::string output_number = kvs::String::From( time_index, 6, '0' );
+            const std::string output_basename( "output" );
+            const std::string output_filename = output_basename + "_" + output_number;
+
+            // Draw image
+            m_screen.draw();
+
+            // Read-back framebuffer.
+            auto color_buffer = m_screen.readbackColorBuffer();
+
+            // Output framebuffer to image file
+            if ( m_enable_output_image )
+            {
+                const auto filename = m_output_directory.name() + "/" + output_filename + ".bmp";
+                kvs::ColorImage image( m_image_width, m_image_height, color_buffer );
+                image.write( filename );
+            }
         }
+        this->incrementTimeCounter();
     }
+
+protected:
+    void incrementTimeCounter() { m_time_counter++; }
+    void decrementTimeCounter() { m_time_counter--; }
+    bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
 };
 
 #if defined( KVS_SUPPORT_MPI )
@@ -189,64 +213,68 @@ public:
 
     virtual void exec( const kvs::UInt32 time_index )
     {
-        const std::string output_number = kvs::String::From( time_index, 6, '0' );
-        const std::string output_basename( "output" );
-        const std::string output_filename = output_basename + "_" + output_number;
-        const std::string output_dirname = BaseClass::outputDirectory().name();
-        const std::string output_base_dirname = BaseClass::outputDirectory().baseDirectoryName();
-
-        // Draw image
-        BaseClass::screen().draw();
-
-        // Read-back image
-        auto color_buffer = BaseClass::screen().readbackColorBuffer();
-        auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
-
-        // Output rendering image
-        const auto width = BaseClass::imageWidth();
-        const auto height = BaseClass::imageHeight();
-        if ( m_enable_output_subimage )
+        if ( BaseClass::canVisualize() )
         {
-            // RGB image
+            const std::string output_number = kvs::String::From( time_index, 6, '0' );
+            const std::string output_basename( "output" );
+            const std::string output_filename = output_basename + "_" + output_number;
+            const std::string output_dirname = BaseClass::outputDirectory().name();
+            const std::string output_base_dirname = BaseClass::outputDirectory().baseDirectoryName();
+
+            // Draw image
+            BaseClass::screen().draw();
+
+            // Read-back image
+            auto color_buffer = BaseClass::screen().readbackColorBuffer();
+            auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
+
+            // Output rendering image
+            const auto width = BaseClass::imageWidth();
+            const auto height = BaseClass::imageHeight();
+            if ( m_enable_output_subimage )
             {
-                const auto filename = output_dirname + output_filename + ".bmp";
-                kvs::ColorImage image( width, height, color_buffer );
-                image.write( filename );
+                // RGB image
+                {
+                    const auto filename = output_dirname + output_filename + ".bmp";
+                    kvs::ColorImage image( width, height, color_buffer );
+                    image.write( filename );
+                }
+
+                // Depth image
+                if ( m_enable_output_subimage_depth )
+                {
+                    const auto filename = output_dirname + output_basename + "_depth_" + output_number + ".bmp";
+                    kvs::GrayImage depth_image( width, height, depth_buffer );
+                    depth_image.write( filename );
+                }
+
+                // Alpha image
+                if ( m_enable_output_subimage_alpha )
+                {
+                    const auto filename = output_dirname + output_basename + "_alpha_" + output_number + ".bmp";
+                    kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
+                    alpha_image.write( filename );
+                }
             }
 
-            // Depth image
-            if ( m_enable_output_subimage_depth )
+            // Image composition
+            if ( !m_compositor.run( color_buffer, depth_buffer ) )
             {
-                const auto filename = output_dirname + output_basename + "_depth_" + output_number + ".bmp";
-                kvs::GrayImage depth_image( width, height, depth_buffer );
-                depth_image.write( filename );
+                this->log() << "ERROR: " << "Cannot compose images." << std::endl;
             }
 
-            // Alpha image
-            if ( m_enable_output_subimage_alpha )
+            // Output composite image
+            if ( m_world.rank() == m_world.root() )
             {
-                const auto filename = output_dirname + output_basename + "_alpha_" + output_number + ".bmp";
-                kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
-                alpha_image.write( filename );
+                if ( BaseClass::isOutputImageEnabled() )
+                {
+                    const auto filename = output_base_dirname + "/" + output_filename + ".bmp";
+                    kvs::ColorImage image( width, height, color_buffer );
+                    image.write( filename );
+                }
             }
         }
-
-        // Image composition
-        if ( !m_compositor.run( color_buffer, depth_buffer ) )
-        {
-            this->log() << "ERROR: " << "Cannot compose images." << std::endl;
-        }
-
-        // Output composite image
-        if ( m_world.rank() == m_world.root() )
-        {
-            if ( BaseClass::isOutputImageEnabled() )
-            {
-                const auto filename = output_base_dirname + "/" + output_filename + ".bmp";
-                kvs::ColorImage image( width, height, color_buffer );
-                image.write( filename );
-            }
-        }
+        BaseClass::incrementTimeCounter();
     }
 };
 

@@ -27,6 +27,9 @@ public:
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false );
+        this->setTimeInterval( 5 );
+        this->screen().scene()->camera()->setPosition( kvs::Vec3( -4, 4, 8 ) );
+        this->screen().scene()->light()->setPosition( kvs::Vec3( -4, 4, 8 ) );
 
         this->setPipeline(
             [&] ( Screen& screen, const Volume& volume )
