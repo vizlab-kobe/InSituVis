@@ -6,7 +6,14 @@
 #include <kvs/GrayImage>
 #include <kvs/String>
 #include <kvs/Type>
+#include <kvs/CubicImage>
+#include <kvs/SphericalImage>
+#include <kvs/Background>
+#include <kvs/RotationMatrix33>
+#include "Viewpoint.h"
+#include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
+#include "SphericalBuffer.h"
 
 #if defined( KVS_SUPPORT_MPI )
 #include <kvs/mpi/Communicator>
@@ -24,19 +31,25 @@ public:
     using Volume = kvs::UnstructuredVolumeObject;
     using Screen = kvs::OffScreen;
     using Pipeline = std::function<void(Screen&,const Volume&)>;
+    using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
 
 private:
     Screen m_screen; ///< rendering screen (off-screen)
     Pipeline m_pipeline; ///< visualization pipeline
+    InSituVis::Viewpoint m_viewpoint; ///< rendering viewpoint
     InSituVis::OutputDirectory m_output_directory; ///< output directory
+    std::string m_output_filename; ///< basename of output file
     size_t m_image_width; ///< width of rendering image
     size_t m_image_height; ///< height of rendering image
     bool m_enable_output_image; ///< flag for writing final rendering image data
     size_t m_time_counter; ///< time step counter (t)
     size_t m_time_interval; ///< visualization time interval (dt)
+    kvs::UInt32 m_current_time_index; ///< current time index
+    kvs::UInt32 m_current_space_index; ///< current space index
 
 public:
     Adaptor():
+        m_output_filename( "output" ),
         m_image_width( 512 ),
         m_image_height( 512 ),
         m_enable_output_image( true ),
@@ -47,14 +60,21 @@ public:
 
     virtual ~Adaptor() {}
 
+    const std::string& outputFilename() const { return m_output_filename; }
     size_t imageWidth() const { return m_image_width; }
     size_t imageHeight() const { return m_image_height; }
     bool isOutputImageEnabled() const { return m_enable_output_image; }
     std::ostream& log() { return std::cout; }
     Screen& screen() { return m_screen; }
+    const InSituVis::Viewpoint& viewpoint() const { return m_viewpoint; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
     size_t timeCounter() const { return m_time_counter; }
     size_t timeInterval() const { return m_time_interval; }
+
+    void setViewpoint( const Viewpoint& viewpoint )
+    {
+        m_viewpoint = viewpoint;
+    }
 
     void setTimeInterval( const size_t interval )
     {
@@ -69,6 +89,11 @@ public:
     void setOutputDirectory( const InSituVis::OutputDirectory& directory )
     {
         m_output_directory = directory;
+    }
+
+    void setOutputFilename( const std::string& filename )
+    {
+        m_output_filename = filename;
     }
 
     void setImageSize( const size_t width, const size_t height )
@@ -110,33 +135,158 @@ public:
 
     virtual void exec( const kvs::UInt32 time_index )
     {
+        this->setCurrentTimeIndex( time_index );
+
         if ( this->canVisualize() )
         {
-            const std::string output_number = kvs::String::From( time_index, 6, '0' );
-            const std::string output_basename( "output" );
-            const std::string output_filename = output_basename + "_" + output_number;
-
-            // Draw image
-            m_screen.draw();
-
-            // Read-back framebuffer.
-            auto color_buffer = m_screen.readbackColorBuffer();
-
-            // Output framebuffer to image file
-            if ( m_enable_output_image )
+            const auto npoints = m_viewpoint.numberOfPoints();
+            for ( size_t i = 0; i < npoints; ++i )
             {
-                const auto filename = m_output_directory.name() + "/" + output_filename + ".bmp";
-                kvs::ColorImage image( m_image_width, m_image_height, color_buffer );
-                image.write( filename );
+                this->setCurrentSpaceIndex( i );
+
+                // Draw and readback framebuffer
+                const auto& point = m_viewpoint.point( i );
+                auto color_buffer = this->readback( point );
+
+                // Output framebuffer to image file
+                if ( m_enable_output_image )
+                {
+                    const auto image_width = this->outputImageWidth( point.dir_type );
+                    const auto image_height = this->outputImageHeight( point.dir_type );
+                    kvs::ColorImage image( image_width, image_height, color_buffer );
+                    image.write( this->outputImageName() );
+                }
             }
         }
+
         this->incrementTimeCounter();
     }
 
 protected:
+    kvs::UInt32 currentTimeIndex() const { return m_current_time_index; }
+    kvs::UInt32 currentSpaceIndex() const { return m_current_space_index; }
+    void setCurrentTimeIndex( const size_t index ) { m_current_time_index = index; }
+    void setCurrentSpaceIndex( const size_t index ) { m_current_space_index = index; }
     void incrementTimeCounter() { m_time_counter++; }
     void decrementTimeCounter() { m_time_counter--; }
     bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
+
+    size_t outputImageWidth( const Viewpoint::DirType dir_type ) const
+    {
+        return ( dir_type == Viewpoint::SingleDir ) ? m_image_width : m_image_width * 4;
+    }
+
+    size_t outputImageHeight( const Viewpoint::DirType dir_type ) const
+    {
+        return ( dir_type == Viewpoint::SingleDir ) ? m_image_height : m_image_height * 3;
+    }
+
+    std::string outputImageName( const std::string& surfix = "" ) const
+    {
+        const auto time = this->currentTimeIndex();
+        const auto space = this->currentSpaceIndex();
+        const std::string output_time = kvs::String::From( time, 6, '0' );
+        const std::string output_space = kvs::String::From( space, 6, '0' );
+
+        const std::string output_basename = m_output_filename;
+        const std::string output_filename = output_basename + "_" + output_time + "_" + output_space;
+        const std::string filename = m_output_directory.name() + "/" + output_filename + surfix + ".bmp";
+        return filename;
+    }
+
+    ColorBuffer backgroundColorBuffer()
+    {
+        const auto color = m_screen.scene()->background()->color();
+        const auto width = m_screen.width();
+        const auto height = m_screen.height();
+        const size_t npixels = width * height;
+        ColorBuffer buffer( npixels * 4 );
+        for ( size_t i = 0; i < npixels; ++i )
+        {
+            buffer[ 4 * i + 0 ] = color.r();
+            buffer[ 4 * i + 1 ] = color.g();
+            buffer[ 4 * i + 2 ] = color.b();
+            buffer[ 4 * i + 3 ] = 255;
+        }
+        return buffer;
+    }
+
+private:
+    ColorBuffer readback( const Viewpoint::Point& point )
+    {
+        switch ( point.dir_type )
+        {
+        case Viewpoint::SingleDir:
+            return this->readback_plane_buffer( point.position );
+        case Viewpoint::OmniDir:
+            return this->readback_spherical_buffer( point.position );
+        default:
+            break;
+        }
+
+        return this->backgroundColorBuffer();
+    }
+
+    ColorBuffer readback_plane_buffer( const kvs::Vec3& position )
+    {
+        ColorBuffer color_buffer;
+        const auto lookat = m_screen.scene()->camera()->lookAt();
+        if ( lookat == position )
+        {
+            color_buffer = this->backgroundColorBuffer();
+        }
+        else
+        {
+            const auto p0 = ( m_screen.scene()->camera()->position() - lookat ).normalized();
+            const auto p1 = ( position- lookat ).normalized();
+            const auto axis = p0.cross( p1 );
+            const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
+            const auto R = kvs::RotationMatrix33<float>( axis, deg );
+            const auto up = m_screen.scene()->camera()->upVector() * R;
+            m_screen.scene()->camera()->setPosition( position, lookat, up );
+
+            m_screen.scene()->light()->setPosition( position );
+            m_screen.draw();
+            color_buffer = m_screen.readbackColorBuffer();
+        }
+        return color_buffer;
+    }
+
+    ColorBuffer readback_spherical_buffer( const kvs::Vec3& position )
+    {
+        using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
+
+        const auto fov = m_screen.scene()->camera()->fieldOfView();
+        const auto front = m_screen.scene()->camera()->front();
+        const auto pc = m_screen.scene()->camera()->position();
+        const auto pl = m_screen.scene()->light()->position();
+        const auto& p = position;
+
+        m_screen.scene()->light()->setPosition( position );
+        m_screen.scene()->camera()->setFieldOfView( 90.0 );
+        m_screen.scene()->camera()->setFront( 0.1 );
+
+        SphericalColorBuffer color_buffer( m_screen.width(), m_screen.height() );
+        for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
+        {
+            const auto d = SphericalColorBuffer::Direction(i);
+            const auto dir = SphericalColorBuffer::DirectionVector(d);
+            const auto up = SphericalColorBuffer::UpVector(d);
+            m_screen.scene()->camera()->setPosition( p, p + dir, up );
+            m_screen.draw();
+
+            const auto buffer = m_screen.readbackColorBuffer();
+            color_buffer.setBuffer( d, buffer );
+        }
+
+        m_screen.scene()->camera()->setFieldOfView( fov );
+        m_screen.scene()->camera()->setFront( front );
+        m_screen.scene()->camera()->setPosition( pc );
+        m_screen.scene()->light()->setPosition( pl );
+
+        const size_t nchannels = 4; // rgba
+        return color_buffer.stitch<nchannels>();
+    }
 };
 
 #if defined( KVS_SUPPORT_MPI )
@@ -145,7 +295,10 @@ namespace mpi
 
 class Adaptor : public InSituVis::Adaptor
 {
+public:
     using BaseClass = InSituVis::Adaptor;
+    using DepthBuffer = kvs::ValueArray<kvs::Real32>;
+    struct FrameBuffer { ColorBuffer color_buffer; DepthBuffer depth_buffer; };
 
 private:
     kvs::mpi::Communicator m_world; ///< MPI communicator
@@ -213,47 +366,110 @@ public:
 
     virtual void exec( const kvs::UInt32 time_index )
     {
+        BaseClass::setCurrentTimeIndex( time_index );
+
         if ( BaseClass::canVisualize() )
         {
-            const std::string output_number = kvs::String::From( time_index, 6, '0' );
-            const std::string output_basename( "output" );
-            const std::string output_filename = output_basename + "_" + output_number;
-            const std::string output_dirname = BaseClass::outputDirectory().name();
-            const std::string output_base_dirname = BaseClass::outputDirectory().baseDirectoryName();
+            const auto npoints = BaseClass::viewpoint().numberOfPoints();
+            for ( size_t i = 0; i < npoints; ++i )
+            {
+                BaseClass::setCurrentSpaceIndex( i );
 
+                // Draw and readback framebuffer
+                const auto& point = BaseClass::viewpoint().point( i );
+                auto frame_buffer = this->readback( point );
+
+                // Output framebuffer to image file
+                if ( m_world.rank() == m_world.root() )
+                {
+                    if ( BaseClass::isOutputImageEnabled() )
+                    {
+                        const auto image_width = BaseClass::outputImageWidth( point.dir_type );
+                        const auto image_height = BaseClass::outputImageHeight( point.dir_type );
+                        kvs::ColorImage image( image_width, image_height, frame_buffer.color_buffer );
+                        image.write( this->outputImageName() );
+                    }
+                }
+            }
+        }
+        BaseClass::incrementTimeCounter();
+    }
+
+private:
+    DepthBuffer backgroundDepthBuffer()
+    {
+        const auto width = BaseClass::screen().width();
+        const auto height = BaseClass::screen().height();
+        DepthBuffer buffer( width * height );
+        buffer.fill(0);
+        return buffer;
+    }
+
+    FrameBuffer readback( const Viewpoint::Point& point )
+    {
+        switch ( point.dir_type )
+        {
+        case Viewpoint::SingleDir:
+            return this->readback_plane_buffer( point.position );
+        case Viewpoint::OmniDir:
+            return this->readback_spherical_buffer( point.position );
+        default:
+            break;
+        }
+
+        FrameBuffer frame_buffer;
+        frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
+        frame_buffer.depth_buffer = this->backgroundDepthBuffer();
+        return frame_buffer;
+    }
+
+    FrameBuffer readback_plane_buffer( const kvs::Vec3& position )
+    {
+        FrameBuffer frame_buffer;
+        const auto lookat = BaseClass::screen().scene()->camera()->lookAt();
+        if ( lookat == position )
+        {
+            frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
+            frame_buffer.depth_buffer = this->backgroundDepthBuffer();
+        }
+        else
+        {
             // Draw image
+            const auto p0 = ( BaseClass::screen().scene()->camera()->position() - lookat ).normalized();
+            const auto p1 = ( position- lookat ).normalized();
+            const auto axis = p0.cross( p1 );
+            const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
+            const auto R = kvs::RotationMatrix33<float>( axis, deg );
+            const auto up = BaseClass::screen().scene()->camera()->upVector() * R;
+            BaseClass::screen().scene()->camera()->setPosition( position, lookat, up );
+            BaseClass::screen().scene()->light()->setPosition( position );
             BaseClass::screen().draw();
 
             // Read-back image
             auto color_buffer = BaseClass::screen().readbackColorBuffer();
             auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
 
-            // Output rendering image
-            const auto width = BaseClass::imageWidth();
-            const auto height = BaseClass::imageHeight();
+            // Output rendering image (partial rendering image)
             if ( m_enable_output_subimage )
             {
                 // RGB image
-                {
-                    const auto filename = output_dirname + output_filename + ".bmp";
-                    kvs::ColorImage image( width, height, color_buffer );
-                    image.write( filename );
-                }
+                const auto width = BaseClass::imageWidth();
+                const auto height = BaseClass::imageHeight();
+                kvs::ColorImage image( width, height, color_buffer );
+                image.write( BaseClass::outputImageName( "_color") );
 
                 // Depth image
                 if ( m_enable_output_subimage_depth )
                 {
-                    const auto filename = output_dirname + output_basename + "_depth_" + output_number + ".bmp";
                     kvs::GrayImage depth_image( width, height, depth_buffer );
-                    depth_image.write( filename );
+                    depth_image.write( BaseClass::outputImageName( "_depth" ) );
                 }
 
                 // Alpha image
                 if ( m_enable_output_subimage_alpha )
                 {
-                    const auto filename = output_dirname + output_basename + "_alpha_" + output_number + ".bmp";
                     kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
-                    alpha_image.write( filename );
+                    alpha_image.write( BaseClass::outputImageName( "_alpha" ) );
                 }
             }
 
@@ -263,18 +479,85 @@ public:
                 this->log() << "ERROR: " << "Cannot compose images." << std::endl;
             }
 
-            // Output composite image
-            if ( m_world.rank() == m_world.root() )
+            frame_buffer.color_buffer = color_buffer;
+            frame_buffer.depth_buffer = depth_buffer;
+        }
+
+        return frame_buffer;
+    }
+
+    FrameBuffer readback_spherical_buffer( const kvs::Vec3& position )
+    {
+        using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
+        using SphericalDepthBuffer = InSituVis::SphericalBuffer<kvs::Real32>;
+
+        const auto fov = BaseClass::screen().scene()->camera()->fieldOfView();
+        const auto front = BaseClass::screen().scene()->camera()->front();
+        const auto pc = BaseClass::screen().scene()->camera()->position();
+        const auto pl = BaseClass::screen().scene()->light()->position();
+        const auto& p = position;
+
+        BaseClass::screen().scene()->light()->setPosition( position );
+        BaseClass::screen().scene()->camera()->setFieldOfView( 90.0 );
+        BaseClass::screen().scene()->camera()->setFront( 0.1 );
+
+        SphericalColorBuffer color_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
+        SphericalDepthBuffer depth_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
+        for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
+        {
+            const auto d = SphericalColorBuffer::Direction(i);
+            const auto dir = SphericalColorBuffer::DirectionVector(d);
+            const auto up = SphericalColorBuffer::UpVector(d);
+            BaseClass::screen().scene()->camera()->setPosition( p, p + dir, up );
+            BaseClass::screen().draw();
+
+            auto cbuffer = BaseClass::screen().readbackColorBuffer();
+            auto dbuffer = BaseClass::screen().readbackDepthBuffer();
+
+            // Output rendering image (partial rendering image) for each direction
+            if ( m_enable_output_subimage )
             {
-                if ( BaseClass::isOutputImageEnabled() )
+                // RGB image
+                const auto dname = SphericalColorBuffer::DirectionName(d);
+                const auto width = BaseClass::imageWidth();
+                const auto height = BaseClass::imageHeight();
+                kvs::ColorImage image( width, height, cbuffer );
+                image.write( BaseClass::outputImageName( "_color_" + dname ) );
+
+                // Depth image
+                if ( m_enable_output_subimage_depth )
                 {
-                    const auto filename = output_base_dirname + "/" + output_filename + ".bmp";
-                    kvs::ColorImage image( width, height, color_buffer );
-                    image.write( filename );
+                    kvs::GrayImage depth_image( width, height, dbuffer );
+                    depth_image.write( BaseClass::outputImageName( "_depth_" + dname ) );
+                }
+
+                // Alpha image
+                if ( m_enable_output_subimage_alpha )
+                {
+                    kvs::GrayImage alpha_image( width, height, cbuffer, 3 );
+                    alpha_image.write( BaseClass::outputImageName( "_alpha_" + dname ) );
                 }
             }
+
+            // Image composition
+            if ( !m_compositor.run( cbuffer, dbuffer ) )
+            {
+                this->log() << "ERROR: " << "Cannot compose images." << std::endl;
+            }
+
+            color_buffer.setBuffer( d, cbuffer );
+            depth_buffer.setBuffer( d, dbuffer );
         }
-        BaseClass::incrementTimeCounter();
+
+        BaseClass::screen().scene()->camera()->setFieldOfView( fov );
+        BaseClass::screen().scene()->camera()->setFront( front );
+        BaseClass::screen().scene()->camera()->setPosition( pc );
+        BaseClass::screen().scene()->light()->setPosition( pl );
+
+        FrameBuffer frame_buffer;
+        frame_buffer.color_buffer = color_buffer.stitch<4>();
+        frame_buffer.depth_buffer = depth_buffer.stitch<1>();
+        return frame_buffer;
     }
 };
 

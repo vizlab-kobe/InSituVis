@@ -3,6 +3,8 @@
 #include <kvs/PolygonRenderer>
 #include <kvs/Bounds>
 #include <InSituVis/Lib/Adaptor.h>
+#include <InSituVis/Lib/Viewpoint.h>
+#include <InSituVis/Lib/DistributedViewpoint.h>
 
 
 namespace local
@@ -11,24 +13,30 @@ namespace local
 class InSituVis : public ::InSituVis::Adaptor
 {
     using BaseClass = ::InSituVis::Adaptor;
+    using Viewpoint = ::InSituVis::DistributedViewpoint;
     using Volume = BaseClass::Volume;
     using Screen = BaseClass::Screen;
 
 private:
+    Viewpoint m_viewpoint;
     kvs::Real32 m_min_value;
     kvs::Real32 m_max_value;
 
 public:
     InSituVis():
         BaseClass(),
+//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ),
+        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ),
+//        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist ),
         m_min_value( 0.0f ),
         m_max_value( 0.0f )
     {
+        m_viewpoint.generate();
+
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setTimeInterval( 5 );
-        this->screen().scene()->camera()->setPosition( kvs::Vec3( -4, 4, 8 ) );
-        this->screen().scene()->light()->setPosition( kvs::Vec3( -4, 4, 8 ) );
+        this->setViewpoint( m_viewpoint );
 
         this->setPipeline(
             [&] ( Screen& screen, const Volume& volume )
