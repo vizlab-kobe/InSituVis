@@ -28,6 +28,11 @@ KVS supports OSMesa and MPI needs to be installed.
     KVS_SUPPORT_MPI       = 1
     KVS_SUPPORT_OSMESA    = 1
     ```
+    - Change the following items from 1(enable) to 0(disable).<br>
+    ```
+    KVS_SUPPORT_GLU       = 0
+    KVS_SUPPORT_GLUT      = 0
+    ```
     - Change the following items to 1 if needed. <br>
     ```
     KVS_ENABLE_OPENMP     = 1
