@@ -213,7 +213,7 @@ protected:
         return buffer;
     }
 
-    bool isInsideVolum( const kvs::Vec3& position ) const
+    bool isInsideVolume( const kvs::Vec3& position ) const
     {
         const auto* object = m_screen.scene()->objectManager();
         const auto min_obj = object->minObjectCoord();
