@@ -12,8 +12,9 @@ class Viewpoint
 public:
     enum DirType
     {
-        SingleDir,
-        OmniDir
+        SingleDir, ///< single direction
+        OmniDir, ///< omni-direction
+        AdaptiveDir ///< adaptive direction
     };
 
     struct Point

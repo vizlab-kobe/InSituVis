@@ -10,6 +10,8 @@
 #include <kvs/SphericalImage>
 #include <kvs/Background>
 #include <kvs/RotationMatrix33>
+#include <kvs/ObjectManager>
+#include <kvs/Coordinate>
 #include "Viewpoint.h"
 #include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
@@ -211,6 +213,18 @@ protected:
         return buffer;
     }
 
+    bool isInsideVolum( const kvs::Vec3& position ) const
+    {
+        const auto* object = m_screen.scene()->objectManager();
+        const auto min_obj = object->minObjectCoord();
+        const auto max_obj = object->maxObjectCoord();
+        const auto p_obj = kvs::WorldCoordinate( position ).toObjectCoordinate( object ).position();
+        return
+            ( min_obj.x() <= p_obj.x() ) && ( p_obj.x() <= max_obj.x() ) &&
+            ( min_obj.y() <= p_obj.y() ) && ( p_obj.y() <= max_obj.y() ) &&
+            ( min_obj.z() <= p_obj.z() ) && ( p_obj.z() <= max_obj.z() );
+    }
+
 private:
     ColorBuffer readback( const Viewpoint::Point& point )
     {
@@ -220,6 +234,14 @@ private:
             return this->readback_plane_buffer( point.position );
         case Viewpoint::OmniDir:
             return this->readback_spherical_buffer( point.position );
+        case Viewpoint::AdaptiveDir:
+        {
+            if ( this->isInsideVolume( point.position ) )
+            {
+                return this->readback_spherical_buffer( point.position );
+            }
+            return this->readback_plane_buffer( point.position );
+        }
         default:
             break;
         }
@@ -413,6 +435,14 @@ private:
             return this->readback_plane_buffer( point.position );
         case Viewpoint::OmniDir:
             return this->readback_spherical_buffer( point.position );
+        case Viewpoint::AdaptiveDir:
+        {
+            if ( Viewpoint::isInsideVolume( point.position ) )
+            {
+                return this->readback_spherical_buffer( point.position );
+            }
+            return this->readback_plane_buffer( point.position );
+        }
         default:
             break;
         }
