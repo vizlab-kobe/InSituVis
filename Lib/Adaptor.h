@@ -437,7 +437,7 @@ private:
             return this->readback_spherical_buffer( point.position );
         case Viewpoint::AdaptiveDir:
         {
-            if ( Viewpoint::isInsideVolume( point.position ) )
+            if ( BaseClass::isInsideVolume( point.position ) )
             {
                 return this->readback_spherical_buffer( point.position );
             }
