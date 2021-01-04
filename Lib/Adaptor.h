@@ -1,3 +1,9 @@
+/*****************************************************************************/
+/**
+ *  @file   Adaptor.h
+ *  @author Naohisa Sakamoto
+ */
+/*****************************************************************************/
 #pragma once
 #include <functional>
 #include <kvs/OffScreen>
@@ -27,6 +33,11 @@
 namespace InSituVis
 {
 
+/*===========================================================================*/
+/**
+ *  @brief  Adaptor class.
+ */
+/*===========================================================================*/
 class Adaptor
 {
 public:
@@ -153,9 +164,8 @@ public:
                 // Output framebuffer to image file
                 if ( m_enable_output_image )
                 {
-                    const auto image_width = this->outputImageWidth( point.dir_type );
-                    const auto image_height = this->outputImageHeight( point.dir_type );
-                    kvs::ColorImage image( image_width, image_height, color_buffer );
+                    const auto image_size = this->outputImageSize( point );
+                    kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
                     image.write( this->outputImageName() );
                 }
             }
@@ -173,14 +183,21 @@ protected:
     void decrementTimeCounter() { m_time_counter--; }
     bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
 
-    size_t outputImageWidth( const Viewpoint::DirType dir_type ) const
+    kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const
     {
-        return ( dir_type == Viewpoint::SingleDir ) ? m_image_width : m_image_width * 4;
-    }
-
-    size_t outputImageHeight( const Viewpoint::DirType dir_type ) const
-    {
-        return ( dir_type == Viewpoint::SingleDir ) ? m_image_height : m_image_height * 3;
+        switch ( point.dir_type )
+        {
+        case Viewpoint::OmniDir:
+            return kvs::Vec2ui( m_image_width * 4, m_image_height * 3 );
+        default:
+            const auto* object = m_screen.scene()->objectManager();
+            if ( this->isInsideObject( point.position, object ) )
+            {
+                return kvs::Vec2ui( m_image_width * 4, m_image_height * 3 );
+            }
+            break;
+        }
+        return kvs::Vec2ui( m_image_width, m_image_height );
     }
 
     std::string outputImageName( const std::string& surfix = "" ) const
@@ -196,7 +213,7 @@ protected:
         return filename;
     }
 
-    ColorBuffer backgroundColorBuffer()
+    ColorBuffer backgroundColorBuffer() const
     {
         const auto color = m_screen.scene()->background()->color();
         const auto width = m_screen.width();
@@ -213,9 +230,8 @@ protected:
         return buffer;
     }
 
-    bool isInsideVolume( const kvs::Vec3& position )
+    bool isInsideObject( const kvs::Vec3& position, const kvs::ObjectBase* object ) const
     {
-        const auto* object = m_screen.scene()->objectManager();
         const auto min_obj = object->minObjectCoord();
         const auto max_obj = object->maxObjectCoord();
         const auto p_obj = kvs::WorldCoordinate( position ).toObjectCoordinate( object ).position();
@@ -236,7 +252,7 @@ private:
             return this->readback_spherical_buffer( point.position );
         case Viewpoint::AdaptiveDir:
         {
-            if ( this->isInsideVolume( point.position ) )
+            if ( this->isInsideObject( point.position, m_screen.scene()->objectManager() ) )
             {
                 return this->readback_spherical_buffer( point.position );
             }
@@ -266,7 +282,6 @@ private:
             const auto R = kvs::RotationMatrix33<float>( axis, deg );
             const auto up = m_screen.scene()->camera()->upVector() * R;
             m_screen.scene()->camera()->setPosition( position, lookat, up );
-
             m_screen.scene()->light()->setPosition( position );
             m_screen.draw();
             color_buffer = m_screen.readbackColorBuffer();
@@ -315,6 +330,11 @@ private:
 namespace mpi
 {
 
+/*===========================================================================*/
+/**
+ *  @brief  Adaptor class for parallel rendering based on MPI.
+ */
+/*===========================================================================*/
 class Adaptor : public InSituVis::Adaptor
 {
 public:
@@ -406,9 +426,8 @@ public:
                 {
                     if ( BaseClass::isOutputImageEnabled() )
                     {
-                        const auto image_width = BaseClass::outputImageWidth( point.dir_type );
-                        const auto image_height = BaseClass::outputImageHeight( point.dir_type );
-                        kvs::ColorImage image( image_width, image_height, frame_buffer.color_buffer );
+                        const auto image_size = BaseClass::outputImageSize( point );
+                        kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
                         image.write( this->outputImageName() );
                     }
                 }
@@ -437,11 +456,14 @@ private:
             return this->readback_spherical_buffer( point.position );
         case Viewpoint::AdaptiveDir:
         {
-            if ( BaseClass::isInsideVolume( point.position ) )
+            if ( BaseClass::isInsideObject( point.position, BaseClass::screen().scene()->objectManager() ) )
             {
                 return this->readback_spherical_buffer( point.position );
             }
-            return this->readback_plane_buffer( point.position );
+            else
+            {
+                return this->readback_plane_buffer( point.position );
+            }
         }
         default:
             break;

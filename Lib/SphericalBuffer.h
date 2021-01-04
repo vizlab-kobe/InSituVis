@@ -1,3 +1,9 @@
+/*****************************************************************************/
+/**
+ *  @file   SphericalBuffer.h
+ *  @author Naohisa Sakamoto
+ */
+/*****************************************************************************/
 #pragma once
 #include <kvs/ValueArray>
 #include <kvs/Vector2>
@@ -8,6 +14,11 @@
 namespace InSituVis
 {
 
+/*===========================================================================*/
+/**
+ *  @brief  Spherical buffer class.
+ */
+/*===========================================================================*/
 template <typename PixelType>
 class SphericalBuffer
 {
@@ -21,9 +32,9 @@ public:
     static kvs::Vec3 UpVector( const Direction dir ) { return kvs::CubicImage::UpVector( dir ); }
 
 private:
-    size_t m_width;
-    size_t m_height;
-    Buffers m_buffers;
+    size_t m_width; ///< width size of original image
+    size_t m_height; ///< height size of original image
+    Buffers m_buffers; ///< buffers for each direction (6 directions)
 
 public:
     SphericalBuffer( const size_t width, const size_t height ):

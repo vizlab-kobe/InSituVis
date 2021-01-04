@@ -1,3 +1,9 @@
+/*****************************************************************************/
+/**
+ *  @file   DistributedViewpoint.h
+ *  @author Naohisa Sakamoto
+ */
+/*****************************************************************************/
 #pragma once
 #include "Viewpoint.h"
 #include <kvs/Vector3>
@@ -6,6 +12,11 @@
 namespace InSituVis
 {
 
+/*===========================================================================*/
+/**
+ *  @brief  Distributed viewpoint class.
+ */
+/*===========================================================================*/
 class DistributedViewpoint : public Viewpoint
 {
     using BaseClass = Viewpoint;
@@ -13,8 +24,8 @@ class DistributedViewpoint : public Viewpoint
 public:
     enum DistType
     {
-        CubicDist,
-        SphericalDist
+        CubicDist, ///< cubic viewpoint distribution
+        SphericalDist ///< spherical viewpoint distribution
     };
 
 private:
