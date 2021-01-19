@@ -428,7 +428,6 @@ public:
                     {
                         const auto image_size = BaseClass::outputImageSize( point );
                         kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
-//                        image.write( this->outputImageName() );
                         image.write( this->outputFinalImageName() );
                     }
                 }
@@ -447,7 +446,6 @@ private:
 
         const std::string output_basename = BaseClass::outputFilename();
         const std::string output_filename = output_basename + "_" + output_time + "_" + output_space;
-//        const std::string filename = m_output_directory.name() + "/" + output_filename + surfix + ".bmp";
         const std::string filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
         return filename;
     }
