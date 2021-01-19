@@ -1,6 +1,8 @@
 #pragma once
 #include <kvs/OrthoSlice>
+#include <kvs/PolygonObject>
 #include <kvs/PolygonRenderer>
+#include <kvs/PolygonImporter>
 #include <kvs/Bounds>
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
@@ -15,19 +17,22 @@ class InSituVis : public ::InSituVis::mpi::Adaptor
     using BaseClass = ::InSituVis::mpi::Adaptor;
     using Viewpoint = ::InSituVis::DistributedViewpoint;
     using Volume = BaseClass::Volume;
+    using Polygon = kvs::PolygonObject;
     using Screen = BaseClass::Screen;
 
 private:
     Viewpoint m_viewpoint;
     kvs::Real32 m_min_value;
     kvs::Real32 m_max_value;
+    Polygon m_boundary_mesh;
 
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
         BaseClass( world, root ),
 //        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ),
-        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ),
-//        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist ),
+//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ),
+//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir ),
+        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ),
         m_min_value( 0.0f ),
         m_max_value( 0.0f )
     {
@@ -80,9 +85,33 @@ public:
                     auto* renderer_z = new kvs::glsl::PolygonRenderer();
                     screen.registerObject( object_y, renderer_y );
                     screen.registerObject( object_z, renderer_z );
-                    screen.registerObject( object_z, new kvs::Bounds() );
                 }
             } );
+    }
+
+    void exec( const kvs::UInt32 time_index )
+    {
+        if ( !BaseClass::screen().scene()->hasObject( "BoundaryMesh") )
+        {
+            if ( m_boundary_mesh.numberOfVertices() > 0 )
+            {
+                // Register the bounding box at the root rank.
+                auto* object = new Polygon();
+                object->shallowCopy( m_boundary_mesh );
+                object->setName( "BoundaryMesh" );
+                BaseClass::screen().registerObject( object, new kvs::Bounds() );
+            }
+        }
+
+        BaseClass::exec( time_index );
+    }
+
+    void importBoundaryMesh( const std::string& filename )
+    {
+        if ( BaseClass::world().rank() == BaseClass::world().root () )
+        {
+            m_boundary_mesh = kvs::PolygonImporter( filename );
+        }
     }
 
     void setMinMaxValues( const kvs::Real32 min_value, const kvs::Real32 max_value )

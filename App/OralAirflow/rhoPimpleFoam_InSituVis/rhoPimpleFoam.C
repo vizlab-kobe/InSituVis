@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     const kvs::Indent indent(4); // indent for log stream
     kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis( MPI_COMM_WORLD );
+    vis.importBoundaryMesh( "./constant/triSurface/realistic-cfd3.stl" );
     if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
