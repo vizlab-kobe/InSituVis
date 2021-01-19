@@ -428,7 +428,8 @@ public:
                     {
                         const auto image_size = BaseClass::outputImageSize( point );
                         kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
-                        image.write( this->outputImageName() );
+//                        image.write( this->outputImageName() );
+                        image.write( this->outputFinalImageName() );
                     }
                 }
             }
@@ -437,6 +438,20 @@ public:
     }
 
 private:
+    std::string outputFinalImageName()
+    {
+        const auto time = BaseClass::currentTimeIndex();
+        const auto space = BaseClass::currentSpaceIndex();
+        const std::string output_time = kvs::String::From( time, 6, '0' );
+        const std::string output_space = kvs::String::From( space, 6, '0' );
+
+        const std::string output_basename = BaseClass::outputFilename();
+        const std::string output_filename = output_basename + "_" + output_time + "_" + output_space;
+//        const std::string filename = m_output_directory.name() + "/" + output_filename + surfix + ".bmp";
+        const std::string filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
+        return filename;
+    }
+
     DepthBuffer backgroundDepthBuffer()
     {
         const auto width = BaseClass::screen().width();
