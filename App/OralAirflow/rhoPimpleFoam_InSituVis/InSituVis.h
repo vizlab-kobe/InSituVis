@@ -1,5 +1,6 @@
 #pragma once
 #include <kvs/OrthoSlice>
+#include <kvs/Isosurface>
 #include <kvs/PolygonObject>
 #include <kvs/PolygonRenderer>
 #include <kvs/PolygonImporter>
@@ -19,6 +20,109 @@ class InSituVis : public ::InSituVis::mpi::Adaptor
     using Volume = BaseClass::Volume;
     using Polygon = kvs::PolygonObject;
     using Screen = BaseClass::Screen;
+
+public:
+    static Pipeline OrthoSlicePipeline( const InSituVis& adaptor )
+    {
+        return [&] ( Screen& screen, const Volume& volume )
+        {
+            auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
+            if ( !t.hasRange() )
+            {
+                const auto min_value = adaptor.minValue();
+                const auto max_value = adaptor.maxValue();
+                if ( kvs::Math::Equal( min_value, max_value ) )
+                {
+                    t.setRange( volume.minValue(), volume.maxValue() );
+                }
+                else
+                {
+                    t.setRange( min_value, max_value );
+                }
+            }
+
+            // Create new slice objects.
+            auto py = ( volume.minObjectCoord().y() + volume.maxObjectCoord().y() ) * 0.5f;
+            auto ay = kvs::OrthoSlice::YAxis;
+            auto* object_y = new kvs::OrthoSlice( &volume, py, ay, t );
+            object_y->setName( volume.name() + "ObjectY");
+
+            auto pz = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
+            auto az = kvs::OrthoSlice::ZAxis;
+            auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
+            object_z->setName( volume.name() + "ObjectZ");
+
+            // Create new renderers.
+            auto* renderer_y = new kvs::glsl::PolygonRenderer();
+            renderer_y->setName( volume.name() + "RendererY");
+
+            auto* renderer_z = new kvs::glsl::PolygonRenderer();
+            renderer_z->setName( volume.name() + "RendererZ");
+
+            kvs::Light::SetModelTwoSide( true );
+            if ( screen.scene()->hasObject( volume.name() + "ObjectY") )
+            {
+                // Update the objects.
+                screen.scene()->replaceObject( volume.name() + "ObjectY", object_y );
+                screen.scene()->replaceObject( volume.name() + "ObjectZ", object_z );
+                screen.scene()->replaceRenderer( volume.name() + "RendererY", renderer_y );
+                screen.scene()->replaceRenderer( volume.name() + "RendererZ", renderer_z );
+            }
+            else
+            {
+                // Register the objects with renderer.
+                screen.registerObject( object_y, renderer_y );
+                screen.registerObject( object_z, renderer_z );
+            }
+        };
+    }
+
+    static Pipeline IsosurfacePipeline( const InSituVis& adaptor )
+    {
+        return [&] ( Screen& screen, const Volume& volume )
+        {
+            const auto min_value = adaptor.minValue();
+            const auto max_value = adaptor.maxValue();
+
+            auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
+            if ( !t.hasRange() )
+            {
+                if ( kvs::Math::Equal( min_value, max_value ) )
+                {
+                    t.setRange( volume.minValue(), volume.maxValue() );
+                }
+                else
+                {
+                    t.setRange( min_value, max_value );
+                }
+            }
+
+            // Create new object
+            auto i = ( min_value + max_value ) * 0.5f;
+            auto n = kvs::Isosurface::PolygonNormal;
+            auto d = true;
+            auto* object = new kvs::Isosurface( &volume, i, n, d, t );
+            object->setName( volume.name() + "Object");
+
+            // Create new renderer
+            auto* renderer = new kvs::glsl::PolygonRenderer();
+            renderer->setName( volume.name() + "Renderer");
+
+            // Register object and renderer to screen
+            kvs::Light::SetModelTwoSide( true );
+            if ( screen.scene()->hasObject( volume.name() + "Object") )
+            {
+                // Update the objects.
+                screen.scene()->replaceObject( volume.name() + "Object", object );
+                screen.scene()->replaceRenderer( volume.name() + "Renderer", renderer );
+            }
+            else
+            {
+                // Register the objects with renderer.
+                screen.registerObject( object, renderer );
+            }
+        };
+    }
 
 private:
     Viewpoint m_viewpoint;
@@ -43,50 +147,8 @@ public:
         this->setOutputSubImageEnabled( false );
         this->setTimeInterval( 5 );
         this->setViewpoint( m_viewpoint );
-
-        this->setPipeline(
-            [&] ( Screen& screen, const Volume& volume )
-            {
-                auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
-                if ( !t.hasRange() )
-                {
-                    if ( kvs::Math::Equal( m_min_value, m_max_value ) )
-                    {
-                        t.setRange( volume.minValue(), volume.maxValue() );
-                    }
-                    else
-                    {
-                        t.setRange( m_min_value, m_max_value );
-                    }
-                }
-
-                // Create new slice objects.
-                auto py = ( volume.minObjectCoord().y() + volume.maxObjectCoord().y() ) * 0.5f;
-                auto ay = kvs::OrthoSlice::YAxis;
-                auto* object_y = new kvs::OrthoSlice( &volume, py, ay, t );
-                object_y->setName( volume.name() + "ObjectY");
-
-                auto pz = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
-                auto az = kvs::OrthoSlice::ZAxis;
-                auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
-                object_z->setName( volume.name() + "ObjectZ");
-
-                if ( screen.scene()->hasObject( volume.name() + "ObjectY") )
-                {
-                    // Update the objects.
-                    screen.scene()->replaceObject( volume.name() + "ObjectY", object_y );
-                    screen.scene()->replaceObject( volume.name() + "ObjectZ", object_z );
-                }
-                else
-                {
-                    // Register the objects with renderer.
-                    kvs::Light::SetModelTwoSide( true );
-                    auto* renderer_y = new kvs::glsl::PolygonRenderer();
-                    auto* renderer_z = new kvs::glsl::PolygonRenderer();
-                    screen.registerObject( object_y, renderer_y );
-                    screen.registerObject( object_z, renderer_z );
-                }
-            } );
+        this->setPipeline( OrthoSlicePipeline( *this ) );
+//        this->setPipeline( IsosurfacePipeline( *this ) );
     }
 
     void exec( const kvs::UInt32 time_index )
@@ -119,6 +181,9 @@ public:
         m_min_value = min_value;
         m_max_value = max_value;
     }
+
+    kvs::Real32 minValue() const { return m_min_value; }
+    kvs::Real32 maxValue() const { return m_max_value; }
 };
 
 } // end of namspace local
