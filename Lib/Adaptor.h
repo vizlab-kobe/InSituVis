@@ -185,19 +185,20 @@ protected:
 
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const
     {
+        const auto image_size = kvs::Vec2ui( m_image_width, m_image_height );
         switch ( point.dir_type )
         {
-        case Viewpoint::OmniDir:
-            return kvs::Vec2ui( m_image_width * 4, m_image_height * 3 );
+        case Viewpoint::SingleDir: return image_size;
+        case Viewpoint::OmniDir: return image_size * kvs::Vec2ui( 4, 3 );
         default:
             const auto* object = m_screen.scene()->objectManager();
             if ( this->isInsideObject( point.position, object ) )
             {
-                return kvs::Vec2ui( m_image_width * 4, m_image_height * 3 );
+                return image_size * kvs::Vec2ui( 4, 3 );
             }
             break;
         }
-        return kvs::Vec2ui( m_image_width, m_image_height );
+        return image_size;
     }
 
     std::string outputImageName( const std::string& surfix = "" ) const
@@ -491,7 +492,9 @@ private:
     FrameBuffer readback_plane_buffer( const kvs::Vec3& position )
     {
         FrameBuffer frame_buffer;
-        const auto lookat = BaseClass::screen().scene()->camera()->lookAt();
+
+        const auto* camera = BaseClass::screen().scene()->camera();
+        const auto lookat = camera->lookAt();
         if ( lookat == position )
         {
             frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
@@ -499,13 +502,16 @@ private:
         }
         else
         {
+//            const auto position0 = camera->position();
+//            const auto up0 = camera->upVector();
+
             // Draw image
-            const auto p0 = ( BaseClass::screen().scene()->camera()->position() - lookat ).normalized();
-            const auto p1 = ( position- lookat ).normalized();
+            const auto p0 = ( camera->position() - lookat ).normalized();
+            const auto p1 = ( position - lookat ).normalized();
             const auto axis = p0.cross( p1 );
             const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
             const auto R = kvs::RotationMatrix33<float>( axis, deg );
-            const auto up = BaseClass::screen().scene()->camera()->upVector() * R;
+            const auto up = camera->upVector() * R;
             BaseClass::screen().scene()->camera()->setPosition( position, lookat, up );
             BaseClass::screen().scene()->light()->setPosition( position );
             BaseClass::screen().draw();
@@ -546,6 +552,10 @@ private:
 
             frame_buffer.color_buffer = color_buffer;
             frame_buffer.depth_buffer = depth_buffer;
+
+//            BaseClass::screen().scene()->camera()->setPosition( position0, lookat, up0 );
+//            BaseClass::screen().scene()->camera()->setPosition( position0 );
+//            BaseClass::screen().scene()->light()->setPosition( position0 );
         }
 
         return frame_buffer;

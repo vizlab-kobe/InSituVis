@@ -68,7 +68,7 @@ public:
             BaseClass::setPointLocator(
                 [&] ( const size_t index )
                 {
-                    const kvs::Vec3 rtp = this->index_to_ijk( index ); // polor coordinate
+                    const kvs::Vec3 rtp = this->index_to_ijk( index ); // polar coordinate
                     const kvs::Vec3 ijk = this->rtp_to_ijk( rtp ); // ijk coordinate
                     const kvs::Vec3 xyz = this->ijk_to_xyz( ijk ); // world coordinate
                     return BaseClass::Point( xyz, m_dir_type );
