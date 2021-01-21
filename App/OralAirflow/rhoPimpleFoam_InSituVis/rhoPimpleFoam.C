@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
     kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis( MPI_COMM_WORLD );
     vis.importBoundaryMesh( "./constant/triSurface/realistic-cfd3.stl" );
+    //vis.setPipeline( local::InSituVis::OrthoSlice() );
+    //vis.setPipeline( local::InSituVis::Isosurface() );
     if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
@@ -146,7 +148,9 @@ int main(int argc, char *argv[])
         {
             // p: pressure
             auto& field = p;
-            vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
+            const auto min_value = 9.94 * 10000.0;
+            const auto max_value = 1.02 * 100000.0;
+            //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
 
             // U: velocity
             //auto& field = U;
@@ -173,6 +177,11 @@ int main(int argc, char *argv[])
             //vol_hex->print( vis.log() << std::endl );
             //vol_pri->print( vis.log() << std::endl );
             //vol_pyr->print( vis.log() << std::endl );
+
+            vol_tet.setMinMaxValues( min_value, max_value );
+            vol_hex.setMinMaxValues( min_value, max_value );
+            vol_pri.setMinMaxValues( min_value, max_value );
+            vol_pyr.setMinMaxValues( min_value, max_value );
 
             // Execute visualization pipeline and rendering
             vis.put( vol_tet );
