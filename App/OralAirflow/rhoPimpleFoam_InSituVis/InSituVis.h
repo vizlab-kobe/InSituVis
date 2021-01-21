@@ -32,19 +32,19 @@ private:
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
         BaseClass( world, root ),
-//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir )
-//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir )
-//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir )
-        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir )
+//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ) // OK
+        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ) // OK
+//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir ) // NG
+//        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ) // OK
     {
         m_viewpoint.generate();
 
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
-        this->setOutputSubImageEnabled( false );
+//        this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
+        this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
         this->setTimeInterval( 5 );
         this->setViewpoint( m_viewpoint );
-        this->setPipeline( OrthoSlice() );
     }
 
     void exec( const kvs::UInt32 time_index )
