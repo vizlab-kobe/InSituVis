@@ -32,19 +32,23 @@ private:
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
         BaseClass( world, root ),
-//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ) // OK
         m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ) // OK
-//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir ) // NG
-//        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ) // OK
+        //m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ) // OK
+        //m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir ) // NG
+        //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ) // OK
+        //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::OmniDir ) // OK
+        //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::AdaptiveDir ) // NG
     {
         m_viewpoint.generate();
 
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
-//        this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
-        this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
+        this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
+        //this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
         this->setTimeInterval( 5 );
         this->setViewpoint( m_viewpoint );
+        this->setPipeline( local::InSituVis::OrthoSlice() );
+        //this->setPipeline( local::InSituVis::Isosurface() );
     }
 
     void exec( const kvs::UInt32 time_index )
@@ -94,27 +98,18 @@ inline InSituVis::Pipeline InSituVis::OrthoSlice()
         auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
         object_z->setName( volume.name() + "ObjectZ");
 
-        // Create new renderers.
-        auto* renderer_y = new kvs::glsl::PolygonRenderer();
-        renderer_y->setName( volume.name() + "RendererY");
-
-        auto* renderer_z = new kvs::glsl::PolygonRenderer();
-        renderer_z->setName( volume.name() + "RendererZ");
-
         kvs::Light::SetModelTwoSide( true );
         if ( screen.scene()->hasObject( volume.name() + "ObjectY") )
         {
             // Update the objects.
             screen.scene()->replaceObject( volume.name() + "ObjectY", object_y );
             screen.scene()->replaceObject( volume.name() + "ObjectZ", object_z );
-            screen.scene()->replaceRenderer( volume.name() + "RendererY", renderer_y );
-            screen.scene()->replaceRenderer( volume.name() + "RendererZ", renderer_z );
         }
         else
         {
             // Register the objects with renderer.
-            screen.registerObject( object_y, renderer_y );
-            screen.registerObject( object_z, renderer_z );
+            screen.registerObject( object_y, new kvs::glsl::PolygonRenderer() );
+            screen.registerObject( object_z, new kvs::glsl::PolygonRenderer() );
         }
     };
 }
@@ -136,22 +131,17 @@ inline InSituVis::Pipeline InSituVis::Isosurface()
         auto* object = new kvs::Isosurface( &volume, i, n, d, t );
         object->setName( volume.name() + "Object");
 
-        // Create new renderer
-        auto* renderer = new kvs::glsl::PolygonRenderer();
-        renderer->setName( volume.name() + "Renderer");
-
         // Register object and renderer to screen
         kvs::Light::SetModelTwoSide( true );
         if ( screen.scene()->hasObject( volume.name() + "Object") )
         {
             // Update the objects.
             screen.scene()->replaceObject( volume.name() + "Object", object );
-            screen.scene()->replaceRenderer( volume.name() + "Renderer", renderer );
         }
         else
         {
             // Register the objects with renderer.
-            screen.registerObject( object, renderer );
+            screen.registerObject( object, new kvs::glsl::PolygonRenderer() );
         }
     };
 }

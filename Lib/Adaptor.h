@@ -462,30 +462,36 @@ private:
 
     FrameBuffer readback( const Viewpoint::Point& point )
     {
+        FrameBuffer frame_buffer;
+
         switch ( point.dir_type )
         {
         case Viewpoint::SingleDir:
-            return this->readback_plane_buffer( point.position );
-        case Viewpoint::OmniDir:
-            return this->readback_spherical_buffer( point.position );
-        case Viewpoint::AdaptiveDir:
         {
-            if ( BaseClass::isInsideObject( point.position, BaseClass::screen().scene()->objectManager() ) )
-            {
-                return this->readback_spherical_buffer( point.position );
-            }
-            else
-            {
-                return this->readback_plane_buffer( point.position );
-            }
-        }
-        default:
+            frame_buffer = this->readback_plane_buffer( point.position );
             break;
         }
+        case Viewpoint::OmniDir:
+        {
+            frame_buffer = this->readback_spherical_buffer( point.position );
+            break;
+        }
+        case Viewpoint::AdaptiveDir:
+        {
+            const auto* object = BaseClass::screen().scene()->objectManager();
+            frame_buffer = BaseClass::isInsideObject( point.position, object ) ?
+                this->readback_spherical_buffer( point.position ) :
+                this->readback_plane_buffer( point.position );
+            break;
+        }
+        default:
+        {
+            frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
+            frame_buffer.depth_buffer = this->backgroundDepthBuffer();
+            break;
+        }
+        }
 
-        FrameBuffer frame_buffer;
-        frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
-        frame_buffer.depth_buffer = this->backgroundDepthBuffer();
         return frame_buffer;
     }
 
@@ -502,9 +508,6 @@ private:
         }
         else
         {
-//            const auto position0 = camera->position();
-//            const auto up0 = camera->upVector();
-
             // Draw image
             const auto p0 = ( camera->position() - lookat ).normalized();
             const auto p1 = ( position - lookat ).normalized();
@@ -552,10 +555,6 @@ private:
 
             frame_buffer.color_buffer = color_buffer;
             frame_buffer.depth_buffer = depth_buffer;
-
-//            BaseClass::screen().scene()->camera()->setPosition( position0, lookat, up0 );
-//            BaseClass::screen().scene()->camera()->setPosition( position0 );
-//            BaseClass::screen().scene()->light()->setPosition( position0 );
         }
 
         return frame_buffer;
