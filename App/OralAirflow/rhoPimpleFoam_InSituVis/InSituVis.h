@@ -47,8 +47,8 @@ public:
         //this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
         this->setTimeInterval( 5 );
         this->setViewpoint( m_viewpoint );
-        this->setPipeline( local::InSituVis::OrthoSlice() );
-        //this->setPipeline( local::InSituVis::Isosurface() );
+        //this->setPipeline( local::InSituVis::OrthoSlice() );
+        this->setPipeline( local::InSituVis::Isosurface() );
     }
 
     void exec( const kvs::UInt32 time_index )

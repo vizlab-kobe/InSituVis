@@ -500,6 +500,8 @@ private:
         FrameBuffer frame_buffer;
 
         const auto* camera = BaseClass::screen().scene()->camera();
+        const auto* light = BaseClass::screen().scene()->light();
+
         const auto lookat = camera->lookAt();
         if ( lookat == position )
         {
@@ -508,20 +510,35 @@ private:
         }
         else
         {
-            // Draw image
-            const auto p0 = ( camera->position() - lookat ).normalized();
-            const auto p1 = ( position - lookat ).normalized();
-            const auto axis = p0.cross( p1 );
-            const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
-            const auto R = kvs::RotationMatrix33<float>( axis, deg );
-            const auto up = camera->upVector() * R;
-            BaseClass::screen().scene()->camera()->setPosition( position, lookat, up );
-            BaseClass::screen().scene()->light()->setPosition( position );
-            BaseClass::screen().draw();
+            // Backup camera and light info.
+            const auto cp = camera->position();
+            const auto cu = camera->upVector();
+            const auto lp = light->position();
+            {
+                // Draw image
+                //
+                // BUGS INCLUDED
+                // {
+                const auto p0 = ( camera->position() - lookat ).normalized();
+                const auto p1 = ( position - lookat ).normalized();
+                const auto axis = p0.cross( p1 );
+                const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
+                const auto R = kvs::RotationMatrix33<float>( axis, deg );
+                const auto up = camera->upVector() * R;
+                // }
+                //
+                BaseClass::screen().scene()->camera()->setPosition( position, lookat, up );
+                BaseClass::screen().scene()->light()->setPosition( position );
+                BaseClass::screen().draw();
+            }
 
             // Read-back image
             auto color_buffer = BaseClass::screen().readbackColorBuffer();
             auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
+
+            // Restore camera and light info.
+//            BaseClass::screen().scene()->camera()->setPosition( cp, lookat, cu );
+//            BaseClass::screen().scene()->light()->setPosition( lp );
 
             // Output rendering image (partial rendering image)
             if ( m_enable_output_subimage )
@@ -565,69 +582,79 @@ private:
         using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
         using SphericalDepthBuffer = InSituVis::SphericalBuffer<kvs::Real32>;
 
-        const auto fov = BaseClass::screen().scene()->camera()->fieldOfView();
-        const auto front = BaseClass::screen().scene()->camera()->front();
-        const auto pc = BaseClass::screen().scene()->camera()->position();
-        const auto pl = BaseClass::screen().scene()->light()->position();
-        const auto& p = position;
-
-        BaseClass::screen().scene()->light()->setPosition( position );
-        BaseClass::screen().scene()->camera()->setFieldOfView( 90.0 );
-        BaseClass::screen().scene()->camera()->setFront( 0.1 );
-
+        // Color and depth buffers.
         SphericalColorBuffer color_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
         SphericalDepthBuffer depth_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
-        for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
+
+        // Backup camera and light info.
+        const auto fov = BaseClass::screen().scene()->camera()->fieldOfView();
+        const auto front = BaseClass::screen().scene()->camera()->front();
+//        const auto pc = BaseClass::screen().scene()->camera()->position();
+//        const auto pl = BaseClass::screen().scene()->light()->position();
+        const auto cp = BaseClass::screen().scene()->camera()->position();
+        const auto cl = BaseClass::screen().scene()->camera()->lookAt();
+        const auto cu = BaseClass::screen().scene()->camera()->upVector();
+        const auto lp = BaseClass::screen().scene()->light()->position();
         {
-            const auto d = SphericalColorBuffer::Direction(i);
-            const auto dir = SphericalColorBuffer::DirectionVector(d);
-            const auto up = SphericalColorBuffer::UpVector(d);
-            BaseClass::screen().scene()->camera()->setPosition( p, p + dir, up );
-            BaseClass::screen().draw();
+            // Draw images.
+            BaseClass::screen().scene()->light()->setPosition( position );
+            BaseClass::screen().scene()->camera()->setFieldOfView( 90.0 );
+            BaseClass::screen().scene()->camera()->setFront( 0.1 );
 
-            auto cbuffer = BaseClass::screen().readbackColorBuffer();
-            auto dbuffer = BaseClass::screen().readbackDepthBuffer();
-
-            // Output rendering image (partial rendering image) for each direction
-            if ( m_enable_output_subimage )
+            const auto& p = position;
+            for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
             {
-                // RGB image
-                const auto dname = SphericalColorBuffer::DirectionName(d);
-                const auto width = BaseClass::imageWidth();
-                const auto height = BaseClass::imageHeight();
-                kvs::ColorImage image( width, height, cbuffer );
-                image.write( BaseClass::outputImageName( "_color_" + dname ) );
+                const auto d = SphericalColorBuffer::Direction(i);
+                const auto dir = SphericalColorBuffer::DirectionVector(d);
+                const auto up = SphericalColorBuffer::UpVector(d);
+                BaseClass::screen().scene()->camera()->setPosition( p, p + dir, up );
+                BaseClass::screen().draw();
 
-                // Depth image
-                if ( m_enable_output_subimage_depth )
+                auto cbuffer = BaseClass::screen().readbackColorBuffer();
+                auto dbuffer = BaseClass::screen().readbackDepthBuffer();
+
+                // Output rendering image (partial rendering image) for each direction
+                if ( m_enable_output_subimage )
                 {
-                    kvs::GrayImage depth_image( width, height, dbuffer );
-                    depth_image.write( BaseClass::outputImageName( "_depth_" + dname ) );
+                    // RGB image
+                    const auto dname = SphericalColorBuffer::DirectionName(d);
+                    const auto width = BaseClass::imageWidth();
+                    const auto height = BaseClass::imageHeight();
+                    kvs::ColorImage image( width, height, cbuffer );
+                    image.write( BaseClass::outputImageName( "_color_" + dname ) );
+
+                    // Depth image
+                    if ( m_enable_output_subimage_depth )
+                    {
+                        kvs::GrayImage depth_image( width, height, dbuffer );
+                        depth_image.write( BaseClass::outputImageName( "_depth_" + dname ) );
+                    }
+
+                    // Alpha image
+                    if ( m_enable_output_subimage_alpha )
+                    {
+                        kvs::GrayImage alpha_image( width, height, cbuffer, 3 );
+                        alpha_image.write( BaseClass::outputImageName( "_alpha_" + dname ) );
+                    }
                 }
 
-                // Alpha image
-                if ( m_enable_output_subimage_alpha )
+                // Image composition
+                if ( !m_compositor.run( cbuffer, dbuffer ) )
                 {
-                    kvs::GrayImage alpha_image( width, height, cbuffer, 3 );
-                    alpha_image.write( BaseClass::outputImageName( "_alpha_" + dname ) );
+                    this->log() << "ERROR: " << "Cannot compose images." << std::endl;
                 }
-            }
 
-            // Image composition
-            if ( !m_compositor.run( cbuffer, dbuffer ) )
-            {
-                this->log() << "ERROR: " << "Cannot compose images." << std::endl;
+                color_buffer.setBuffer( d, cbuffer );
+                depth_buffer.setBuffer( d, dbuffer );
             }
-
-            color_buffer.setBuffer( d, cbuffer );
-            depth_buffer.setBuffer( d, dbuffer );
         }
-
+        // Restore camera and light info.
         BaseClass::screen().scene()->camera()->setFieldOfView( fov );
         BaseClass::screen().scene()->camera()->setFront( front );
-        BaseClass::screen().scene()->camera()->setPosition( pc );
-        BaseClass::screen().scene()->light()->setPosition( pl );
+        BaseClass::screen().scene()->camera()->setPosition( cp, cl, cu );
+        BaseClass::screen().scene()->light()->setPosition( lp );
 
+        // Return frame buffer
         FrameBuffer frame_buffer;
         frame_buffer.color_buffer = color_buffer.stitch<4>();
         frame_buffer.depth_buffer = depth_buffer.stitch<1>();
