@@ -3,7 +3,7 @@
 #include "Process.h"
 #include <KVS.mpi/Lib/Environment.h>
 #include <KVS.mpi/Lib/Communicator.h>
-#include <InSituVis/Lib/Logger.h>
+#include <kvs/LogStream>
 
 
 namespace
@@ -133,8 +133,8 @@ int Program::exec( int argc, char** argv )
     // Logger.
     const kvs::Indent indent(4);
     const std::string basename = ::BaseName( "result", input, world );
-    InSituVis::Logger log_file( basename + "_log.csv" );
-    InSituVis::Logger log_cout;
+    kvs::LogStream log_file( basename + "_log.csv" );
+    kvs::LogStream log_cout;
 
     input.print( log_cout( is_master ) << "INPUT PARAMETERS" << std::endl, indent );
 

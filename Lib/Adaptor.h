@@ -18,6 +18,7 @@
 #include <kvs/RotationMatrix33>
 #include <kvs/ObjectManager>
 #include <kvs/Coordinate>
+#include <kvs/LogStream>
 #include "Viewpoint.h"
 #include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
@@ -59,6 +60,7 @@ private:
     size_t m_time_interval; ///< visualization time interval (dt)
     kvs::UInt32 m_current_time_index; ///< current time index
     kvs::UInt32 m_current_space_index; ///< current space index
+    kvs::LogStream m_log; ///< log stream
 
 public:
     Adaptor():
@@ -77,7 +79,9 @@ public:
     size_t imageWidth() const { return m_image_width; }
     size_t imageHeight() const { return m_image_height; }
     bool isOutputImageEnabled() const { return m_enable_output_image; }
-    std::ostream& log() { return std::cout; }
+//    std::ostream& log() { return std::cout; }
+    std::ostream& log() { return m_log(); }
+    std::ostream& log( const bool enable ) { return m_log( enable ); }
     Screen& screen() { return m_screen; }
     const InSituVis::Viewpoint& viewpoint() const { return m_viewpoint; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
