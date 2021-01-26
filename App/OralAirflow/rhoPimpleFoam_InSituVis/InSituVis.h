@@ -10,6 +10,7 @@
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
 #include <InSituVis/Lib/StampTimer.h>
+#include <InSituVis/Lib/StampTimerTable.h>
 #include <csignal>
 #include <functional>
 
@@ -50,54 +51,26 @@ public:
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::OmniDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::AdaptiveDir ), // NG
-        m_sim_timer( BaseClass::world(), "Sim. time" ),
-        m_vis_timer( BaseClass::world(), "Vis. time" )
+        m_sim_timer( BaseClass::world() ),
+        m_vis_timer( BaseClass::world() )
     {
         m_viewpoint.generate();
 
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
-        //this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
-        this->setTimeInterval( 5 );
+         this->setTimeInterval( 5 );
         this->setViewpoint( m_viewpoint );
-        //this->setPipeline( local::InSituVis::OrthoSlice() );
-        this->setPipeline( local::InSituVis::Isosurface() );
+        this->setPipeline( local::InSituVis::OrthoSlice() );
+        //this->setPipeline( local::InSituVis::Isosurface() );
 
         // Set signal function for dumping timers.
-        ::Dump = [&](int) { this->dumpTimer(); exit(0); };
+        ::Dump = [&](int) { this->dump(); exit(0); };
         std::signal( SIGTERM, ::SigTerm );
     }
 
     ::InSituVis::mpi::StampTimer& simTimer() { return m_sim_timer; }
     ::InSituVis::mpi::StampTimer& visTimer() { return m_vis_timer; }
-
-    void dumpTimer()
-    {
-        // For each node
-        const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
-        const std::string subdir = BaseClass::outputDirectory().name() + "/";
-        m_sim_timer.write( subdir + "sim_time_" + rank +".csv" );
-        m_vis_timer.write( subdir + "vis_time_" + rank +".csv" );
-
-        // For root node
-        const std::string basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-        auto sim_time_min = m_sim_timer; sim_time_min.reduceMin();
-        auto sim_time_max = m_sim_timer; sim_time_max.reduceMax();
-        auto sim_time_ave = m_sim_timer; sim_time_ave.reduceAve();
-        auto vis_time_min = m_vis_timer; vis_time_min.reduceMin();
-        auto vis_time_max = m_vis_timer; vis_time_max.reduceMax();
-        auto vis_time_ave = m_vis_timer; vis_time_ave.reduceAve();
-        if ( this->world().isRoot() )
-        {
-            sim_time_min.write( basedir + "sim_time_min.csv" );
-            sim_time_max.write( basedir + "sim_time_max.csv" );
-            sim_time_ave.write( basedir + "sim_time_ave.csv" );
-            vis_time_min.write( basedir + "vis_time_min.csv" );
-            vis_time_max.write( basedir + "vis_time_max.csv" );
-            vis_time_ave.write( basedir + "vis_time_ave.csv" );
-        }
-    }
 
     void exec( const kvs::UInt32 time_index )
     {
@@ -118,7 +91,7 @@ public:
 
     bool finalize()
     {
-        this->dumpTimer();
+        this->dump();
         return BaseClass::finalize();
     }
 
@@ -127,6 +100,48 @@ public:
         if ( BaseClass::world().rank() == BaseClass::world().root () )
         {
             m_boundary_mesh = kvs::PolygonImporter( filename );
+        }
+    }
+
+private:
+    void dump()
+    {
+        // For each node
+        m_sim_timer.setTitle( "Sim time" );
+        m_vis_timer.setTitle( "Vis time" );
+
+        const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
+        const std::string subdir = BaseClass::outputDirectory().name() + "/";
+        ::InSituVis::StampTimerTable timer_table;
+        timer_table.push( m_sim_timer );
+        timer_table.push( m_vis_timer );
+        timer_table.write( subdir + "proc_time_" + rank + ".csv" );
+
+        // For root node
+        auto sim_time_min = m_sim_timer; sim_time_min.reduceMin();
+        auto sim_time_max = m_sim_timer; sim_time_max.reduceMax();
+        auto sim_time_ave = m_sim_timer; sim_time_ave.reduceAve();
+        auto vis_time_min = m_vis_timer; vis_time_min.reduceMin();
+        auto vis_time_max = m_vis_timer; vis_time_max.reduceMax();
+        auto vis_time_ave = m_vis_timer; vis_time_ave.reduceAve();
+        if ( this->world().isRoot() )
+        {
+            sim_time_min.setTitle( "Sim time (min)" );
+            sim_time_max.setTitle( "Sim time (max)" );
+            sim_time_ave.setTitle( "Sim time (ave)" );
+            vis_time_min.setTitle( "Vis time (min)" );
+            vis_time_max.setTitle( "Vis time (max)" );
+            vis_time_ave.setTitle( "Vis time (ave)" );
+
+            const std::string basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
+            timer_table.clear();
+            timer_table.push( sim_time_min );
+            timer_table.push( sim_time_max );
+            timer_table.push( sim_time_ave );
+            timer_table.push( vis_time_min );
+            timer_table.push( vis_time_max );
+            timer_table.push( vis_time_ave );
+            timer_table.write( basedir + "proc_time.csv" );
         }
     }
 };
