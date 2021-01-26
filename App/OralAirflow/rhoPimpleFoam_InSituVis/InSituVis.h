@@ -39,8 +39,9 @@ public:
 private:
     Viewpoint m_viewpoint; ///< viewpoint
     Polygon m_boundary_mesh; ///< boundary mesh
-    ::InSituVis::mpi::StampTimer m_sim_timer;
-    ::InSituVis::mpi::StampTimer m_vis_timer;
+    ::InSituVis::mpi::StampTimer m_sim_timer; ///< timer for simulation process
+    ::InSituVis::mpi::StampTimer m_imp_timer; ///< timer for imporing process
+    ::InSituVis::mpi::StampTimer m_vis_timer; ///< timer for visualization process
 
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -52,6 +53,7 @@ public:
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::OmniDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::AdaptiveDir ), // NG
         m_sim_timer( BaseClass::world() ),
+        m_imp_timer( BaseClass::world() ),
         m_vis_timer( BaseClass::world() )
     {
         m_viewpoint.generate();
@@ -70,6 +72,7 @@ public:
     }
 
     ::InSituVis::mpi::StampTimer& simTimer() { return m_sim_timer; }
+    ::InSituVis::mpi::StampTimer& impTimer() { return m_imp_timer; }
     ::InSituVis::mpi::StampTimer& visTimer() { return m_vis_timer; }
 
     void exec( const kvs::UInt32 time_index )
@@ -108,19 +111,25 @@ private:
     {
         // For each node
         m_sim_timer.setTitle( "Sim time" );
+        m_imp_timer.setTitle( "Imp time" );
         m_vis_timer.setTitle( "Vis time" );
 
         const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
         const std::string subdir = BaseClass::outputDirectory().name() + "/";
         ::InSituVis::StampTimerTable timer_table;
         timer_table.push( m_sim_timer );
+        timer_table.push( m_imp_timer );
         timer_table.push( m_vis_timer );
         timer_table.write( subdir + "proc_time_" + rank + ".csv" );
+        timer_table.clear();
 
         // For root node
         auto sim_time_min = m_sim_timer; sim_time_min.reduceMin();
         auto sim_time_max = m_sim_timer; sim_time_max.reduceMax();
         auto sim_time_ave = m_sim_timer; sim_time_ave.reduceAve();
+        auto imp_time_min = m_imp_timer; imp_time_min.reduceMin();
+        auto imp_time_max = m_imp_timer; imp_time_max.reduceMax();
+        auto imp_time_ave = m_imp_timer; imp_time_ave.reduceAve();
         auto vis_time_min = m_vis_timer; vis_time_min.reduceMin();
         auto vis_time_max = m_vis_timer; vis_time_max.reduceMax();
         auto vis_time_ave = m_vis_timer; vis_time_ave.reduceAve();
@@ -129,15 +138,20 @@ private:
             sim_time_min.setTitle( "Sim time (min)" );
             sim_time_max.setTitle( "Sim time (max)" );
             sim_time_ave.setTitle( "Sim time (ave)" );
+            imp_time_min.setTitle( "Imp time (min)" );
+            imp_time_max.setTitle( "Imp time (max)" );
+            imp_time_ave.setTitle( "Imp time (ave)" );
             vis_time_min.setTitle( "Vis time (min)" );
             vis_time_max.setTitle( "Vis time (max)" );
             vis_time_ave.setTitle( "Vis time (ave)" );
 
             const std::string basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-            timer_table.clear();
             timer_table.push( sim_time_min );
             timer_table.push( sim_time_max );
             timer_table.push( sim_time_ave );
+            timer_table.push( imp_time_min );
+            timer_table.push( imp_time_max );
+            timer_table.push( imp_time_ave );
             timer_table.push( vis_time_min );
             timer_table.push( vis_time_max );
             timer_table.push( vis_time_ave );

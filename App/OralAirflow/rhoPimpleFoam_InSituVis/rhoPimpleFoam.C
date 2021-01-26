@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
     // In-situ visualization setup
     Foam::messageStream::level = 0; // Disable Foam::Info
     const kvs::Indent indent(4); // indent for log stream
-    kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis( MPI_COMM_WORLD );
     vis.importBoundaryMesh( "./constant/triSurface/realistic-cfd3.stl" );
     if ( !vis.initialize() )
@@ -73,8 +72,6 @@ int main(int argc, char *argv[])
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
         vis.world().abort();
     }
-
-//    std::signal( SIGTERM, [](int){ std::cerr << "SIGTERM" << std::endl; } );
 #endif // IN_SITU_VIS
 
 #if defined( IN_SITU_VIS )
@@ -108,7 +105,6 @@ int main(int argc, char *argv[])
         vis.log() << indent << "T: " << current_time << std::endl;
         vis.log() << indent << "End T: " << end_time << std::endl;
         vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
-//        timer.start(); // begin sim.
         vis.simTimer().start();
 #endif // IN_SITU_VIS
 
@@ -140,71 +136,56 @@ int main(int argc, char *argv[])
         runTime.write();
 
 #if defined( IN_SITU_VIS )
-//        timer.stop(); // end sim.
         vis.simTimer().stamp();
-//        const auto ts = timer.sec();
         const auto ts = vis.simTimer().last();
         const auto Ts = kvs::String::From( ts, 4 );
         vis.log() << indent << "Processing Times:" << std::endl;
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
 
         // Execute in-situ visualization process
-//        timer.start(); // begin vis.
+        // p: pressure
+        auto& field = p;
+        const auto min_value = 9.94 * 10000.0;
+        const auto max_value = 1.02 * 100000.0;
+        //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
+
+        // U: velocity
+        //auto& field = U;
+        //vis.setMinMaxValues( 0.0224, 70.9 );
+
+        // T: temperature
+        //auto& field = thermo.T();
+        //vis.setMinMaxValues( 293, 295 );
+
+        // Convert OpenFOAM data to KVS data
+        vis.impTimer().start();
+        InSituVis::foam::FoamToKVS converter( field );
+        using CellType = InSituVis::foam::FoamToKVS::CellType;
+        auto vol_tet = converter.exec( vis.world(), field, CellType::Tetrahedra );
+        auto vol_hex = converter.exec( vis.world(), field, CellType::Hexahedra );
+        auto vol_pri = converter.exec( vis.world(), field, CellType::Prism );
+        auto vol_pyr = converter.exec( vis.world(), field, CellType::Pyramid );
+        vis.impTimer().stamp();
+
+        vol_tet.setName("Tet");
+        vol_hex.setName("Hex");
+        vol_pri.setName("Pri");
+        vol_pyr.setName("Pyr");
+
+        vol_tet.setMinMaxValues( min_value, max_value );
+        vol_hex.setMinMaxValues( min_value, max_value );
+        vol_pri.setMinMaxValues( min_value, max_value );
+        vol_pyr.setMinMaxValues( min_value, max_value );
+
+        // Execute visualization pipeline and rendering
         vis.visTimer().start();
-        {
-            // p: pressure
-            auto& field = p;
-            const auto min_value = 9.94 * 10000.0;
-            const auto max_value = 1.02 * 100000.0;
-            //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
-
-            // U: velocity
-            //auto& field = U;
-            //vis.setMinMaxValues( 0.0224, 70.9 );
-
-            // T: temperature
-            //auto& field = thermo.T();
-            //vis.setMinMaxValues( 293, 295 );
-
-            // Convert OpenFOAM data to KVS data
-            InSituVis::foam::FoamToKVS converter( field );
-            using CellType = InSituVis::foam::FoamToKVS::CellType;
-            auto vol_tet = converter.exec( vis.world(), field, CellType::Tetrahedra );
-            auto vol_hex = converter.exec( vis.world(), field, CellType::Hexahedra );
-            auto vol_pri = converter.exec( vis.world(), field, CellType::Prism );
-            auto vol_pyr = converter.exec( vis.world(), field, CellType::Pyramid );
-
-            vol_tet.setName("Tet");
-            vol_hex.setName("Hex");
-            vol_pri.setName("Pri");
-            vol_pyr.setName("Pyr");
-
-            //vol_tet->print( vis.log() << std::endl );
-            //vol_hex->print( vis.log() << std::endl );
-            //vol_pri->print( vis.log() << std::endl );
-            //vol_pyr->print( vis.log() << std::endl );
-
-            vol_tet.setMinMaxValues( min_value, max_value );
-            vol_hex.setMinMaxValues( min_value, max_value );
-            vol_pri.setMinMaxValues( min_value, max_value );
-            vol_pyr.setMinMaxValues( min_value, max_value );
-
-            // Execute visualization pipeline and rendering
-            vis.put( vol_tet );
-            vis.put( vol_hex );
-            vis.put( vol_pri );
-            vis.put( vol_pyr );
-            vis.exec( runTime.timeIndex() );
-
-//            delete vol_tet;
-//            delete vol_hex;
-//            delete vol_pri;
-//            delete vol_pyr;
-        }
-//        timer.stop(); // end vis.
+        vis.put( vol_tet );
+        vis.put( vol_hex );
+        vis.put( vol_pri );
+        vis.put( vol_pyr );
+        vis.exec( runTime.timeIndex() );
         vis.visTimer().stamp();
 
-//        const auto tv = timer.sec();
         const auto tv = vis.visTimer().last();
         const auto Tv = kvs::String::From( tv, 4 );
         vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
