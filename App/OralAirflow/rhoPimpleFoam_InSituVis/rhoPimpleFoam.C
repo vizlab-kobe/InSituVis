@@ -47,6 +47,8 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
@@ -71,6 +73,8 @@ int main(int argc, char *argv[])
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
         vis.world().abort();
     }
+
+//    std::signal( SIGTERM, [](int){ std::cerr << "SIGTERM" << std::endl; } );
 #endif // IN_SITU_VIS
 
 #if defined( IN_SITU_VIS )
@@ -104,7 +108,8 @@ int main(int argc, char *argv[])
         vis.log() << indent << "T: " << current_time << std::endl;
         vis.log() << indent << "End T: " << end_time << std::endl;
         vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
-        timer.start(); // begin sim.
+//        timer.start(); // begin sim.
+        vis.simTimer().start();
 #endif // IN_SITU_VIS
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
@@ -135,14 +140,17 @@ int main(int argc, char *argv[])
         runTime.write();
 
 #if defined( IN_SITU_VIS )
-        timer.stop(); // end sim.
-        const auto ts = timer.sec();
+//        timer.stop(); // end sim.
+        vis.simTimer().stamp();
+//        const auto ts = timer.sec();
+        const auto ts = vis.simTimer().last();
         const auto Ts = kvs::String::From( ts, 4 );
         vis.log() << indent << "Processing Times:" << std::endl;
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
 
         // Execute in-situ visualization process
-        timer.start(); // begin vis.
+//        timer.start(); // begin vis.
+        vis.visTimer().start();
         {
             // p: pressure
             auto& field = p;
@@ -193,9 +201,11 @@ int main(int argc, char *argv[])
 //            delete vol_pri;
 //            delete vol_pyr;
         }
-        timer.stop(); // end vis.
+//        timer.stop(); // end vis.
+        vis.visTimer().stamp();
 
-        const auto tv = timer.sec();
+//        const auto tv = timer.sec();
+        const auto tv = vis.visTimer().last();
         const auto Tv = kvs::String::From( tv, 4 );
         vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
 
