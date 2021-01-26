@@ -6,6 +6,7 @@
 /*****************************************************************************/
 #pragma once
 #include <functional>
+#include <csignal>
 #include <kvs/OffScreen>
 #include <kvs/UnstructuredVolumeObject>
 #include <kvs/ColorImage>
@@ -23,12 +24,21 @@
 #include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
 #include "SphericalBuffer.h"
+#include "StampTimer.h"
+#include "StampTimerTable.h"
 
 #if defined( KVS_SUPPORT_MPI )
 #include <kvs/mpi/Communicator>
 #include <kvs/mpi/LogStream>
 #include <kvs/mpi/ImageCompositor>
 #endif
+
+
+namespace
+{
+std::function<void(int)> Dump;
+void SigTerm( int sig ) { Dump( sig ); }
+}
 
 
 namespace InSituVis
@@ -61,6 +71,10 @@ private:
     kvs::UInt32 m_current_time_index; ///< current time index
     kvs::UInt32 m_current_space_index; ///< current space index
     kvs::LogStream m_log; ///< log stream
+    float m_pipe_time; ///< pipeline execution time per frame
+    InSituVis::StampTimer m_pipe_timer; ///< timer for pipeline execution process
+    InSituVis::StampTimer m_rend_timer; ///< timer for rendering process
+    InSituVis::StampTimer m_save_timer; ///< timer for image saving process
 
 public:
     Adaptor():
@@ -69,8 +83,12 @@ public:
         m_image_height( 512 ),
         m_enable_output_image( true ),
         m_time_counter( 0 ),
-        m_time_interval( 1 )
+        m_time_interval( 1 ),
+        m_pipe_time( 0.0f )
     {
+        // Set signal function for dumping timers.
+        ::Dump = [&](int) { this->dump(); exit(0); };
+        std::signal( SIGTERM, ::SigTerm );
     }
 
     virtual ~Adaptor() {}
@@ -79,7 +97,6 @@ public:
     size_t imageWidth() const { return m_image_width; }
     size_t imageHeight() const { return m_image_height; }
     bool isOutputImageEnabled() const { return m_enable_output_image; }
-//    std::ostream& log() { return std::cout; }
     std::ostream& log() { return m_log(); }
     std::ostream& log( const bool enable ) { return m_log( enable ); }
     Screen& screen() { return m_screen; }
@@ -138,44 +155,82 @@ public:
 
     virtual bool finalize()
     {
-        return true;
+        return this->dump();
     }
 
     virtual void put( const Volume& volume )
     {
+        kvs::Timer timer( kvs::Timer::Start );
         if ( this->canVisualize() )
         {
-            if ( volume.numberOfCells() == 0 ) return;
-            m_pipeline( m_screen, volume );
+            if ( volume.numberOfCells() > 0 )
+            {
+                m_pipeline( m_screen, volume );
+            }
         }
+        timer.stop();
+        m_pipe_time += m_pipe_timer.time( timer );
     }
 
     virtual void exec( const kvs::UInt32 time_index )
     {
         this->setCurrentTimeIndex( time_index );
 
+        m_pipe_timer.stamp( m_pipe_time );
+        m_pipe_time = 0.0f;
+
+        float rend_time = 0.0f;
+        float save_time = 0.0f;
         if ( this->canVisualize() )
         {
+            kvs::Timer timer_rend;
+            kvs::Timer timer_save;
             const auto npoints = m_viewpoint.numberOfPoints();
             for ( size_t i = 0; i < npoints; ++i )
             {
                 this->setCurrentSpaceIndex( i );
 
                 // Draw and readback framebuffer
+                timer_rend.start();
                 const auto& point = m_viewpoint.point( i );
                 auto color_buffer = this->readback( point );
+                timer_rend.stop();
+                rend_time += m_rend_timer.time( timer_rend );
 
                 // Output framebuffer to image file
+                timer_save.start();
                 if ( m_enable_output_image )
                 {
                     const auto image_size = this->outputImageSize( point );
                     kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
                     image.write( this->outputImageName() );
                 }
+                timer_save.stop();
+                save_time += m_save_timer.time( timer_save );
             }
         }
+        m_rend_timer.stamp( rend_time );
+        m_save_timer.stamp( save_time );
 
         this->incrementTimeCounter();
+    }
+
+    InSituVis::StampTimer& pipeTimer() { return m_pipe_timer; }
+    InSituVis::StampTimer& rendTimer() { return m_rend_timer; }
+    InSituVis::StampTimer& saveTimer() { return m_save_timer; }
+
+    virtual bool dump()
+    {
+        if ( m_pipe_timer.title().empty() ) { m_pipe_timer.setTitle( "Pipe time" ); }
+        if ( m_rend_timer.title().empty() ) { m_rend_timer.setTitle( "Rend time" ); }
+        if ( m_save_timer.title().empty() ) { m_save_timer.setTitle( "Save time" ); }
+
+        const auto dir = m_output_directory.name() + "/";
+        InSituVis::StampTimerTable timer_table;
+        timer_table.push( m_pipe_timer );
+        timer_table.push( m_rend_timer );
+        timer_table.push( m_save_timer );
+        return timer_table.write( dir + "vis_proc_time" + ".csv" );
     }
 
 protected:
@@ -186,6 +241,9 @@ protected:
     void incrementTimeCounter() { m_time_counter++; }
     void decrementTimeCounter() { m_time_counter--; }
     bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
+
+    float pipeTime() const { return m_pipe_time; }
+    void setPipeTime( const float time ) { m_pipe_time = time; }
 
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const
     {
@@ -354,6 +412,9 @@ private:
     bool m_enable_output_subimage; ///< flag for writing sub-volume rendering image
     bool m_enable_output_subimage_depth; ///< flag for writing sub-volume rendering image (depth image)
     bool m_enable_output_subimage_alpha; ///< flag for writing sub-volume rendering image (alpha image)
+    float m_rend_time; ///< rendering time per frame
+    float m_comp_time; ///< image composition time per frame
+    InSituVis::mpi::StampTimer m_comp_timer; ///< timer for image composition process
 
 public:
     Adaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -363,7 +424,10 @@ public:
         m_compositor( m_world ),
         m_enable_output_subimage( false ),
         m_enable_output_subimage_depth( false ),
-        m_enable_output_subimage_alpha( false )
+        m_enable_output_subimage_alpha( false ),
+        m_rend_time( 0.0f ),
+        m_comp_time( 0.0f ),
+        m_comp_timer( m_world )
     {
     }
 
@@ -408,15 +472,26 @@ public:
 
     virtual bool finalize()
     {
-        return m_compositor.destroy();
+        if ( m_compositor.destroy() )
+        {
+            return BaseClass::finalize();
+        }
+        return false;
     }
 
     virtual void exec( const kvs::UInt32 time_index )
     {
         BaseClass::setCurrentTimeIndex( time_index );
 
+        BaseClass::pipeTimer().stamp( BaseClass::pipeTime() );
+        BaseClass::setPipeTime( 0.0f );
+
+        m_rend_time = 0.0f;
+        m_comp_time = 0.0f;
+        float save_time = 0.0f;
         if ( BaseClass::canVisualize() )
         {
+            kvs::Timer timer_save;
             const auto npoints = BaseClass::viewpoint().numberOfPoints();
             for ( size_t i = 0; i < npoints; ++i )
             {
@@ -427,6 +502,7 @@ public:
                 auto frame_buffer = this->readback( point );
 
                 // Output framebuffer to image file
+                timer_save.start();
                 if ( m_world.rank() == m_world.root() )
                 {
                     if ( BaseClass::isOutputImageEnabled() )
@@ -436,9 +512,82 @@ public:
                         image.write( this->outputFinalImageName() );
                     }
                 }
+                timer_save.stop();
+                save_time += BaseClass::saveTimer().time( timer_save );
             }
         }
+        BaseClass::saveTimer().stamp( save_time );
+        BaseClass::rendTimer().stamp( m_rend_time );
+        m_comp_timer.stamp( m_comp_time );
+
         BaseClass::incrementTimeCounter();
+    }
+
+    virtual bool dump()
+    {
+        auto& pipe_timer = BaseClass::pipeTimer();
+        auto& rend_timer = BaseClass::rendTimer();
+        auto& save_timer = BaseClass::saveTimer();
+        auto& comp_timer = m_comp_timer;
+        if ( pipe_timer.title().empty() ) { pipe_timer.setTitle( "Pipe time" ); }
+        if ( rend_timer.title().empty() ) { rend_timer.setTitle( "Rend time" ); }
+        if ( save_timer.title().empty() ) { save_timer.setTitle( "Save time" ); }
+        if ( comp_timer.title().empty() ) { comp_timer.setTitle( "Comp time" ); }
+
+        const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
+        const std::string subdir = BaseClass::outputDirectory().name() + "/";
+        InSituVis::StampTimerTable timer_table;
+        timer_table.push( pipe_timer );
+        timer_table.push( rend_timer );
+        timer_table.push( save_timer );
+        timer_table.push( comp_timer );
+        if ( !timer_table.write( subdir + "vis_proc_time_" + rank + ".csv" ) ) return false;
+
+        using Time = InSituVis::mpi::StampTimer;
+        Time pipe_time_min( this->world(), pipe_timer ); pipe_time_min.reduceMin();
+        Time pipe_time_max( this->world(), pipe_timer ); pipe_time_max.reduceMax();
+        Time pipe_time_ave( this->world(), pipe_timer ); pipe_time_ave.reduceAve();
+        Time rend_time_min( this->world(), rend_timer ); rend_time_min.reduceMin();
+        Time rend_time_max( this->world(), rend_timer ); rend_time_max.reduceMax();
+        Time rend_time_ave( this->world(), rend_timer ); rend_time_ave.reduceAve();
+        Time save_time_min( this->world(), save_timer ); save_time_min.reduceMin();
+        Time save_time_max( this->world(), save_timer ); save_time_max.reduceMax();
+        Time save_time_ave( this->world(), save_timer ); save_time_ave.reduceAve();
+        Time comp_time_min( this->world(), comp_timer ); comp_time_min.reduceMin();
+        Time comp_time_max( this->world(), comp_timer ); comp_time_max.reduceMax();
+        Time comp_time_ave( this->world(), comp_timer ); comp_time_ave.reduceAve();
+
+        if ( !this->world().isRoot() ) return true;
+
+        pipe_time_min.setTitle( pipe_timer.title() + " (min)" );
+        pipe_time_max.setTitle( pipe_timer.title() + " (max)" );
+        pipe_time_ave.setTitle( pipe_timer.title() + " (ave)" );
+        rend_time_min.setTitle( rend_timer.title() + " (min)" );
+        rend_time_max.setTitle( rend_timer.title() + " (max)" );
+        rend_time_ave.setTitle( rend_timer.title() + " (ave)" );
+        save_time_min.setTitle( save_timer.title() + " (min)" );
+        save_time_max.setTitle( save_timer.title() + " (max)" );
+        save_time_ave.setTitle( save_timer.title() + " (ave)" );
+        comp_time_min.setTitle( comp_timer.title() + " (min)" );
+        comp_time_max.setTitle( comp_timer.title() + " (max)" );
+        comp_time_ave.setTitle( comp_timer.title() + " (ave)" );
+
+        timer_table.clear();
+        timer_table.push( pipe_time_min );
+        timer_table.push( pipe_time_max );
+        timer_table.push( pipe_time_ave );
+        timer_table.push( rend_time_min );
+        timer_table.push( rend_time_max );
+        timer_table.push( rend_time_ave );
+        timer_table.push( save_time_min );
+        timer_table.push( save_time_max );
+        timer_table.push( save_time_ave );
+        timer_table.push( comp_time_min );
+        timer_table.push( comp_time_max );
+        timer_table.push( comp_time_ave );
+
+        const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
+        return timer_table.write( basedir + "vis_proc_time.csv" );
     }
 
 private:
@@ -503,17 +652,25 @@ private:
     {
         FrameBuffer frame_buffer;
 
+        kvs::Timer timer_rend;
+        kvs::Timer timer_comp;
+
         const auto* camera = BaseClass::screen().scene()->camera();
         const auto* light = BaseClass::screen().scene()->light();
 
         const auto lookat = camera->lookAt();
         if ( lookat == position )
         {
+            timer_rend.start();
             frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
             frame_buffer.depth_buffer = this->backgroundDepthBuffer();
+            timer_rend.stop();
+            m_rend_time += BaseClass::rendTimer().time( timer_rend );
         }
         else
         {
+            timer_rend.start();
+
             // Backup camera and light info.
             const auto cp = camera->position();
             const auto cu = camera->upVector();
@@ -544,6 +701,9 @@ private:
 //            BaseClass::screen().scene()->camera()->setPosition( cp, lookat, cu );
 //            BaseClass::screen().scene()->light()->setPosition( lp );
 
+            timer_rend.stop();
+            m_rend_time += BaseClass::rendTimer().time( timer_rend );
+
             // Output rendering image (partial rendering image)
             if ( m_enable_output_subimage )
             {
@@ -569,10 +729,13 @@ private:
             }
 
             // Image composition
+            timer_comp.start();
             if ( !m_compositor.run( color_buffer, depth_buffer ) )
             {
                 this->log() << "ERROR: " << "Cannot compose images." << std::endl;
             }
+            timer_comp.stop();
+            m_comp_time += m_comp_timer.time( timer_comp );
 
             frame_buffer.color_buffer = color_buffer;
             frame_buffer.depth_buffer = depth_buffer;
@@ -585,6 +748,9 @@ private:
     {
         using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
         using SphericalDepthBuffer = InSituVis::SphericalBuffer<kvs::Real32>;
+
+        kvs::Timer timer_rend;
+        kvs::Timer timer_comp;
 
         // Color and depth buffers.
         SphericalColorBuffer color_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
@@ -605,9 +771,14 @@ private:
             BaseClass::screen().scene()->camera()->setFieldOfView( 90.0 );
             BaseClass::screen().scene()->camera()->setFront( 0.1 );
 
+            float rend_time = 0.0f;
+            float comp_time = 0.0f;
+
             const auto& p = position;
             for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
             {
+                timer_rend.start();
+
                 const auto d = SphericalColorBuffer::Direction(i);
                 const auto dir = SphericalColorBuffer::DirectionVector(d);
                 const auto up = SphericalColorBuffer::UpVector(d);
@@ -616,6 +787,9 @@ private:
 
                 auto cbuffer = BaseClass::screen().readbackColorBuffer();
                 auto dbuffer = BaseClass::screen().readbackDepthBuffer();
+
+                timer_rend.stop();
+                rend_time += BaseClass::rendTimer().time( timer_rend );
 
                 // Output rendering image (partial rendering image) for each direction
                 if ( m_enable_output_subimage )
@@ -643,14 +817,20 @@ private:
                 }
 
                 // Image composition
+                timer_comp.start();
                 if ( !m_compositor.run( cbuffer, dbuffer ) )
                 {
                     this->log() << "ERROR: " << "Cannot compose images." << std::endl;
                 }
+                timer_comp.stop();
+                comp_time += m_comp_timer.time( timer_comp );
 
                 color_buffer.setBuffer( d, cbuffer );
                 depth_buffer.setBuffer( d, dbuffer );
             }
+
+            m_rend_time = rend_time;
+            m_comp_time = comp_time;
         }
         // Restore camera and light info.
         BaseClass::screen().scene()->camera()->setFieldOfView( fov );

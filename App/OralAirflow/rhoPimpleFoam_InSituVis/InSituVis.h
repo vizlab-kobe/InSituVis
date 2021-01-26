@@ -11,15 +11,7 @@
 #include <InSituVis/Lib/DistributedViewpoint.h>
 #include <InSituVis/Lib/StampTimer.h>
 #include <InSituVis/Lib/StampTimerTable.h>
-#include <csignal>
-#include <functional>
 
-
-namespace
-{
-std::function<void(int)> Dump;
-void SigTerm( int sig ) { Dump( sig ); }
-}
 
 namespace local
 {
@@ -65,10 +57,6 @@ public:
         this->setViewpoint( m_viewpoint );
         this->setPipeline( local::InSituVis::OrthoSlice() );
         //this->setPipeline( local::InSituVis::Isosurface() );
-
-        // Set signal function for dumping timers.
-        ::Dump = [&](int) { this->dump(); exit(0); };
-        std::signal( SIGTERM, ::SigTerm );
     }
 
     ::InSituVis::mpi::StampTimer& simTimer() { return m_sim_timer; }
@@ -92,12 +80,6 @@ public:
         BaseClass::exec( time_index );
     }
 
-    bool finalize()
-    {
-        this->dump();
-        return BaseClass::finalize();
-    }
-
     void importBoundaryMesh( const std::string& filename )
     {
         if ( BaseClass::world().rank() == BaseClass::world().root () )
@@ -107,8 +89,10 @@ public:
     }
 
 private:
-    void dump()
+    virtual bool dump()
     {
+        if ( !BaseClass::dump() ) return false;
+
         // For each node
         m_sim_timer.setTitle( "Sim time" );
         m_imp_timer.setTitle( "Imp time" );
@@ -120,8 +104,7 @@ private:
         timer_table.push( m_sim_timer );
         timer_table.push( m_imp_timer );
         timer_table.push( m_vis_timer );
-        timer_table.write( subdir + "proc_time_" + rank + ".csv" );
-        timer_table.clear();
+        if ( !timer_table.write( subdir + "proc_time_" + rank + ".csv" ) ) return false;
 
         // For root node
         auto sim_time_min = m_sim_timer; sim_time_min.reduceMin();
@@ -133,30 +116,32 @@ private:
         auto vis_time_min = m_vis_timer; vis_time_min.reduceMin();
         auto vis_time_max = m_vis_timer; vis_time_max.reduceMax();
         auto vis_time_ave = m_vis_timer; vis_time_ave.reduceAve();
-        if ( this->world().isRoot() )
-        {
-            sim_time_min.setTitle( "Sim time (min)" );
-            sim_time_max.setTitle( "Sim time (max)" );
-            sim_time_ave.setTitle( "Sim time (ave)" );
-            imp_time_min.setTitle( "Imp time (min)" );
-            imp_time_max.setTitle( "Imp time (max)" );
-            imp_time_ave.setTitle( "Imp time (ave)" );
-            vis_time_min.setTitle( "Vis time (min)" );
-            vis_time_max.setTitle( "Vis time (max)" );
-            vis_time_ave.setTitle( "Vis time (ave)" );
 
-            const std::string basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-            timer_table.push( sim_time_min );
-            timer_table.push( sim_time_max );
-            timer_table.push( sim_time_ave );
-            timer_table.push( imp_time_min );
-            timer_table.push( imp_time_max );
-            timer_table.push( imp_time_ave );
-            timer_table.push( vis_time_min );
-            timer_table.push( vis_time_max );
-            timer_table.push( vis_time_ave );
-            timer_table.write( basedir + "proc_time.csv" );
-        }
+        if ( !this->world().isRoot() ) return true;
+
+        sim_time_min.setTitle( "Sim time (min)" );
+        sim_time_max.setTitle( "Sim time (max)" );
+        sim_time_ave.setTitle( "Sim time (ave)" );
+        imp_time_min.setTitle( "Imp time (min)" );
+        imp_time_max.setTitle( "Imp time (max)" );
+        imp_time_ave.setTitle( "Imp time (ave)" );
+        vis_time_min.setTitle( "Vis time (min)" );
+        vis_time_max.setTitle( "Vis time (max)" );
+        vis_time_ave.setTitle( "Vis time (ave)" );
+
+        timer_table.clear();
+        timer_table.push( sim_time_min );
+        timer_table.push( sim_time_max );
+        timer_table.push( sim_time_ave );
+        timer_table.push( imp_time_min );
+        timer_table.push( imp_time_max );
+        timer_table.push( imp_time_ave );
+        timer_table.push( vis_time_min );
+        timer_table.push( vis_time_max );
+        timer_table.push( vis_time_ave );
+
+        const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
+        return timer_table.write( basedir + "proc_time.csv" );
     }
 };
 

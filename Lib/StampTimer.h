@@ -27,6 +27,7 @@ private:
 
 public:
     StampTimer() = default;
+    StampTimer( const StampTimer& ) = default;
     StampTimer( const std::string& title ): m_title( title ) {}
 
     void start()
@@ -37,7 +38,17 @@ public:
     void stamp()
     {
         m_timer.stop();
-        m_times.push_back( this->time() );
+        this->stamp( this->time() );
+    }
+
+    void stamp( const kvs::Timer& timer )
+    {
+        this->stamp( this->time( timer ) );
+    }
+
+    void stamp( const float time )
+    {
+        m_times.push_back( time );
     }
 
     void setTitle( const std::string& title )
@@ -63,6 +74,24 @@ public:
     const Times& times() const
     {
         return m_times;
+    }
+
+    float time() const
+    {
+        return this->time( m_timer );
+    }
+
+    float time( const kvs::Timer& timer ) const
+    {
+        switch ( m_unit )
+        {
+        case Unit::Sec: return static_cast<float>( timer.sec() );
+        case Unit::MSec: return static_cast<float>( timer.msec() );
+        case Unit::USec: return static_cast<float>( timer.usec() );
+        case Unit::Fps: return static_cast<float>( timer.fps() );
+        default: break;
+        }
+        return 0.0f;
     }
 
     size_t numberOfStamps() const
@@ -91,19 +120,6 @@ public:
 
 protected:
     Times& times() { return m_times; }
-
-    float time() const
-    {
-        switch ( m_unit )
-        {
-        case Unit::Sec: return static_cast<float>( m_timer.sec() );
-        case Unit::MSec: return static_cast<float>( m_timer.msec() );
-        case Unit::USec: return static_cast<float>( m_timer.usec() );
-        case Unit::Fps: return static_cast<float>( m_timer.fps() );
-        default: break;
-        }
-        return 0.0f;
-    }
 };
 
 #if defined( KVS_SUPPORT_MPI )
@@ -120,6 +136,9 @@ private:
 
 public:
     StampTimer( kvs::mpi::Communicator& comm ): m_comm( comm ) {}
+    StampTimer( kvs::mpi::Communicator& comm, const InSituVis::StampTimer& timer ):
+        InSituVis::StampTimer( timer ),
+        m_comm( comm ) {}
     StampTimer( kvs::mpi::Communicator& comm, const std::string& title ):
         InSituVis::StampTimer( title ),
         m_comm( comm ) {}
