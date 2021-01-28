@@ -20,17 +20,20 @@
 #include <kvs/ObjectManager>
 #include <kvs/Coordinate>
 #include <kvs/LogStream>
+#include <kvs/StampTimer>
+#include <kvs/StampTimerList>
 #include "Viewpoint.h"
 #include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
 #include "SphericalBuffer.h"
-#include "StampTimer.h"
-#include "StampTimerTable.h"
+//#include "StampTimer.h"
+//#include "StampTimerTable.h"
 
 #if defined( KVS_SUPPORT_MPI )
 #include <kvs/mpi/Communicator>
 #include <kvs/mpi/LogStream>
 #include <kvs/mpi/ImageCompositor>
+#include <kvs/mpi/StampTimer>
 #endif
 
 
@@ -72,9 +75,9 @@ private:
     kvs::UInt32 m_current_space_index; ///< current space index
     kvs::LogStream m_log; ///< log stream
     float m_pipe_time; ///< pipeline execution time per frame
-    InSituVis::StampTimer m_pipe_timer; ///< timer for pipeline execution process
-    InSituVis::StampTimer m_rend_timer; ///< timer for rendering process
-    InSituVis::StampTimer m_save_timer; ///< timer for image saving process
+    kvs::StampTimer m_pipe_timer; ///< timer for pipeline execution process
+    kvs::StampTimer m_rend_timer; ///< timer for rendering process
+    kvs::StampTimer m_save_timer; ///< timer for image saving process
 
 public:
     Adaptor():
@@ -215,9 +218,9 @@ public:
         this->incrementTimeCounter();
     }
 
-    InSituVis::StampTimer& pipeTimer() { return m_pipe_timer; }
-    InSituVis::StampTimer& rendTimer() { return m_rend_timer; }
-    InSituVis::StampTimer& saveTimer() { return m_save_timer; }
+    kvs::StampTimer& pipeTimer() { return m_pipe_timer; }
+    kvs::StampTimer& rendTimer() { return m_rend_timer; }
+    kvs::StampTimer& saveTimer() { return m_save_timer; }
 
     virtual bool dump()
     {
@@ -226,11 +229,11 @@ public:
         if ( m_save_timer.title().empty() ) { m_save_timer.setTitle( "Save time" ); }
 
         const auto dir = m_output_directory.name() + "/";
-        InSituVis::StampTimerTable timer_table;
-        timer_table.push( m_pipe_timer );
-        timer_table.push( m_rend_timer );
-        timer_table.push( m_save_timer );
-        return timer_table.write( dir + "vis_proc_time" + ".csv" );
+        kvs::StampTimerList timer_list;
+        timer_list.push( m_pipe_timer );
+        timer_list.push( m_rend_timer );
+        timer_list.push( m_save_timer );
+        return timer_list.write( dir + "vis_proc_time" + ".csv" );
     }
 
 protected:
@@ -414,7 +417,7 @@ private:
     bool m_enable_output_subimage_alpha; ///< flag for writing sub-volume rendering image (alpha image)
     float m_rend_time; ///< rendering time per frame
     float m_comp_time; ///< image composition time per frame
-    InSituVis::mpi::StampTimer m_comp_timer; ///< timer for image composition process
+    kvs::mpi::StampTimer m_comp_timer; ///< timer for image composition process
 
 public:
     Adaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -536,14 +539,14 @@ public:
 
         const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
         const std::string subdir = BaseClass::outputDirectory().name() + "/";
-        InSituVis::StampTimerTable timer_table;
-        timer_table.push( pipe_timer );
-        timer_table.push( rend_timer );
-        timer_table.push( save_timer );
-        timer_table.push( comp_timer );
-        if ( !timer_table.write( subdir + "vis_proc_time_" + rank + ".csv" ) ) return false;
+        kvs::StampTimerList timer_list;
+        timer_list.push( pipe_timer );
+        timer_list.push( rend_timer );
+        timer_list.push( save_timer );
+        timer_list.push( comp_timer );
+        if ( !timer_list.write( subdir + "vis_proc_time_" + rank + ".csv" ) ) return false;
 
-        using Time = InSituVis::mpi::StampTimer;
+        using Time = kvs::mpi::StampTimer;
         Time pipe_time_min( this->world(), pipe_timer ); pipe_time_min.reduceMin();
         Time pipe_time_max( this->world(), pipe_timer ); pipe_time_max.reduceMax();
         Time pipe_time_ave( this->world(), pipe_timer ); pipe_time_ave.reduceAve();
@@ -572,22 +575,22 @@ public:
         comp_time_max.setTitle( comp_timer.title() + " (max)" );
         comp_time_ave.setTitle( comp_timer.title() + " (ave)" );
 
-        timer_table.clear();
-        timer_table.push( pipe_time_min );
-        timer_table.push( pipe_time_max );
-        timer_table.push( pipe_time_ave );
-        timer_table.push( rend_time_min );
-        timer_table.push( rend_time_max );
-        timer_table.push( rend_time_ave );
-        timer_table.push( save_time_min );
-        timer_table.push( save_time_max );
-        timer_table.push( save_time_ave );
-        timer_table.push( comp_time_min );
-        timer_table.push( comp_time_max );
-        timer_table.push( comp_time_ave );
+        timer_list.clear();
+        timer_list.push( pipe_time_min );
+        timer_list.push( pipe_time_max );
+        timer_list.push( pipe_time_ave );
+        timer_list.push( rend_time_min );
+        timer_list.push( rend_time_max );
+        timer_list.push( rend_time_ave );
+        timer_list.push( save_time_min );
+        timer_list.push( save_time_max );
+        timer_list.push( save_time_ave );
+        timer_list.push( comp_time_min );
+        timer_list.push( comp_time_max );
+        timer_list.push( comp_time_ave );
 
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-        return timer_table.write( basedir + "vis_proc_time.csv" );
+        return timer_list.write( basedir + "vis_proc_time.csv" );
     }
 
 private:

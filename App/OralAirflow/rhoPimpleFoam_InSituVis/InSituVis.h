@@ -6,11 +6,14 @@
 #include <kvs/PolygonImporter>
 #include <kvs/Bounds>
 #include <kvs/String>
+#include <kvs/StampTimer>
+#include <kvs/StampTimerList>
+#include <kvs/mpi/StampTimer>
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
-#include <InSituVis/Lib/StampTimer.h>
-#include <InSituVis/Lib/StampTimerTable.h>
+//#include <InSituVis/Lib/StampTimer.h>
+//#include <InSituVis/Lib/StampTimerTable.h>
 
 
 namespace local
@@ -31,9 +34,9 @@ public:
 private:
     Viewpoint m_viewpoint; ///< viewpoint
     Polygon m_boundary_mesh; ///< boundary mesh
-    ::InSituVis::mpi::StampTimer m_sim_timer; ///< timer for simulation process
-    ::InSituVis::mpi::StampTimer m_imp_timer; ///< timer for imporing process
-    ::InSituVis::mpi::StampTimer m_vis_timer; ///< timer for visualization process
+    kvs::mpi::StampTimer m_sim_timer; ///< timer for simulation process
+    kvs::mpi::StampTimer m_imp_timer; ///< timer for imporing process
+    kvs::mpi::StampTimer m_vis_timer; ///< timer for visualization process
 
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
@@ -53,15 +56,15 @@ public:
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
-         this->setTimeInterval( 5 );
+        this->setTimeInterval( 5 );
         this->setViewpoint( m_viewpoint );
         this->setPipeline( local::InSituVis::OrthoSlice() );
         //this->setPipeline( local::InSituVis::Isosurface() );
     }
 
-    ::InSituVis::mpi::StampTimer& simTimer() { return m_sim_timer; }
-    ::InSituVis::mpi::StampTimer& impTimer() { return m_imp_timer; }
-    ::InSituVis::mpi::StampTimer& visTimer() { return m_vis_timer; }
+    kvs::mpi::StampTimer& simTimer() { return m_sim_timer; }
+    kvs::mpi::StampTimer& impTimer() { return m_imp_timer; }
+    kvs::mpi::StampTimer& visTimer() { return m_vis_timer; }
 
     void exec( const kvs::UInt32 time_index )
     {
@@ -100,11 +103,11 @@ private:
 
         const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
         const std::string subdir = BaseClass::outputDirectory().name() + "/";
-        ::InSituVis::StampTimerTable timer_table;
-        timer_table.push( m_sim_timer );
-        timer_table.push( m_imp_timer );
-        timer_table.push( m_vis_timer );
-        if ( !timer_table.write( subdir + "proc_time_" + rank + ".csv" ) ) return false;
+        kvs::StampTimerList timer_list;
+        timer_list.push( m_sim_timer );
+        timer_list.push( m_imp_timer );
+        timer_list.push( m_vis_timer );
+        if ( !timer_list.write( subdir + "proc_time_" + rank + ".csv" ) ) return false;
 
         // For root node
         auto sim_time_min = m_sim_timer; sim_time_min.reduceMin();
@@ -129,19 +132,19 @@ private:
         vis_time_max.setTitle( "Vis time (max)" );
         vis_time_ave.setTitle( "Vis time (ave)" );
 
-        timer_table.clear();
-        timer_table.push( sim_time_min );
-        timer_table.push( sim_time_max );
-        timer_table.push( sim_time_ave );
-        timer_table.push( imp_time_min );
-        timer_table.push( imp_time_max );
-        timer_table.push( imp_time_ave );
-        timer_table.push( vis_time_min );
-        timer_table.push( vis_time_max );
-        timer_table.push( vis_time_ave );
+        timer_list.clear();
+        timer_list.push( sim_time_min );
+        timer_list.push( sim_time_max );
+        timer_list.push( sim_time_ave );
+        timer_list.push( imp_time_min );
+        timer_list.push( imp_time_max );
+        timer_list.push( imp_time_ave );
+        timer_list.push( vis_time_min );
+        timer_list.push( vis_time_max );
+        timer_list.push( vis_time_ave );
 
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-        return timer_table.write( basedir + "proc_time.csv" );
+        return timer_list.write( basedir + "proc_time.csv" );
     }
 };
 

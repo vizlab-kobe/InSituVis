@@ -1,4 +1,15 @@
 #pragma once
+#include <kvs/StampTimer>
+namespace InSituVis { using StampTimer = kvs::StampTimer; }
+
+#if defined( KVS_SUPPORT_MPI )
+#include <kvs/mpi/StampTimer>
+namespace InSituVis { namespace mpi { using StampTimer = kvs::mpi::StampTimer; } }
+#endif
+
+
+
+#if 0
 #include <kvs/Timer>
 #include <vector>
 #include <string>
@@ -174,3 +185,4 @@ public:
 #endif
 
 } // end of namespace InSituVis
+#endif
