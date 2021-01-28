@@ -12,8 +12,6 @@
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
-//#include <InSituVis/Lib/StampTimer.h>
-//#include <InSituVis/Lib/StampTimerTable.h>
 
 
 namespace local

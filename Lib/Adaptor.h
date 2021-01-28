@@ -26,8 +26,6 @@
 #include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
 #include "SphericalBuffer.h"
-//#include "StampTimer.h"
-//#include "StampTimerTable.h"
 
 #if defined( KVS_SUPPORT_MPI )
 #include <kvs/mpi/Communicator>
