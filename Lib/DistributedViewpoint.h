@@ -137,19 +137,19 @@ private:
 
     kvs::Vec3 index_to_rtp( const size_t index ) const
     {
-        const size_t dt = kvs::Math::pi / (m_dims[0] + m_dims[2] - 2.0 );
-        const size_t dp = kvs::Math::pi / (m_dims[1] + 2.0 );
+        const float dt = kvs::Math::pi / (m_dims[0] + m_dims[2] - 2.0f );
+        const float dp = kvs::Math::pi / (m_dims[1] + 2.0f );
         const size_t wt = index % ( m_dims[0] * m_dims[2] );
         const size_t wp = int( index / ( m_dims[0] * m_dims[2] ));
 
-        const size_t r = ( m_max_coord[0] - m_min_coord[0] ) / 2.0f; // TODO min?
-        const size_t t = wt * dt + kvs::Math::pi;
-        const size_t p = kvs::Math::pi - (wp + 1.) * dp;
+        const float r = ( m_max_coord[0] - m_min_coord[0] ) / 2.0f; // TODO min?
+        const float t = wt * dt + kvs::Math::pi;
+        const float p = kvs::Math::pi - (wp + 1.) * dp;
 
         if (wt == 0)
         {
-            const size_t p0 = kvs::Math::pi * (float(m_dims[1] - wp) / m_dims[1]);
-            const size_t r0 = r * std::cos( p0 );
+            const float p0 = kvs::Math::pi * (float(m_dims[1] - 2.0f) / (m_dims[1] - 1.0f)) * wp;
+            const float r0 = r * std::cos( p0 );
             return kvs::Vec3( r0, 0, 0 );
         }
         return kvs::Vec3( r, t, p );
@@ -164,6 +164,7 @@ private:
         const float sin_phi = std::sin( phi );
         const float cos_theta = std::cos( theta );
         const float cos_phi = std::cos( phi );
+        
         return kvs::Vec3( r * sin_theta * sin_phi, r * cos_theta, r * sin_theta * cos_phi );
     }
 };
