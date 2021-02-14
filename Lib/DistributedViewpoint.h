@@ -144,8 +144,8 @@ private:
         const size_t wp = index % ( m_dims[0] * m_dims[2] );
 
         const float r = ( m_max_coord[0] - m_min_coord[0] ) / 2.0f; // TODO min?
-        const float t = wt * dt * kvs::Math::phi;
-        const float p = wp * dp * kvs::Math::phi;
+        const float t = wt * dt * kvs::Math::pi;
+        const float p = wp * dp * kvs::Math::pi;
 
         // if (wt == 0)
         // {
