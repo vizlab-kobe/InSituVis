@@ -137,7 +137,7 @@ private:
 
     kvs::Vec3 index_to_rtp( const size_t index ) const
     {
-        const float dt = 1.0f / m_dims[1];
+        const float dt = 1.0f / (m_dims[1] - 1);
         const size_t wt = (m_dims[1] - 1) - index / ( m_dims[0] * m_dims[2] );
 
         const float dp = 1.0f / (m_dims[0] + m_dims[2] - 2.0f );
@@ -153,6 +153,8 @@ private:
         //     const float r0 = r * std::cos( p0 );
         //     return kvs::Vec3( r0, 0, 0 );
         // }
+
+        if (wp == 0 && wt == (m_dims[1] - 1) / 2) return kvs::Vec3( 0, 0, 0 )
         return kvs::Vec3( r, t, p );
     }
 
