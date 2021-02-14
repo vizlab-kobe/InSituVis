@@ -154,8 +154,8 @@ private:
         //     return kvs::Vec3( r0, 0, 0 );
         // }
 
-        if (wp == 0 && wt == (m_dims[1] - 1) / 2) return kvs::Vec3( 0, 0, 0 )
-        return kvs::Vec3( r, t, p );
+        const bool isOrigin = (wp == 0 && wt == (m_dims[1] - 1) / 2);
+        return isOrigin ? kvs::Vec3(0, 0, 0) : kvs::Vec3(r, t, p);
     }
 
     kvs::Vec3 rtp_to_xyz( const kvs::Vec3& rtp ) const
