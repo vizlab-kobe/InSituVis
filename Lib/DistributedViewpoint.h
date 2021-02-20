@@ -86,17 +86,36 @@ public:
         BaseClass::clearPoints();
 
         size_t index = 0;
-        for ( size_t k = 0; k < m_dims[2]; ++k )
+
+        switch ( dist_type )
         {
-            for ( size_t j = 0; j < m_dims[1]; ++j )
+        case DistType::CubicDist:
+            for ( size_t k = 0; k < m_dims[2]; ++k )
             {
-                for ( size_t i = 0; i < m_dims[0]; ++i )
+                for ( size_t j = 0; j < m_dims[1]; ++j )
+                {
+                    for ( size_t i = 0; i < m_dims[0]; ++i )
+                    {
+                        const auto point = BaseClass::locator( index );
+                        BaseClass::addPoint( point.position, m_dir_type );
+                        index++;
+                    }
+                }
+            }
+            break;
+        case DistType::SphericalDist:
+            for ( size_t k = 0; k < m_dims[1]; ++k )
+            {
+                for ( size_t j = 0; j < 2 * (m_dims[0] + m_dims[1] - 2); ++j )
                 {
                     const auto point = BaseClass::locator( index );
                     BaseClass::addPoint( point.position, m_dir_type );
                     index++;
                 }
             }
+            break;
+        default:
+            break;
         }
     }
 
@@ -138,10 +157,10 @@ private:
     kvs::Vec3 index_to_rtp( const size_t index ) const
     {
         const float dt = 1.0f / (m_dims[1] - 1);
-        const size_t wt = (m_dims[1] - 1) - index / ( m_dims[0] * m_dims[2] );
+        const size_t wt = (m_dims[1] - 1) - index / (2 * (m_dims[0] + m_dims[1] - 2));
 
         const float dp = 1.0f / (m_dims[0] + m_dims[2] - 2.0f );
-        const size_t wp = index % ( m_dims[0] * m_dims[2] );
+        const size_t wp = index % ( 2 * ( m_dims[0] + m_dims[2] - 2 ));
 
         const float r = ( m_max_coord[0] - m_min_coord[0] ) / 2.0f; // TODO min?
         const float t = wt * dt * kvs::Math::pi;
@@ -154,8 +173,15 @@ private:
         //     return kvs::Vec3( r0, 0, 0 );
         // }
 
-        const bool isOrigin = (wp == 0 && wt == (m_dims[1] - 1) / 2);
-        return isOrigin ? kvs::Vec3(0, 0, 0) : kvs::Vec3(r, t, p);
+        // const bool isOrigin = (wp == 0 && wt == (m_dims[1] - 1) / 2);
+        // return isOrigin ? kvs::Vec3(0, 0, 0) : kvs::Vec3(r, t, p);
+
+        return kvs::Vec3(r, t, p);
+
+        // const size_t rank = std::round( (std::pow(index, 1.0f / 3.0f)) / 2.0f );
+
+        // const float r = rank * ( m_max_coord[0] - m_min_coord[0] ) / ( m_dims[0] - 1.0f );
+
     }
 
     kvs::Vec3 rtp_to_xyz( const kvs::Vec3& rtp ) const
