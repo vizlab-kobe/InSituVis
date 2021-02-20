@@ -87,7 +87,7 @@ public:
 
         size_t index = 0;
 
-        switch ( dist_type )
+        switch ( m_dist_type )
         {
         case DistType::CubicDist:
             for ( size_t k = 0; k < m_dims[2]; ++k )
