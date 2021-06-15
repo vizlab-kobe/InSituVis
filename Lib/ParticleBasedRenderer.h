@@ -65,8 +65,8 @@ public:
     size_t windowWidth() const { return m_width; }
     size_t windowHeight() const { return m_height; }
     size_t repetitionLevel() const { return m_repetition_level; }
-    bool isEnabledLODControl() const { return m_enable_lod; }
-    bool isEnabledRefinement() const { return m_enable_refinement; }
+    bool isLODControlEnabled() const { return m_enable_lod; }
+    bool isRefinementEnabled() const { return m_enable_refinement; }
     void setRepetitionLevel( const size_t repetition_level ) { m_repetition_level = repetition_level; }
     void setEnabledLODControl( const bool enable ) { m_enable_lod = enable; }
     void setEnabledRefinement( const bool enable ) { m_enable_refinement = enable; }
@@ -106,8 +106,8 @@ public:
 public:
     ParticleBasedRenderer();
     ParticleBasedRenderer( const kvs::Mat4& m, const kvs::Mat4& p, const kvs::Vec4& v );
-    bool isEnabledShuffle() const;
-    bool isEnabledZooming() const;
+    bool isShuffleEnabled() const;
+    bool isZoomingEnabled() const;
     void setEnabledShuffle( const bool enable );
     void setEnabledZooming( const bool enable );
     void enableShuffle();
@@ -143,8 +143,8 @@ public:
     void setup( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light );
     void draw( kvs::ObjectBase* object, kvs::Camera* camera, kvs::Light* light );
 
-    bool isEnabledShuffle() const { return m_enable_shuffle; }
-    bool isEnabledZooming() const { return m_enable_zooming; }
+    bool isShuffleEnabled() const { return m_enable_shuffle; }
+    bool isZoomingEnabled() const { return m_enable_zooming; }
     void setEnabledShuffle( const bool enable ) { m_enable_shuffle = enable; }
     void setEnabledZooming( const bool enable ) { m_enable_zooming = enable; }
     void enableShuffle() { this->setEnabledShuffle( true ); }

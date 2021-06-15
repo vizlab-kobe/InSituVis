@@ -127,7 +127,7 @@ void StochasticRendererBase::exec( kvs::ObjectBase* object, kvs::Camera* camera,
         m_light_position = light->position();
         m_engine->setShader( &shader() );
         m_engine->setRepetitionLevel( m_repetition_level );
-        m_engine->setEnabledShading( kvs::RendererBase::isEnabledShading() );
+        m_engine->setShadingEnabled( kvs::RendererBase::isShadingEnabled() );
 
         // Add: VBO/shader craation time.
         timer.start();
@@ -155,7 +155,7 @@ void StochasticRendererBase::exec( kvs::ObjectBase* object, kvs::Camera* camera,
         m_ensemble_buffer.clear();
         m_engine->release();
         m_engine->setShader( &shader() );
-        m_engine->setEnabledShading( kvs::RendererBase::isEnabledShading() );
+        m_engine->setShadingEnabled( kvs::RendererBase::isShadingEnabled() );
         m_engine->create( object, camera, light );
     }
 
@@ -241,9 +241,9 @@ ParticleBasedRenderer::ParticleBasedRenderer( const kvs::Mat4& m, const kvs::Mat
  *  @return true, if the shuffling is enabled
  */
 /*===========================================================================*/
-bool ParticleBasedRenderer::isEnabledShuffle() const
+bool ParticleBasedRenderer::isShuffleEnabled() const
 {
-    return static_cast<const Engine&>( engine() ).isEnabledShuffle();
+    return static_cast<const Engine&>( engine() ).isShuffleEnabled();
 }
 
 /*===========================================================================*/
@@ -252,9 +252,9 @@ bool ParticleBasedRenderer::isEnabledShuffle() const
  *  @return true, if the zooming is enabled
  */
 /*===========================================================================*/
-bool ParticleBasedRenderer::isEnabledZooming() const
+bool ParticleBasedRenderer::isZoomingEnabled() const
 {
-    return static_cast<const Engine&>( engine() ).isEnabledZooming();
+    return static_cast<const Engine&>( engine() ).isZoomingEnabled();
 }
 
 /*===========================================================================*/
@@ -429,7 +429,7 @@ void ParticleBasedRenderer::Engine::create( kvs::ObjectBase* object, kvs::Camera
 {
     kvs::PointObject* point = kvs::PointObject::DownCast( object );
     m_has_normal = point->normals().size() > 0;
-    if ( !m_has_normal ) setEnabledShading( false );
+    if ( !m_has_normal ) setShadingEnabled( false );
 
     // Create resources.
     attachObject( object );
@@ -592,7 +592,7 @@ void ParticleBasedRenderer::Engine::create_shader_program()
     kvs::ShaderSource vert( "PBR_zooming.vert" );
     kvs::ShaderSource frag( "PBR_zooming.frag" );
 
-    if ( isEnabledShading() )
+    if ( isShadingEnabled() )
     {
         switch ( shader().type() )
         {
@@ -608,7 +608,7 @@ void ParticleBasedRenderer::Engine::create_shader_program()
         }
     }
 
-    if ( isEnabledZooming() )
+    if ( isZoomingEnabled() )
     {
         vert.define("ENABLE_PARTICLE_ZOOMING");
         frag.define("ENABLE_PARTICLE_ZOOMING");
