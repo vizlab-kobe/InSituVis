@@ -156,32 +156,19 @@ private:
 
     kvs::Vec3 index_to_rtp( const size_t index ) const
     {
-        const float dt = 1.0f / (m_dims[1] - 1);
-        const size_t wt = (m_dims[1] - 1) - index / (2 * (m_dims[0] + m_dims[1] - 2));
+        const size_t layer = static_cast<size_t>( index / ( m_dims[1] * m_dims[2] ) ) + 1;
 
-        const float dp = 1.0f / (m_dims[0] + m_dims[2] - 2.0f );
-        const size_t wp = index % ( 2 * ( m_dims[0] + m_dims[2] - 2 ));
+        const float dt = 1.0f / ( m_dims[1] - 1 );
+        const size_t wt = index % ( m_dims[1] * m_dims[2] );
 
-        const float r = ( m_max_coord[0] - m_min_coord[0] ) / 2.0f; // TODO min?
+        const float dp = 2.0f / ( m_dims[2] );
+        const size_t wp = index % m_dims[2];
+
+        const float r = layer * ( m_max_coord[0] - m_min_coord[0] ) / 2.0f;
         const float t = wt * dt * kvs::Math::pi;
         const float p = wp * dp * kvs::Math::pi;
 
-        // if (wt == 0)
-        // {
-        //     const float p0 = kvs::Math::pi * (float(m_dims[1] - 2.0f) / (m_dims[1] - 1.0f)) * wp;
-        //     const float r0 = r * std::cos( p0 );
-        //     return kvs::Vec3( r0, 0, 0 );
-        // }
-
-        // const bool isOrigin = (wp == 0 && wt == (m_dims[1] - 1) / 2);
-        // return isOrigin ? kvs::Vec3(0, 0, 0) : kvs::Vec3(r, t, p);
-
-        return kvs::Vec3(r, t, p);
-
-        // const size_t rank = std::round( (std::pow(index, 1.0f / 3.0f)) / 2.0f );
-
-        // const float r = rank * ( m_max_coord[0] - m_min_coord[0] ) / ( m_dims[0] - 1.0f );
-
+        return kvs::Vec3( r, t, p );
     }
 
     kvs::Vec3 rtp_to_xyz( const kvs::Vec3& rtp ) const
