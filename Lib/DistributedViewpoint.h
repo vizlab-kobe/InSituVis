@@ -29,13 +29,16 @@ public:
     };
 
 private:
-    kvs::Vec3ui m_dims; ///< grid resolution
-    DistType m_dist_type; ///< viewpoint distribution type
-    DirType m_dir_type; ///< viewpoint direction type
-    kvs::Vec3 m_min_coord; ///< min. coord in world coordinate
-    kvs::Vec3 m_max_coord; ///< max. coord in world coordinate
+    kvs::Vec3ui m_dims{1,1,1}; ///< grid resolution
+    DistType m_dist_type = DistType::CubicDist; ///< viewpoint distribution type
+    DirType m_dir_type = DirType::SingleDir; ///< viewpoint direction type
+    kvs::Vec3 m_min_coord{ -12, -12, -12 }; ///< min. coord in world coordinate
+    kvs::Vec3 m_max_coord{  12,  12,  12 }; ///< max. coord in world coordinate
 
 public:
+    DistributedViewpoint() = default;
+    virtual ~DistributedViewpoint() = default;
+
     DistributedViewpoint(
         const kvs::Vec3ui& dims,
         const DistType dist_type = DistType::CubicDist,

@@ -40,23 +40,32 @@ public:
     using Locator = std::function<Point(const size_t index)>;
 
 private:
-    kvs::Vec3 m_look_at_point; ///< look-at point in world coordinate (ignored in the case of 'OmniDir')
-    Points m_points; ///< set of viewpoints
-    Counter m_counter; ///< counter for number of viewpoints
-    Locator m_locator; ///< locator for viewpoint
+    kvs::Vec3 m_look_at_point{0,0,0}; ///< look-at point in world coordinate (ignored in the case of 'OmniDir')
+    Points m_points{}; ///< set of viewpoints
+    Counter m_counter{}; ///< counter for number of viewpoints
+    Locator m_locator{}; ///< locator for viewpoint
 
 public:
-    Viewpoint(): m_look_at_point( 0, 0, 0 )
-    {
-    }
+    Viewpoint() = default;
+    virtual ~Viewpoint() = default;
 
-    Viewpoint( const kvs::Vec3& position, const DirType dir_type, const kvs::Vec3& lookat = { 0, 0, 0 } ):
+    Viewpoint(
+        const kvs::Vec3& position,
+        const DirType dir_type = DirType::SingleDir,
+        const kvs::Vec3& lookat = { 0, 0, 0 } ):
         m_look_at_point( lookat )
     {
         this->setPoint( position, dir_type );
     }
 
-    virtual ~Viewpoint() {}
+    Viewpoint(
+        const kvs::Vec3& position,
+        const kvs::Vec3& lookat ):
+        m_look_at_point( lookat )
+    {
+        const DirType dir_type = DirType::SingleDir;
+        this->setPoint( position, dir_type );
+    }
 
     void setNumberOfPointsCounter( Counter counter )
     {

@@ -177,8 +177,12 @@ inline InSituVis::Pipeline InSituVis::OrthoSlice()
         else
         {
             // Register the objects with renderer.
-            screen.registerObject( object_y, new kvs::glsl::PolygonRenderer() );
-            screen.registerObject( object_z, new kvs::glsl::PolygonRenderer() );
+            auto* renderer_y = new kvs::glsl::PolygonRenderer();
+            auto* renderer_z = new kvs::glsl::PolygonRenderer();
+            renderer_y->setTwoSideLightingEnabled( true );
+            renderer_z->setTwoSideLightingEnabled( true );
+            screen.registerObject( object_y, renderer_y );
+            screen.registerObject( object_z, renderer_z );
         }
     };
 }
@@ -210,7 +214,9 @@ inline InSituVis::Pipeline InSituVis::Isosurface()
         else
         {
             // Register the objects with renderer.
-            screen.registerObject( object, new kvs::glsl::PolygonRenderer() );
+            auto* renderer = new kvs::glsl::PolygonRenderer();
+            renderer->setTwoSideLightingEnabled( true );
+            screen.registerObject( object, renderer );
         }
     };
 }
