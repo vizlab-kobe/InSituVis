@@ -12,6 +12,9 @@
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
+#include <InSituVis/Lib/AdaptiveTimeSelector.h>
+
+#define IN_SITU_VIS__SINGLE_VIEWPOINT
 
 
 namespace local
@@ -20,7 +23,11 @@ namespace local
 class InSituVis : public ::InSituVis::mpi::Adaptor
 {
     using BaseClass = ::InSituVis::mpi::Adaptor;
+#ifdef IN_SITU_VIS__SINGLE_VIEWPOINT
+    using Viewpoint = ::InSituVis::Viewpoint;
+#else
     using Viewpoint = ::InSituVis::DistributedViewpoint;
+#endif
     using Volume = BaseClass::Volume;
     using Polygon = kvs::PolygonObject;
     using Screen = BaseClass::Screen;
@@ -39,17 +46,24 @@ private:
 public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
         BaseClass( world, root ),
+#ifdef IN_SITU_VIS__SINGLE_VIEWPOINT
+        m_viewpoint( {0, 0, 12} ), // viewpoint, look-at point
+#else
         m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir ), // NG
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::OmniDir ), // OK
         //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::AdaptiveDir ), // NG
+#endif
         m_sim_timer( BaseClass::world() ),
         m_imp_timer( BaseClass::world() ),
         m_vis_timer( BaseClass::world() )
     {
+#ifdef IN_SITU_VIS__SINGLE_VIEWPOINT
+#else
         m_viewpoint.generate();
+#endif
 
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );

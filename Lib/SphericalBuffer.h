@@ -32,8 +32,8 @@ public:
     static kvs::Vec3 UpVector( const Direction dir ) { return kvs::CubicImage::UpVector( dir ); }
 
 private:
-    size_t m_width; ///< width size of original image
-    size_t m_height; ///< height size of original image
+    size_t m_width = 512; ///< width size of original image
+    size_t m_height = 512; ///< height size of original image
     Buffers m_buffers; ///< buffers for each direction (6 directions)
 
 public:

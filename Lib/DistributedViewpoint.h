@@ -45,9 +45,7 @@ public:
         const DirType dir_type = DirType::SingleDir ):
         m_dims( dims ),
         m_dist_type( dist_type ),
-        m_dir_type( dir_type ),
-        m_min_coord( -12, -12, -12 ),
-        m_max_coord(  12,  12,  12 )
+        m_dir_type( dir_type )
     {
         BaseClass::setNumberOfPointsCounter(
             [&]()
@@ -89,7 +87,6 @@ public:
         BaseClass::clearPoints();
 
         size_t index = 0;
-
         switch ( m_dist_type )
         {
         case DistType::CubicDist:

@@ -25,9 +25,9 @@ namespace InSituVis
 class OutputDirectory
 {
 private:
-    std::string m_base_dirname; ///< base directory name (e.g. "Output")
-    std::string m_sub_dirname; ///< sub directory name (e.g. "Process")
-    std::string m_dirname; ///< output directory name (e.g. "Output/Process0000")
+    std::string m_base_dirname = "Output"; ///< base directory name (e.g. "Output")
+    std::string m_sub_dirname = "Process"; ///< sub directory name (e.g. "Process")
+    std::string m_dirname = ""; ///< output directory name (e.g. "Output/Process0000")
 
 public:
     OutputDirectory(

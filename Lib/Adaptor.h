@@ -63,29 +63,22 @@ private:
     Pipeline m_pipeline; ///< visualization pipeline
     InSituVis::Viewpoint m_viewpoint; ///< rendering viewpoint
     InSituVis::OutputDirectory m_output_directory; ///< output directory
-    std::string m_output_filename; ///< basename of output file
-    size_t m_image_width; ///< width of rendering image
-    size_t m_image_height; ///< height of rendering image
-    bool m_enable_output_image; ///< flag for writing final rendering image data
-    size_t m_time_counter; ///< time step counter (t)
-    size_t m_time_interval; ///< visualization time interval (dt)
-    kvs::UInt32 m_current_time_index; ///< current time index
-    kvs::UInt32 m_current_space_index; ///< current space index
-    kvs::LogStream m_log; ///< log stream
-    float m_pipe_time; ///< pipeline execution time per frame
-    kvs::StampTimer m_pipe_timer; ///< timer for pipeline execution process
-    kvs::StampTimer m_rend_timer; ///< timer for rendering process
-    kvs::StampTimer m_save_timer; ///< timer for image saving process
+    std::string m_output_filename = "output"; ///< basename of output file
+    size_t m_image_width = 512; ///< width of rendering image
+    size_t m_image_height = 512; ///< height of rendering image
+    bool m_enable_output_image = true; ///< flag for writing final rendering image data
+    size_t m_time_counter = 0; ///< time step counter (t)
+    size_t m_time_interval = 1; ///< visualization time interval (dt)
+    kvs::UInt32 m_current_time_index = 0; ///< current time index
+    kvs::UInt32 m_current_space_index = 0; ///< current space index
+    kvs::LogStream m_log{}; ///< log stream
+    float m_pipe_time = 0.0f; ///< pipeline execution time per frame
+    kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
+    kvs::StampTimer m_rend_timer{}; ///< timer for rendering process
+    kvs::StampTimer m_save_timer{}; ///< timer for image saving process
 
 public:
-    Adaptor():
-        m_output_filename( "output" ),
-        m_image_width( 512 ),
-        m_image_height( 512 ),
-        m_enable_output_image( true ),
-        m_time_counter( 0 ),
-        m_time_interval( 1 ),
-        m_pipe_time( 0.0f )
+    Adaptor()
     {
         // Set signal function for dumping timers.
         ::Dump = [&](int) { this->dump(); exit(0); };
@@ -242,9 +235,16 @@ protected:
     void incrementTimeCounter() { m_time_counter++; }
     void decrementTimeCounter() { m_time_counter--; }
     bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
-
     float pipeTime() const { return m_pipe_time; }
     void setPipeTime( const float time ) { m_pipe_time = time; }
+
+    void execPipeline( const Volume& volume )
+    {
+        if ( volume.numberOfCells() > 0 )
+        {
+            m_pipeline( m_screen, volume );
+        }
+    }
 
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const
     {
@@ -305,7 +305,6 @@ protected:
             ( min_obj.z() <= p_obj.z() ) && ( p_obj.z() <= max_obj.z() );
     }
 
-private:
     ColorBuffer readback( const Viewpoint::Point& point )
     {
         switch ( point.dir_type )
@@ -329,6 +328,7 @@ private:
         return this->backgroundColorBuffer();
     }
 
+private:
     ColorBuffer readback_plane_buffer( const kvs::Vec3& position )
     {
         ColorBuffer color_buffer;
