@@ -45,6 +45,11 @@ Description
 #include <InSituVis/Lib.foam/FoamToKVS.h>
 #define IN_SITU_VIS
 
+// IN_SITU_VIS__P: Pressure
+// IN_SITU_VIS__U: Velocity
+// IN_SITU_VIS__T: Temperature
+#define IN_SITU_VIS__T
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 
@@ -143,19 +148,19 @@ int main(int argc, char *argv[])
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
 
         // Execute in-situ visualization process
-        // p: pressure
+#if defined( IN_SITU_VIS__P ) // p: pressure
         auto& field = p;
         const auto min_value = 9.94 * 10000.0;
         const auto max_value = 1.02 * 100000.0;
-        //vis.setMinMaxValues( 9.94 * 10000.0, 1.02 * 100000.0 );
-
-        // U: velocity
-        //auto& field = U;
-        //vis.setMinMaxValues( 0.0224, 70.9 );
-
-        // T: temperature
-        //auto& field = thermo.T();
-        //vis.setMinMaxValues( 293, 295 );
+#elif defined( IN_SITU_VIS__U ) // U: velocity
+        auto& field = U;
+        const auto min_value = 0.0224;
+        const auto max_value = 70.9;
+#elif defined( IN_SITU_VIS__T ) // T: temperature
+        auto& field = thermo.T();
+        const auto min_value = 293.0;
+        const auto max_value = 295.0;
+#endif
 
         // Convert OpenFOAM data to KVS data
         vis.impTimer().start();
