@@ -154,58 +154,32 @@ public:
 
     virtual void put( const Volume& volume )
     {
-        kvs::Timer timer( kvs::Timer::Start );
+        // Passing the volume data through the pipeline.
         if ( this->canVisualize() )
         {
-            if ( volume.numberOfCells() > 0 )
-            {
-                m_pipeline( m_screen, volume );
-            }
+            this->execPipeline( volume );
         }
-        timer.stop();
-        m_pipe_time += m_pipe_timer.time( timer );
     }
 
     virtual void exec( const kvs::UInt32 time_index )
     {
-        this->setCurrentTimeIndex( time_index );
-
+        // Stamp the pipeline execution time.
         m_pipe_timer.stamp( m_pipe_time );
         m_pipe_time = 0.0f;
 
-        float rend_time = 0.0f;
-        float save_time = 0.0f;
-        if ( this->canVisualize() )
+        // Visualize the processed volume data.
+        this->setCurrentTimeIndex( time_index );
         {
-            kvs::Timer timer_rend;
-            kvs::Timer timer_save;
-            const auto npoints = m_viewpoint.numberOfPoints();
-            for ( size_t i = 0; i < npoints; ++i )
+            if ( this->canVisualize() )
             {
-                this->setCurrentSpaceIndex( i );
-
-                // Draw and readback framebuffer
-                timer_rend.start();
-                const auto& point = m_viewpoint.point( i );
-                auto color_buffer = this->readback( point );
-                timer_rend.stop();
-                rend_time += m_rend_timer.time( timer_rend );
-
-                // Output framebuffer to image file
-                timer_save.start();
-                if ( m_enable_output_image )
-                {
-                    const auto image_size = this->outputImageSize( point );
-                    kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
-                    image.write( this->outputImageName() );
-                }
-                timer_save.stop();
-                save_time += m_save_timer.time( timer_save );
+                this->visualize();
+            }
+            else
+            {
+                m_rend_timer.stamp( 0.0f );
+                m_save_timer.stamp( 0.0f );
             }
         }
-        m_rend_timer.stamp( rend_time );
-        m_save_timer.stamp( save_time );
-
         this->incrementTimeCounter();
     }
 
@@ -242,8 +216,46 @@ protected:
     {
         if ( volume.numberOfCells() > 0 )
         {
+            kvs::Timer timer( kvs::Timer::Start );
             m_pipeline( m_screen, volume );
+            timer.stop();
+            m_pipe_time += m_pipe_timer.time( timer );
         }
+    }
+
+    void visualize()
+    {
+        float rend_time = 0.0f;
+        float save_time = 0.0f;
+        {
+            kvs::Timer timer_rend;
+            kvs::Timer timer_save;
+            const auto npoints = m_viewpoint.numberOfPoints();
+            for ( size_t i = 0; i < npoints; ++i )
+            {
+                this->setCurrentSpaceIndex( i );
+
+                // Draw and readback framebuffer
+                timer_rend.start();
+                const auto& point = m_viewpoint.point( i );
+                auto color_buffer = this->readback( point );
+                timer_rend.stop();
+                rend_time += m_rend_timer.time( timer_rend );
+
+                // Output framebuffer to image file
+                timer_save.start();
+                if ( m_enable_output_image )
+                {
+                    const auto image_size = this->outputImageSize( point );
+                    kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
+                    image.write( this->outputImageName() );
+                }
+                timer_save.stop();
+                save_time += m_save_timer.time( timer_save );
+            }
+        }
+        m_rend_timer.stamp( rend_time );
+        m_save_timer.stamp( save_time );
     }
 
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const
@@ -407,32 +419,19 @@ public:
     struct FrameBuffer { ColorBuffer color_buffer; DepthBuffer depth_buffer; };
 
 private:
-    kvs::mpi::Communicator m_world; ///< MPI communicator
-    kvs::mpi::LogStream m_log; ///< MPI log stream
-    kvs::mpi::ImageCompositor m_compositor; ///< image compositor
-    bool m_enable_output_subimage; ///< flag for writing sub-volume rendering image
-    bool m_enable_output_subimage_depth; ///< flag for writing sub-volume rendering image (depth image)
-    bool m_enable_output_subimage_alpha; ///< flag for writing sub-volume rendering image (alpha image)
-    float m_rend_time; ///< rendering time per frame
-    float m_comp_time; ///< image composition time per frame
-    kvs::mpi::StampTimer m_comp_timer; ///< timer for image composition process
+    kvs::mpi::Communicator m_world{}; ///< MPI communicator
+    kvs::mpi::LogStream m_log{ m_world }; ///< MPI log stream
+    kvs::mpi::ImageCompositor m_compositor{ m_world }; ///< image compositor
+    bool m_enable_output_subimage = false; ///< flag for writing sub-volume rendering image
+    bool m_enable_output_subimage_depth = false; ///< flag for writing sub-volume rendering image (depth image)
+    bool m_enable_output_subimage_alpha = false; ///< flag for writing sub-volume rendering image (alpha image)
+    float m_rend_time = 0.0f; ///< rendering time per frame
+    float m_comp_time = 0.0f; ///< image composition time per frame
+    kvs::mpi::StampTimer m_comp_timer{ m_world }; ///< timer for image composition process
 
 public:
-    Adaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
-        InSituVis::Adaptor(),
-        m_world( world, root ),
-        m_log( m_world ),
-        m_compositor( m_world ),
-        m_enable_output_subimage( false ),
-        m_enable_output_subimage_depth( false ),
-        m_enable_output_subimage_alpha( false ),
-        m_rend_time( 0.0f ),
-        m_comp_time( 0.0f ),
-        m_comp_timer( m_world )
-    {
-    }
-
-    virtual ~Adaptor() {}
+    Adaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): m_world( world, root ) {}
+    virtual ~Adaptor() = default;
 
     kvs::mpi::Communicator& world() { return m_world; }
     std::ostream& log() { return m_log( m_world.root() ); }
@@ -482,45 +481,24 @@ public:
 
     virtual void exec( const kvs::UInt32 time_index )
     {
-        BaseClass::setCurrentTimeIndex( time_index );
-
+        // Stamp the pipeline execution time.
         BaseClass::pipeTimer().stamp( BaseClass::pipeTime() );
         BaseClass::setPipeTime( 0.0f );
 
-        m_rend_time = 0.0f;
-        m_comp_time = 0.0f;
-        float save_time = 0.0f;
-        if ( BaseClass::canVisualize() )
+        // Visualize the processed volume data.
+        BaseClass::setCurrentTimeIndex( time_index );
         {
-            kvs::Timer timer_save;
-            const auto npoints = BaseClass::viewpoint().numberOfPoints();
-            for ( size_t i = 0; i < npoints; ++i )
+            if ( this->canVisualize() )
             {
-                BaseClass::setCurrentSpaceIndex( i );
-
-                // Draw and readback framebuffer
-                const auto& point = BaseClass::viewpoint().point( i );
-                auto frame_buffer = this->readback( point );
-
-                // Output framebuffer to image file
-                timer_save.start();
-                if ( m_world.rank() == m_world.root() )
-                {
-                    if ( BaseClass::isOutputImageEnabled() )
-                    {
-                        const auto image_size = BaseClass::outputImageSize( point );
-                        kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
-                        image.write( this->outputFinalImageName() );
-                    }
-                }
-                timer_save.stop();
-                save_time += BaseClass::saveTimer().time( timer_save );
+                this->visualize();
+            }
+            else
+            {
+                BaseClass::saveTimer().stamp( 0.0f );
+                BaseClass::rendTimer().stamp( 0.0f );
+                m_comp_timer.stamp( 0.0f );
             }
         }
-        BaseClass::saveTimer().stamp( save_time );
-        BaseClass::rendTimer().stamp( m_rend_time );
-        m_comp_timer.stamp( m_comp_time );
-
         BaseClass::incrementTimeCounter();
     }
 
@@ -591,17 +569,52 @@ public:
         return timer_list.write( basedir + "vis_proc_time.csv" );
     }
 
-private:
+protected:
+    void visualize()
+    {
+        m_rend_time = 0.0f;
+        m_comp_time = 0.0f;
+        float save_time = 0.0f;
+        {
+            const auto npoints = BaseClass::viewpoint().numberOfPoints();
+            for ( size_t i = 0; i < npoints; ++i )
+            {
+                BaseClass::setCurrentSpaceIndex( i );
+
+                // Draw and readback framebuffer
+                const auto& point = BaseClass::viewpoint().point( i );
+                auto frame_buffer = this->readback( point );
+
+                // Output framebuffer to image file at the root node
+                kvs::Timer timer( kvs::Timer::Start );
+                if ( m_world.rank() == m_world.root() )
+                {
+                    if ( BaseClass::isOutputImageEnabled() )
+                    {
+                        const auto image_size = BaseClass::outputImageSize( point );
+                        kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
+                        image.write( this->outputFinalImageName() );
+                    }
+                }
+                timer.stop();
+                save_time += BaseClass::saveTimer().time( timer );
+            }
+        }
+        BaseClass::saveTimer().stamp( save_time );
+        BaseClass::rendTimer().stamp( m_rend_time );
+        m_comp_timer.stamp( m_comp_time );
+    }
+
     std::string outputFinalImageName()
     {
         const auto time = BaseClass::currentTimeIndex();
         const auto space = BaseClass::currentSpaceIndex();
-        const std::string output_time = kvs::String::From( time, 6, '0' );
-        const std::string output_space = kvs::String::From( space, 6, '0' );
+        const auto output_time = kvs::String::From( time, 6, '0' );
+        const auto output_space = kvs::String::From( space, 6, '0' );
 
-        const std::string output_basename = BaseClass::outputFilename();
-        const std::string output_filename = output_basename + "_" + output_time + "_" + output_space;
-        const std::string filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
+        const auto output_basename = BaseClass::outputFilename();
+        const auto output_filename = output_basename + "_" + output_time + "_" + output_space;
+        const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
         return filename;
     }
 
@@ -649,6 +662,7 @@ private:
         return frame_buffer;
     }
 
+private:
     FrameBuffer readback_plane_buffer( const kvs::Vec3& position )
     {
         FrameBuffer frame_buffer;

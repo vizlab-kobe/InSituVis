@@ -18,7 +18,7 @@ class AdaptiveTimeSelector : public InSituVis::Adaptor
 public:
     using BaseClass = InSituVis::Adaptor;
     using Data = std::list<BaseClass::Volume>;
-    using Queue = std::queue<Data>;
+    using DataQueue = std::queue<Data>;
 
 private:
     size_t m_calculation_interval = 1; ///< time interval of KL calculation
@@ -26,7 +26,7 @@ private:
     float m_threshold = 0.0f; ///< threshold value for similarity evalution based on KL divergence
 
     Data m_data{};
-    Queue m_queue{};
+    DataQueue m_data_queue{};
     Data m_previous_data{};
     float m_previous_divergence = 0.0f;
 
@@ -81,13 +81,13 @@ public:
         // Vis. time-step: t % dt' == 0
         if ( BaseClass::canVisualize() )
         {
-            m_queue.push( m_data );
+            m_data_queue.push( m_data );
             m_data.clear();
 
-            // KL calc. time-step
-            if ( m_queue.size() >= L )
+            // KL time-step
+            if ( m_data_queue.size() >= L )
             {
-                const auto V_crr = m_queue.back();
+                const auto V_crr = m_data_queue.back();
                 const auto D_crr = this->divergence( V_prv, V_crr );
                 m_previous_data = V_crr;
 
@@ -95,11 +95,11 @@ public:
                 if ( D_prv < D_thr && D_crr < D_thr )
                 {
                     int i = 1;
-                    while ( !m_queue.empty() )
+                    while ( !m_data_queue.empty() )
                     {
-                        const auto V = m_queue.front();
+                        const auto V = m_data_queue.front();
                         if ( i % R == 0 ) { this->visualize( V ); }
-                        m_queue.pop();
+                        m_data_queue.pop();
                         i++;
                     }
                 }
@@ -107,34 +107,34 @@ public:
                 // Pattern B
                 else if ( D_crr >= D_thr )
                 {
-                    while ( !m_queue.empty() )
+                    while ( !m_data_queue.empty() )
                     {
-                        const auto V = m_queue.front();
+                        const auto V = m_data_queue.front();
                         this->visualize( V );
-                        m_queue.pop();
+                        m_data_queue.pop();
                     }
                 }
 
                 // Pattern C
                 else
                 {
-                    for ( size_t i = 0; i < m_queue.size() / 2; ++i )
+                    for ( size_t i = 0; i < m_data_queue.size() / 2; ++i )
                     {
-                        const auto V = m_queue.front();
+                        const auto V = m_data_queue.front();
                         this->visualize( V );
-                        m_queue.pop();
+                        m_data_queue.pop();
                     }
 
                     int i = 1;
-                    while ( !m_queue.empty() )
+                    while ( !m_data_queue.empty() )
                     {
-                        const auto V = m_queue.front();
+                        const auto V = m_data_queue.front();
                         if ( i % R == 0 ) { this->visualize( V ); }
-                        m_queue.pop();
+                        m_data_queue.pop();
                         i++;
                     }
                 }
-                Queue().swap( m_queue ); // Clear the queue
+                DataQueue().swap( m_data_queue ); // Clear the queue
             }
         }
 
@@ -144,8 +144,13 @@ public:
 private:
     void visualize( const Data& data )
     {
-        for ( const auto& volume : data ) { BaseClass::execPipeline( volume ); }
+        // Execute vis. pipelines for each sub-volume
+        for ( const auto& volume : data )
+        {
+            BaseClass::execPipeline( volume );
+        }
 
+        // Render and read-back the framebuffers.
         const auto& vp = BaseClass::viewpoint();
         const auto npoints = vp.numberOfPoints();
         for ( size_t i = 0; i < npoints; ++i )
