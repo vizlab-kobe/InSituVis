@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 PS_COUNT=`ps aux | grep spraySootTimeFoam | grep -v grep | wc -l`
 if [ $PS_COUNT -gt 0 ]; then
     killall spraySootTimeFoam
