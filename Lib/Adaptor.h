@@ -8,7 +8,7 @@
 #include <functional>
 #include <csignal>
 #include <kvs/OffScreen>
-#include <kvs/UnstructuredVolumeObject>
+#include <kvs/ObjectBase>
 #include <kvs/ColorImage>
 #include <kvs/GrayImage>
 #include <kvs/String>
@@ -39,9 +39,9 @@ namespace InSituVis
 class Adaptor
 {
 public:
-    using Volume = kvs::UnstructuredVolumeObject;
+    using Object = kvs::ObjectBase;
     using Screen = kvs::OffScreen;
-    using Pipeline = std::function<void(Screen&,const Volume&)>;
+    using Pipeline = std::function<void(Screen&,const Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
 
 private:
@@ -92,7 +92,7 @@ public:
 
     virtual bool initialize();
     virtual bool finalize();
-    virtual void put( const Volume& volume );
+    virtual void put( const Object& Object );
     virtual void exec( const kvs::UInt32 time_index );
     virtual bool dump();
 
@@ -107,7 +107,7 @@ protected:
     float pipeTime() const { return m_pipe_time; }
     void setPipeTime( const float time ) { m_pipe_time = time; }
 
-    void execPipeline( const Volume& volume );
+    void execPipeline( const Object& object );
     void visualize();
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const;
     std::string outputImageName( const std::string& surfix = "" ) const;

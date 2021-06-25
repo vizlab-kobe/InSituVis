@@ -52,7 +52,7 @@ inline void Adaptor::exec( const kvs::UInt32 time_index )
     BaseClass::pipeTimer().stamp( BaseClass::pipeTime() );
     BaseClass::setPipeTime( 0.0f );
 
-    // Visualize the processed volume data.
+    // Visualize the processed object.
     BaseClass::setCurrentTimeIndex( time_index );
     {
         if ( this->canVisualize() )

@@ -17,7 +17,8 @@ class AdaptiveTimeSelector : public InSituVis::Adaptor
 {
 public:
     using BaseClass = InSituVis::Adaptor;
-    using Data = std::list<BaseClass::Volume>;
+    using Object = BaseClass::Object;
+    using Data = std::list<Object>;
     using DataQueue = std::queue<Data>;
 
 private:
@@ -25,7 +26,7 @@ private:
     size_t m_granularity = 0; ///< granularity for coarse grained sampling
     float m_threshold = 0.0f; ///< threshold value for similarity evalution based on KL divergence
 
-    Data m_data{}; ///< volume dataset (mixed mesh data)
+    Data m_data{}; ///< dataset (set of sub-data)
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
     float m_previous_divergence = 0.0f; ///< KL divergence for the previous dataset
@@ -42,7 +43,7 @@ public:
     void setSamplingGranularity( const size_t granularity ) { m_granularity = granularity; }
     void setSimilarityThreshold( const float threshold ) { m_threshold = threshold; }
 
-    virtual void put( const Volume& volume );
+    virtual void put( const Object& object );
     virtual void exec( const kvs::UInt32 time_index );
 
 private:

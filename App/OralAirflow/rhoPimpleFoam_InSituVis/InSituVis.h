@@ -4,6 +4,7 @@
 #include <kvs/PolygonObject>
 #include <kvs/PolygonRenderer>
 #include <kvs/PolygonImporter>
+#include <kvs/UnstructuredVolumeObject>
 #include <kvs/Bounds>
 #include <kvs/String>
 #include <kvs/StampTimer>
@@ -22,8 +23,8 @@ namespace local
 class InSituVis : public ::InSituVis::mpi::Adaptor
 {
     using BaseClass = ::InSituVis::mpi::Adaptor;
-    using Volume = BaseClass::Volume;
-    using Polygon = kvs::PolygonObject;
+    using Object = BaseClass::Object;
+    using Volume = kvs::UnstructuredVolumeObject;
     using Screen = BaseClass::Screen;
 
 public:
@@ -31,7 +32,7 @@ public:
     static Pipeline Isosurface();
 
 private:
-    Polygon m_boundary_mesh; ///< boundary mesh
+    kvs::PolygonObject m_boundary_mesh; ///< boundary mesh
     kvs::mpi::StampTimer m_sim_timer{ BaseClass::world() }; ///< timer for sim. process
     kvs::mpi::StampTimer m_imp_timer{ BaseClass::world() }; ///< timer for impor process
     kvs::mpi::StampTimer m_vis_timer{ BaseClass::world() }; ///< timer for vis. process
@@ -97,7 +98,7 @@ public:
             if ( m_boundary_mesh.numberOfVertices() > 0 )
             {
                 // Register the bounding box at the root rank.
-                auto* object = new Polygon();
+                auto* object = new kvs::PolygonObject();
                 object->shallowCopy( m_boundary_mesh );
                 object->setName( "BoundaryMesh" );
                 BaseClass::screen().registerObject( object, new kvs::Bounds() );
@@ -173,8 +174,11 @@ public:
 
 inline InSituVis::Pipeline InSituVis::OrthoSlice()
 {
-    return [&] ( Screen& screen, const Volume& volume )
+    return [&] ( Screen& screen, const Object& object )
     {
+        const auto& volume = dynamic_cast<const Volume&>( object );
+        if ( volume.numberOfCells() == 0 ) { return; }
+
         // Setup a transfer function.
         const auto min_value = volume.minValue();
         const auto max_value = volume.maxValue();
@@ -214,8 +218,11 @@ inline InSituVis::Pipeline InSituVis::OrthoSlice()
 
 inline InSituVis::Pipeline InSituVis::Isosurface()
 {
-    return [&] ( Screen& screen, const Volume& volume )
+    return [&] ( Screen& screen, const Object& object )
     {
+        const auto& volume = dynamic_cast<const Volume&>( object );
+        if ( volume.numberOfCells() == 0 ) { return; }
+
         // Setup a transfer function.
         const auto min_value = volume.minValue();
         const auto max_value = volume.maxValue();
@@ -226,22 +233,22 @@ inline InSituVis::Pipeline InSituVis::Isosurface()
         auto i = kvs::Math::Mix( min_value, max_value, 0.5 );
         auto n = kvs::Isosurface::PolygonNormal;
         auto d = true;
-        auto* object = new kvs::Isosurface( &volume, i, n, d, t );
-        object->setName( volume.name() + "Object");
+        auto* surface = new kvs::Isosurface( &volume, i, n, d, t );
+        surface->setName( volume.name() + "Object");
 
         // Register object and renderer to screen
         kvs::Light::SetModelTwoSide( true );
         if ( screen.scene()->hasObject( volume.name() + "Object") )
         {
             // Update the objects.
-            screen.scene()->replaceObject( volume.name() + "Object", object );
+            screen.scene()->replaceObject( volume.name() + "Object", surface );
         }
         else
         {
             // Register the objects with renderer.
             auto* renderer = new kvs::glsl::PolygonRenderer();
             renderer->setTwoSideLightingEnabled( true );
-            screen.registerObject( object, renderer );
+            screen.registerObject( surface, renderer );
         }
     };
 }

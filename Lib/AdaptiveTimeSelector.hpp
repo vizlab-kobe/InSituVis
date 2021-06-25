@@ -2,9 +2,9 @@
 namespace InSituVis
 {
 
-inline void AdaptiveTimeSelector::put( const Volume& volume )
+inline void AdaptiveTimeSelector::put( const Object& object )
 {
-    m_data.push_back( volume );
+    m_data.push_back( object );
 }
 
 inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
@@ -92,10 +92,10 @@ inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
 
 inline void AdaptiveTimeSelector::visualize( const Data& data )
 {
-    // Execute vis. pipelines for each sub-volume
-    for ( const auto& volume : data )
+    // Execute vis. pipelines for each sub-data
+    for ( const auto& sub_data : data )
     {
-        BaseClass::execPipeline( volume );
+        BaseClass::execPipeline( sub_data );
     }
 
     // Render and read-back the framebuffers.

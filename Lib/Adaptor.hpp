@@ -40,12 +40,11 @@ inline bool Adaptor::finalize()
     return this->dump();
 }
 
-inline void Adaptor::put( const Adaptor::Volume& volume )
+inline void Adaptor::put( const Adaptor::Object& object )
 {
-    // Passing the volume data through the pipeline.
     if ( this->canVisualize() )
     {
-        this->execPipeline( volume );
+        this->execPipeline( object );
     }
 }
 
@@ -85,15 +84,14 @@ inline bool Adaptor::dump()
     return timer_list.write( dir + "vis_proc_time" + ".csv" );
 }
 
-inline void Adaptor::execPipeline( const Volume& volume )
+inline void Adaptor::execPipeline( const Object& object )
 {
-    if ( volume.numberOfCells() > 0 )
+    kvs::Timer timer( kvs::Timer::Start );
     {
-        kvs::Timer timer( kvs::Timer::Start );
-        m_pipeline( m_screen, volume );
-        timer.stop();
-        m_pipe_time += m_pipe_timer.time( timer );
+        m_pipeline( m_screen, object );
     }
+    timer.stop();
+    m_pipe_time += m_pipe_timer.time( timer );
 }
 
 inline void Adaptor::visualize()

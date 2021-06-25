@@ -2,6 +2,7 @@
 #include <kvs/OrthoSlice>
 #include <kvs/Isosurface>
 #include <kvs/PolygonRenderer>
+#include <kvs/UnstructuredVolumeObject>
 #include <kvs/Bounds>
 #include <kvs/StampTimer>
 #include <kvs/StampTimerList>
@@ -18,7 +19,8 @@ namespace local
 class InSituVis : public ::InSituVis::Adaptor
 {
     using BaseClass = ::InSituVis::Adaptor;
-    using Volume = BaseClass::Volume;
+    using Object = BaseClass::Object;
+    using Volume = kvs::UnstructuredVolumeObject;
     using Screen = BaseClass::Screen;
 
 public:
@@ -102,8 +104,11 @@ public:
 
 inline InSituVis::Pipeline InSituVis::OrthoSlice()
 {
-    return [&] ( Screen& screen, const Volume& volume )
+    return [&] ( Screen& screen, const Object& object )
     {
+        const auto& volume = dynamic_cast<const Volume&>( object );
+        if ( volume.numberOfCells() == 0 ) { return; }
+
         // Setup a transfer function.
         const auto min_value = volume.minValue();
         const auto max_value = volume.maxValue();
@@ -145,8 +150,11 @@ inline InSituVis::Pipeline InSituVis::OrthoSlice()
 
 inline InSituVis::Pipeline InSituVis::Isosurface()
 {
-    return [&] ( Screen& screen, const Volume& volume )
+    return [&] ( Screen& screen, const Object& object )
     {
+        const auto& volume = dynamic_cast<const Volume&>( object );
+        if ( volume.numberOfCells() == 0 ) { return; }
+
         // Setup a transfer function.
         const auto min_value = volume.minValue();
         const auto max_value = volume.maxValue();
@@ -157,23 +165,23 @@ inline InSituVis::Pipeline InSituVis::Isosurface()
         auto i = kvs::Math::Mix( min_value, max_value, 0.9 );
         auto n = kvs::Isosurface::PolygonNormal;
         auto d = true;
-        auto* object = new kvs::Isosurface( &volume, i, n, d, t );
-        object->setName( volume.name() + "Object");
+        auto* surface = new kvs::Isosurface( &volume, i, n, d, t );
+        surface->setName( volume.name() + "Object");
 
         // Register object and renderer to screen
         kvs::Light::SetModelTwoSide( true );
         if ( screen.scene()->hasObject( volume.name() + "Object") )
         {
             // Update the objects.
-            screen.scene()->replaceObject( volume.name() + "Object", object );
+            screen.scene()->replaceObject( volume.name() + "Object", surface );
         }
         else
         {
             // Register the objects with renderer.
             auto* renderer = new kvs::glsl::PolygonRenderer();
             renderer->setTwoSideLightingEnabled( true );
-            screen.registerObject( object, renderer );
-            screen.registerObject( object, new kvs::Bounds() );
+            screen.registerObject( surface, renderer );
+            screen.registerObject( surface, new kvs::Bounds() );
         }
     };
 }
