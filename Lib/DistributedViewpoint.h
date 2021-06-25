@@ -80,6 +80,8 @@ public:
         default:
             break;
         }
+
+        this->generate();
     }
 
     void generate()

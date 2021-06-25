@@ -68,7 +68,7 @@ public:
         {
             using Viewpoint = ::InSituVis::Viewpoint;
             const auto p = kvs::Vec3( 0, 0, 12 );
-            this->setViewpoint( Viewpoint( p ) );
+            this->setViewpoint( Viewpoint{ p } );
             break;
         }
         case Dist:
@@ -80,9 +80,7 @@ public:
             const auto dir = Viewpoint::SingleDir;
             //const auto dir = Viewpoint::OmniDir;
             //const auto dir = Viewpoint::AdaptiveDir;
-            Viewpoint vp( dim, dist, dir );
-            vp.generate();
-            this->setViewpoint( vp );
+            this->setViewpoint( Viewpoint{ dim, dist, dir } );
         }
         default: break;
         }
