@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     scalar time_soot_Mcorrect=0;
     scalar time_soot_DYsps=0;
     scalar time_soot_liner=0;
-    
+
     clockTime clockTime;
     //計算時間の計測
     //clockTime clockTime;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     // In-situ visualization setup
     Foam::messageStream::level = 0; // Disable Foam::Info
     const kvs::Indent indent(4); // indent for log stream
-    kvs::Timer timer; // timer for measuring sim and vis processing times
+//    kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis;
     if ( !vis.initialize() )
     {
@@ -161,7 +161,8 @@ int main(int argc, char *argv[])
         vis.log() << indent << "T: " << current_time << std::endl;
         vis.log() << indent << "End T: " << end_time << std::endl;
         vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
-        timer.start(); // begin sim.
+//        timer.start(); // begin sim.
+        vis.simTimer().start();
 #endif // IN_SITU_VIS
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
@@ -216,28 +217,42 @@ int main(int argc, char *argv[])
         }
 
 #if defined( IN_SITU_VIS )
-        timer.stop(); // end sim.
-        const auto ts = timer.sec();
+//        timer.stop(); // end sim.
+        vis.simTimer().stamp();
+//        const auto ts = timer.sec();
+        const auto ts = vis.simTimer().last();
         const auto Ts = kvs::String::From( ts, 4 );
         vis.log() << indent << "Processing Times:" << std::endl;
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
 
         // Execute in-situ visualization process
-        timer.start(); // begin vis.
+//        timer.start(); // begin vis.
         {
             // T: temperature
             auto& field = thermo.T();
-            vis.setMinMaxValues( 731.341, 1031.611 );
+            const auto min_value = 731.341;
+            const auto max_value = 1031.611;
+//            vis.setMinMaxValues( 731.341, 1031.611 );
 
+            // Convert OpenFOAM data to KVS data
+            vis.impTimer().start();
             InSituVis::foam::FoamToKVS converter( field, false );
             using CellType = InSituVis::foam::FoamToKVS::CellType;
             auto vol = converter.exec( field, CellType::Hexahedra );
+            vis.impTimer().stamp();
+
+            vol.setMinMaxValues( 731.341, 1031.611 );
+
+            // Execute visualization pipeline and rendering
+            vis.visTimer().start();
             vis.put( vol );
             vis.exec( runTime.timeIndex() );
+            vis.visTimer().stamp();
         }
-        timer.stop(); // end vis.
+//        timer.stop(); // end vis.
 
-        const auto tv = timer.sec();
+//        const auto tv = timer.sec();
+        const auto tv = vis.visTimer().last();
         const auto Tv = kvs::String::From( tv, 4 );
         vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
 
@@ -273,7 +288,7 @@ int main(int argc, char *argv[])
             << nl << endl;
             // return(0);
             //
-        
+
         loopN += 1;
         Info << "loop times = " << loopN << endl;
 

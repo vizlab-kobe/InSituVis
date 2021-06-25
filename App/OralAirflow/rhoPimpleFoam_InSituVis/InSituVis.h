@@ -8,13 +8,12 @@
 #include <kvs/String>
 #include <kvs/StampTimer>
 #include <kvs/StampTimerList>
+#include <kvs/Math>
 #include <kvs/mpi/StampTimer>
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
 #include <InSituVis/Lib/AdaptiveTimeSelector.h>
-
-#define IN_SITU_VIS__SINGLE_VIEWPOINT
 
 
 namespace local
@@ -23,11 +22,6 @@ namespace local
 class InSituVis : public ::InSituVis::mpi::Adaptor
 {
     using BaseClass = ::InSituVis::mpi::Adaptor;
-#ifdef IN_SITU_VIS__SINGLE_VIEWPOINT
-    using Viewpoint = ::InSituVis::Viewpoint;
-#else
-    using Viewpoint = ::InSituVis::DistributedViewpoint;
-#endif
     using Volume = BaseClass::Volume;
     using Polygon = kvs::PolygonObject;
     using Screen = BaseClass::Screen;
@@ -37,41 +31,61 @@ public:
     static Pipeline Isosurface();
 
 private:
-    Viewpoint m_viewpoint; ///< viewpoint
     Polygon m_boundary_mesh; ///< boundary mesh
-    kvs::mpi::StampTimer m_sim_timer; ///< timer for simulation process
-    kvs::mpi::StampTimer m_imp_timer; ///< timer for imporing process
-    kvs::mpi::StampTimer m_vis_timer; ///< timer for visualization process
+    kvs::mpi::StampTimer m_sim_timer{ BaseClass::world() }; ///< timer for sim. process
+    kvs::mpi::StampTimer m_imp_timer{ BaseClass::world() }; ///< timer for impor process
+    kvs::mpi::StampTimer m_vis_timer{ BaseClass::world() }; ///< timer for vis. process
 
 public:
-    InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ):
-        BaseClass( world, root ),
-#ifdef IN_SITU_VIS__SINGLE_VIEWPOINT
-        m_viewpoint( {0, 0, 12} ), // viewpoint, look-at point
-#else
-        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ), // OK
-        //m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ), // OK
-        //m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::AdaptiveDir ), // NG
-        //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::SingleDir ), // OK
-        //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::OmniDir ), // OK
-        //m_viewpoint( {3,3,3}, Viewpoint::SphericalDist, Viewpoint::AdaptiveDir ), // NG
-#endif
-        m_sim_timer( BaseClass::world() ),
-        m_imp_timer( BaseClass::world() ),
-        m_vis_timer( BaseClass::world() )
+    InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root )
     {
-#ifdef IN_SITU_VIS__SINGLE_VIEWPOINT
-#else
-        m_viewpoint.generate();
-#endif
-
+        // Common parameters.
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
-        this->setTimeInterval( 5 );
-        this->setViewpoint( m_viewpoint );
-        this->setPipeline( local::InSituVis::OrthoSlice() );
-        //this->setPipeline( local::InSituVis::Isosurface() );
+
+        // Time interval.
+        this->setTimeInterval( 5 ); // vis. time interval
+
+        // Set visualization pipeline.
+        enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
+        switch ( pipeline_type )
+        {
+        case Ortho:
+            this->setPipeline( local::InSituVis::OrthoSlice() );
+            break;
+        case Iso:
+            this->setPipeline( local::InSituVis::Isosurface() );
+            break;
+        default: break;
+        }
+
+        // Set viewpoint(s)
+        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
+        switch ( viewpoint_type )
+        {
+        case Single:
+        {
+            using Viewpoint = ::InSituVis::Viewpoint;
+            const auto p = kvs::Vec3( 0, 0, 12 );
+            this->setViewpoint( Viewpoint( p ) );
+            break;
+        }
+        case Dist:
+        {
+            using Viewpoint = ::InSituVis::DistributedViewpoint;
+            const auto dim = kvs::Vec3ui( 3, 3, 3 );
+            const auto dist = Viewpoint::CubicDist;
+            //const auto dist = Viewpoint::SphericalDist;
+            const auto dir = Viewpoint::SingleDir;
+            //const auto dir = Viewpoint::OmniDir;
+            //const auto dir = Viewpoint::AdaptiveDir;
+            Viewpoint vp( dim, dist, dir );
+            vp.generate();
+            this->setViewpoint( vp );
+        }
+        default: break;
+        }
     }
 
     kvs::mpi::StampTimer& simTimer() { return m_sim_timer; }
@@ -103,8 +117,7 @@ public:
         }
     }
 
-private:
-    virtual bool dump()
+    bool dump()
     {
         if ( !BaseClass::dump() ) return false;
 
@@ -212,7 +225,7 @@ inline InSituVis::Pipeline InSituVis::Isosurface()
         t.setRange( min_value, max_value );
 
         // Create new object
-        auto i = ( min_value + max_value ) * 0.5f;
+        auto i = kvs::Math::Mix( min_value, max_value, 0.5 );
         auto n = kvs::Isosurface::PolygonNormal;
         auto d = true;
         auto* object = new kvs::Isosurface( &volume, i, n, d, t );

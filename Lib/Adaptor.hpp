@@ -8,7 +8,7 @@
 namespace
 {
 std::function<void(int)> Dump;
-void SigTerm( int sig ) { Dump( sig ); }
+void Terminate( int sig ) { Dump( sig ); }
 }
 
 namespace InSituVis
@@ -18,7 +18,9 @@ inline Adaptor::Adaptor()
 {
     // Set signal function for dumping timers.
     ::Dump = [&](int) { this->dump(); exit(0); };
-    std::signal( SIGTERM, ::SigTerm );
+    std::signal( SIGTERM, ::Terminate ); // (kill pid)
+    std::signal( SIGQUIT, ::Terminate ); // Ctrl + \, Ctrl + 4
+    std::signal( SIGINT,  ::Terminate ); // Ctrl + c
 }
 
 inline bool Adaptor::initialize()

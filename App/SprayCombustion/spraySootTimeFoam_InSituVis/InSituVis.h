@@ -1,10 +1,15 @@
 #pragma once
 #include <kvs/OrthoSlice>
+#include <kvs/Isosurface>
 #include <kvs/PolygonRenderer>
 #include <kvs/Bounds>
+#include <kvs/StampTimer>
+#include <kvs/StampTimerList>
+#include <kvs/Math>
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
+#include <InSituVis/Lib/AdaptiveTimeSelector.h>
 
 
 namespace local
@@ -13,82 +18,166 @@ namespace local
 class InSituVis : public ::InSituVis::Adaptor
 {
     using BaseClass = ::InSituVis::Adaptor;
-    using Viewpoint = ::InSituVis::DistributedViewpoint;
     using Volume = BaseClass::Volume;
     using Screen = BaseClass::Screen;
 
+public:
+    static Pipeline OrthoSlice();
+    static Pipeline Isosurface();
+
 private:
-    Viewpoint m_viewpoint;
-    kvs::Real32 m_min_value;
-    kvs::Real32 m_max_value;
+    kvs::StampTimer m_sim_timer{}; ///< timer for simulation process
+    kvs::StampTimer m_imp_timer{}; ///< timer for imporing process
+    kvs::StampTimer m_vis_timer{}; ///< timer for visualization process
 
 public:
-    InSituVis():
-        BaseClass(),
-//        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::OmniDir ),
-        m_viewpoint( {3,3,3}, Viewpoint::CubicDist, Viewpoint::SingleDir ),
-//        m_viewpoint( {3,3,3}, Viewpoint::SphericalDist ),
-        m_min_value( 0.0f ),
-        m_max_value( 0.0f )
+    InSituVis(): BaseClass()
     {
-        m_viewpoint.generate();
-
+        // Common parameters.
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
-        this->setTimeInterval( 5 );
-        this->setViewpoint( m_viewpoint );
 
-        this->setPipeline(
-            [&] ( Screen& screen, const Volume& volume )
-            {
-                auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
-                if ( !t.hasRange() )
-                {
-                    if ( kvs::Math::Equal( m_min_value, m_max_value ) )
-                    {
-                        t.setRange( volume.minValue(), volume.maxValue() );
-                    }
-                    else
-                    {
-                        t.setRange( m_min_value, m_max_value );
-                    }
-                }
+        // Time interval.
+        this->setTimeInterval( 5 ); // vis. time interval
 
-                // Create new slice objects.
-                auto py = ( volume.minObjectCoord().y() + volume.maxObjectCoord().y() ) * 0.5f;
-                auto ay = kvs::OrthoSlice::YAxis;
-                auto* object_y = new kvs::OrthoSlice( &volume, py, ay, t );
-                object_y->setName( volume.name() + "ObjectY");
+        // Set visualization pipeline.
+        enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
+        switch ( pipeline_type )
+        {
+        case Ortho:
+            this->setPipeline( local::InSituVis::OrthoSlice() );
+            break;
+        case Iso:
+            this->setPipeline( local::InSituVis::Isosurface() );
+            break;
+        default: break;
+        }
 
-                auto pz = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
-                auto az = kvs::OrthoSlice::ZAxis;
-                auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
-                object_z->setName( volume.name() + "ObjectZ");
-
-                if ( screen.scene()->hasObject( volume.name() + "ObjectY") )
-                {
-                    // Update the objects.
-                    screen.scene()->replaceObject( volume.name() + "ObjectY", object_y );
-                    screen.scene()->replaceObject( volume.name() + "ObjectZ", object_z );
-                }
-                else
-                {
-                    // Register the objects with renderer.
-                    kvs::Light::SetModelTwoSide( true );
-                    auto* renderer_y = new kvs::glsl::PolygonRenderer();
-                    auto* renderer_z = new kvs::glsl::PolygonRenderer();
-                    screen.registerObject( object_y, renderer_y );
-                    screen.registerObject( object_z, renderer_z );
-                    screen.registerObject( object_z, new kvs::Bounds() );
-                }
-            } );
+        // Set viewpoint(s)
+        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
+        switch ( viewpoint_type )
+        {
+        case Single:
+        {
+            using Viewpoint = ::InSituVis::Viewpoint;
+            const auto p = kvs::Vec3( 0, 0, 12 );
+            this->setViewpoint( Viewpoint( p ) );
+            break;
+        }
+        case Dist:
+        {
+            using Viewpoint = ::InSituVis::DistributedViewpoint;
+            const auto dim = kvs::Vec3ui( 3, 3, 3 );
+            const auto dist = Viewpoint::CubicDist;
+            //const auto dist = Viewpoint::SphericalDist;
+            const auto dir = Viewpoint::SingleDir;
+            //const auto dir = Viewpoint::OmniDir;
+            //const auto dir = Viewpoint::AdaptiveDir;
+            Viewpoint vp( dim, dist, dir );
+            vp.generate();
+            this->setViewpoint( vp );
+        }
+        default: break;
+        }
     }
 
-    void setMinMaxValues( const kvs::Real32 min_value, const kvs::Real32 max_value )
+    kvs::StampTimer& simTimer() { return m_sim_timer; }
+    kvs::StampTimer& impTimer() { return m_imp_timer; }
+    kvs::StampTimer& visTimer() { return m_vis_timer; }
+
+    bool dump()
     {
-        m_min_value = min_value;
-        m_max_value = max_value;
+        if ( !BaseClass::dump() ) return false;
+
+        m_sim_timer.setTitle( "Sim time" );
+        m_imp_timer.setTitle( "Imp time" );
+        m_vis_timer.setTitle( "Vis time" );
+
+        const auto dir = BaseClass::outputDirectory().name() + "/";
+        kvs::StampTimerList timer_list;
+        timer_list.push( m_sim_timer );
+        timer_list.push( m_imp_timer );
+        timer_list.push( m_vis_timer );
+        return timer_list.write( dir + "proc_time" + ".csv" );
     }
 };
+
+inline InSituVis::Pipeline InSituVis::OrthoSlice()
+{
+    return [&] ( Screen& screen, const Volume& volume )
+    {
+        // Setup a transfer function.
+        const auto min_value = volume.minValue();
+        const auto max_value = volume.maxValue();
+        auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
+        t.setRange( min_value, max_value );
+
+        // Create new slice objects.
+        auto py = ( volume.minObjectCoord().y() + volume.maxObjectCoord().y() ) * 0.5f;
+        auto ay = kvs::OrthoSlice::YAxis;
+        auto* object_y = new kvs::OrthoSlice( &volume, py, ay, t );
+        object_y->setName( volume.name() + "ObjectY");
+
+        auto pz = ( volume.minObjectCoord().z() + volume.maxObjectCoord().z() ) * 0.5f;
+        auto az = kvs::OrthoSlice::ZAxis;
+        auto* object_z = new kvs::OrthoSlice( &volume, pz, az, t );
+        object_z->setName( volume.name() + "ObjectZ");
+
+        kvs::Light::SetModelTwoSide( true );
+        if ( screen.scene()->hasObject( volume.name() + "ObjectY") )
+        {
+            // Update the objects.
+            screen.scene()->replaceObject( volume.name() + "ObjectY", object_y );
+            screen.scene()->replaceObject( volume.name() + "ObjectZ", object_z );
+        }
+        else
+        {
+            // Register the objects with renderer.
+            kvs::Light::SetModelTwoSide( true );
+            auto* renderer_y = new kvs::glsl::PolygonRenderer();
+            auto* renderer_z = new kvs::glsl::PolygonRenderer();
+            renderer_y->setTwoSideLightingEnabled( true );
+            renderer_z->setTwoSideLightingEnabled( true );
+            screen.registerObject( object_y, renderer_y );
+            screen.registerObject( object_z, renderer_z );
+            screen.registerObject( object_z, new kvs::Bounds() );
+        }
+    };
+}
+
+inline InSituVis::Pipeline InSituVis::Isosurface()
+{
+    return [&] ( Screen& screen, const Volume& volume )
+    {
+        // Setup a transfer function.
+        const auto min_value = volume.minValue();
+        const auto max_value = volume.maxValue();
+        auto t = kvs::TransferFunction( kvs::ColorMap::CoolWarm() );
+        t.setRange( min_value, max_value );
+
+        // Create new object
+        auto i = kvs::Math::Mix( min_value, max_value, 0.9 );
+        auto n = kvs::Isosurface::PolygonNormal;
+        auto d = true;
+        auto* object = new kvs::Isosurface( &volume, i, n, d, t );
+        object->setName( volume.name() + "Object");
+
+        // Register object and renderer to screen
+        kvs::Light::SetModelTwoSide( true );
+        if ( screen.scene()->hasObject( volume.name() + "Object") )
+        {
+            // Update the objects.
+            screen.scene()->replaceObject( volume.name() + "Object", object );
+        }
+        else
+        {
+            // Register the objects with renderer.
+            auto* renderer = new kvs::glsl::PolygonRenderer();
+            renderer->setTwoSideLightingEnabled( true );
+            screen.registerObject( object, renderer );
+            screen.registerObject( object, new kvs::Bounds() );
+        }
+    };
+}
 
 } // end of namspace local
