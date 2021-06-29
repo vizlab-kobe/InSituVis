@@ -44,7 +44,7 @@ inline void Adaptor::put( const Adaptor::Object& object )
 {
     if ( this->canVisualize() )
     {
-        this->execPipeline( object );
+        this->doPipeline( object );
     }
 }
 
@@ -59,7 +59,7 @@ inline void Adaptor::exec( const kvs::UInt32 time_index )
     {
         if ( this->canVisualize() )
         {
-            this->visualize();
+            this->doRendering();
         }
         else
         {
@@ -84,7 +84,7 @@ inline bool Adaptor::dump()
     return timer_list.write( dir + "vis_proc_time" + ".csv" );
 }
 
-inline void Adaptor::execPipeline( const Object& object )
+inline void Adaptor::doPipeline( const Object& object )
 {
     kvs::Timer timer( kvs::Timer::Start );
     {
@@ -94,7 +94,7 @@ inline void Adaptor::execPipeline( const Object& object )
     m_pipe_time += m_pipe_timer.time( timer );
 }
 
-inline void Adaptor::visualize()
+inline void Adaptor::doRendering()
 {
     float rend_time = 0.0f;
     float save_time = 0.0f;

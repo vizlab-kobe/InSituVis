@@ -61,7 +61,7 @@ public:
     virtual bool dump();
 
 protected:
-    void visualize();
+    void doRendering();
     std::string outputFinalImageName();
     DepthBuffer backgroundDepthBuffer();
     FrameBuffer readback( const Viewpoint::Point& point );

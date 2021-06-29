@@ -8,7 +8,7 @@
 namespace
 {
 
-kvs::ObjectBase* GeometryObjectPointer(
+inline kvs::ObjectBase* GeometryObjectPointer(
     const kvs::GeometryObjectBase* geometry )
 {
     switch ( geometry->geometryType() )
@@ -38,7 +38,7 @@ kvs::ObjectBase* GeometryObjectPointer(
     }
 }
 
-kvs::ObjectBase* VolumeObjectPointer(
+inline kvs::ObjectBase* VolumeObjectPointer(
     const kvs::VolumeObjectBase* volume )
 {
     switch ( volume->volumeType() )
@@ -61,7 +61,7 @@ kvs::ObjectBase* VolumeObjectPointer(
     }
 }
 
-kvs::ObjectBase* ObjectPointer( const kvs::ObjectBase& object )
+inline kvs::ObjectBase* ObjectPointer( const kvs::ObjectBase& object )
 {
     switch ( object.objectType() )
     {
@@ -87,8 +87,7 @@ namespace InSituVis
 
 inline void AdaptiveTimeSelector::put( const Object& object )
 {
-//  m_data.push_back( object );
-    auto* p = ::ObjectPointer( object );
+    auto* p = ::ObjectPointer( object ); // pointer to the shallow copied object
     if ( p ) { m_data.push_back( Object::Pointer( p ) ); }
 }
 
@@ -99,12 +98,11 @@ inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
     const auto tc = BaseClass::timeCounter();
     if ( tc == 0 ) // t == t0
     {
-        std::cout << "a" << std::endl;
         this->visualize( m_data );
-        std::cout << "b" << std::endl;
         m_previous_data = m_data;
         m_previous_divergence = 0.0f;
         m_data.clear();
+        BaseClass::incrementTimeCounter();
         return;
     }
 
@@ -130,13 +128,14 @@ inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
             // Pattern A
             if ( D_prv < D_thr && D_crr < D_thr )
             {
-                int i = 1;
+                int counter = 1;
                 while ( !m_data_queue.empty() )
                 {
+                    BaseClass::setCurrentTimeIndex( time_index - m_data_queue.size() + 1 );
                     const auto V = m_data_queue.front();
-                    if ( i % R == 0 ) { this->visualize( V ); }
+                    if ( counter % R == 0 ) { this->visualize( V ); }
                     m_data_queue.pop();
-                    i++;
+                    counter++;
                 }
             }
 
@@ -145,6 +144,7 @@ inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
             {
                 while ( !m_data_queue.empty() )
                 {
+                    BaseClass::setCurrentTimeIndex( time_index - m_data_queue.size() + 1 );
                     const auto V = m_data_queue.front();
                     this->visualize( V );
                     m_data_queue.pop();
@@ -154,20 +154,23 @@ inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
             // Pattern C
             else
             {
-                for ( size_t i = 0; i < m_data_queue.size() / 2; ++i )
+                const auto queue_size = m_data_queue.size();
+                for ( size_t i = 0; i < queue_size / 2; ++i )
                 {
+                    BaseClass::setCurrentTimeIndex( time_index - m_data_queue.size() + 1 );
                     const auto V = m_data_queue.front();
                     this->visualize( V );
                     m_data_queue.pop();
                 }
 
-                int i = 1;
+                int counter = 1;
                 while ( !m_data_queue.empty() )
                 {
+                    BaseClass::setCurrentTimeIndex( time_index - m_data_queue.size() + 1 );
                     const auto V = m_data_queue.front();
-                    if ( i % R == 0 ) { this->visualize( V ); }
+                    if ( counter % R == 0 ) { this->visualize( V ); }
                     m_data_queue.pop();
-                    i++;
+                    counter++;
                 }
             }
             DataQueue().swap( m_data_queue ); // Clear the queue
@@ -179,16 +182,12 @@ inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
 
 inline void AdaptiveTimeSelector::visualize( const Data& data )
 {
-    std::cout << "A" << std::endl;
-
     // Execute vis. pipelines for each sub-data
     for ( const auto& sub_data : data )
     {
         const auto& object = *( sub_data.get() );
-        BaseClass::execPipeline( object );
+        BaseClass::doPipeline( object );
     }
-
-    std::cout << "B" << std::endl;
 
     // Render and read-back the framebuffers.
     const auto& vp = BaseClass::viewpoint();
@@ -213,7 +212,7 @@ inline void AdaptiveTimeSelector::visualize( const Data& data )
 
 float AdaptiveTimeSelector::divergence( const Data& data0, const Data& data1 ) const
 {
-    return 1.0f;
+    return 0.0f;
 }
 
 } // end of namespace InSituVis

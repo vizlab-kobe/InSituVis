@@ -19,7 +19,6 @@ public:
     using BaseClass = InSituVis::Adaptor;
     using Object = BaseClass::Object;
     using Data = std::list<Object::Pointer>;
-//    using Data = std::list<Object>;
     using DataQueue = std::queue<Data>;
 
 private:

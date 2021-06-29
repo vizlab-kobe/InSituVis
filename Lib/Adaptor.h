@@ -107,8 +107,8 @@ protected:
     float pipeTime() const { return m_pipe_time; }
     void setPipeTime( const float time ) { m_pipe_time = time; }
 
-    void execPipeline( const Object& object );
-    void visualize();
+    void doPipeline( const Object& object );
+    void doRendering();
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const;
     std::string outputImageName( const std::string& surfix = "" ) const;
     ColorBuffer backgroundColorBuffer() const;

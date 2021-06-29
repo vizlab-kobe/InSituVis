@@ -57,7 +57,7 @@ inline void Adaptor::exec( const kvs::UInt32 time_index )
     {
         if ( this->canVisualize() )
         {
-            this->visualize();
+            this->doRendering();
         }
         else
         {
@@ -136,7 +136,7 @@ inline bool Adaptor::dump()
     return timer_list.write( basedir + "vis_proc_time.csv" );
 }
 
-inline void Adaptor::visualize()
+inline void Adaptor::doRendering()
 {
     m_rend_time = 0.0f;
     m_comp_time = 0.0f;
