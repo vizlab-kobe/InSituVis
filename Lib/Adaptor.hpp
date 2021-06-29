@@ -4,12 +4,96 @@
  *  @author Naohisa Sakamoto
  */
 /*****************************************************************************/
+#include <kvs/PointObject>
+#include <kvs/LineObject>
+#include <kvs/PolygonObject>
+#include <kvs/StructuredVolumeObject>
+#include <kvs/UnstructuredVolumeObject>
 
+// Termination process.
 namespace
 {
 std::function<void(int)> Dump;
 void Terminate( int sig ) { Dump( sig ); }
 }
+
+// Shallow copied object pointer.
+namespace
+{
+
+inline kvs::ObjectBase* GeometryObjectPointer(
+    const kvs::GeometryObjectBase* geometry )
+{
+    switch ( geometry->geometryType() )
+    {
+    case kvs::GeometryObjectBase::Point:
+    {
+        using Geom = kvs::PointObject;
+        auto* ret = new Geom();
+        ret->shallowCopy( *Geom::DownCast( geometry ) );
+        return ret;
+    }
+    case kvs::GeometryObjectBase::Line:
+    {
+        using Geom = kvs::LineObject;
+        auto* ret = new Geom();
+        ret->shallowCopy( *Geom::DownCast( geometry ) );
+        return ret;
+    }
+    case kvs::GeometryObjectBase::Polygon:
+    {
+        using Geom = kvs::PolygonObject;
+        auto* ret = new Geom();
+        ret->shallowCopy( *Geom::DownCast( geometry ) );
+        return ret;
+    }
+    default: return nullptr;
+    }
+}
+
+inline kvs::ObjectBase* VolumeObjectPointer(
+    const kvs::VolumeObjectBase* volume )
+{
+    switch ( volume->volumeType() )
+    {
+    case kvs::VolumeObjectBase::Structured:
+    {
+        using Volume = kvs::StructuredVolumeObject;
+        auto* ret = new Volume();
+        ret->shallowCopy( *Volume::DownCast( volume ) );
+        return ret;
+    }
+    case kvs::VolumeObjectBase::Unstructured:
+    {
+        using Volume = kvs::UnstructuredVolumeObject;
+        auto* ret = new Volume();
+        ret->shallowCopy( *Volume::DownCast( volume ) );
+        return ret;
+    }
+    default: return nullptr;
+    }
+}
+
+inline kvs::ObjectBase* ObjectPointer( const kvs::ObjectBase& object )
+{
+    switch ( object.objectType() )
+    {
+    case kvs::ObjectBase::Geometry:
+    {
+        using Geom = kvs::GeometryObjectBase;
+        return GeometryObjectPointer( Geom::DownCast( &object ) );
+    }
+    case kvs::ObjectBase::Volume:
+    {
+        using Volume = kvs::VolumeObjectBase;
+        return VolumeObjectPointer( Volume::DownCast( &object ) );
+    }
+    default: return nullptr;
+    }
+}
+
+} // end of namespace
+
 
 namespace InSituVis
 {
@@ -42,32 +126,29 @@ inline bool Adaptor::finalize()
 
 inline void Adaptor::put( const Adaptor::Object& object )
 {
-    if ( this->canVisualize() )
-    {
-        this->doPipeline( object );
-    }
+    auto* p = ::ObjectPointer( object ); // pointer to the shallow copied object
+    if ( p ) { m_objects.push_back( Object::Pointer( p ) ); }
 }
 
 inline void Adaptor::exec( const kvs::UInt32 time_index )
 {
-    // Stamp the pipeline execution time.
-    m_pipe_timer.stamp( m_pipe_time );
-    m_pipe_time = 0.0f;
-
     // Visualize the processed volume data.
     this->setCurrentTimeIndex( time_index );
     {
         if ( this->canVisualize() )
         {
+            this->doPipeline( m_objects );
             this->doRendering();
         }
         else
         {
+            m_pipe_timer.stamp( 0.0f );
             m_rend_timer.stamp( 0.0f );
             m_save_timer.stamp( 0.0f );
         }
     }
     this->incrementTimeCounter();
+    this->clearObjects();
 }
 
 inline bool Adaptor::dump()
@@ -86,12 +167,26 @@ inline bool Adaptor::dump()
 
 inline void Adaptor::doPipeline( const Object& object )
 {
+    m_pipeline( m_screen, object );
+}
+
+inline void Adaptor::doPipeline( const ObjectList& objects )
+{
     kvs::Timer timer( kvs::Timer::Start );
+    for ( const auto& pobject : objects )
     {
-        m_pipeline( m_screen, object );
+        const auto& object = *( pobject.get() );
+        this->doPipeline( object );
     }
     timer.stop();
-    m_pipe_time += m_pipe_timer.time( timer );
+
+    const auto pipe_time = m_pipe_timer.time( timer );
+    m_pipe_timer.stamp( pipe_time );
+}
+
+inline void Adaptor::doPipeline()
+{
+    this->doPipeline( m_objects );
 }
 
 inline void Adaptor::doRendering()

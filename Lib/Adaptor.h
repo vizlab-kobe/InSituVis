@@ -7,6 +7,7 @@
 #pragma once
 #include <functional>
 #include <csignal>
+#include <list>
 #include <kvs/OffScreen>
 #include <kvs/ObjectBase>
 #include <kvs/ColorImage>
@@ -39,13 +40,15 @@ namespace InSituVis
 class Adaptor
 {
 public:
-    using Object = kvs::ObjectBase;
     using Screen = kvs::OffScreen;
+    using Object = kvs::ObjectBase;
+    using ObjectList = std::list<Object::Pointer>;
     using Pipeline = std::function<void(Screen&,const Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
 
 private:
     Screen m_screen{}; ///< rendering screen (off-screen)
+    ObjectList m_objects{}; ///< object list
     Pipeline m_pipeline{}; ///< visualization pipeline
     InSituVis::Viewpoint m_viewpoint{}; ///< rendering viewpoint
     InSituVis::OutputDirectory m_output_directory{}; ///< output directory
@@ -58,7 +61,7 @@ private:
     kvs::UInt32 m_current_time_index = 0; ///< current time index
     kvs::UInt32 m_current_space_index = 0; ///< current space index
     kvs::LogStream m_log{}; ///< log stream
-    float m_pipe_time = 0.0f; ///< pipeline execution time per frame
+//    float m_pipe_time = 0.0f; ///< pipeline execution time per frame
     kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
     kvs::StampTimer m_rend_timer{}; ///< timer for rendering process
     kvs::StampTimer m_save_timer{}; ///< timer for image saving process
@@ -97,6 +100,11 @@ public:
     virtual bool dump();
 
 protected:
+    void doPipeline( const Object& object );
+    void doPipeline( const ObjectList& objects );
+    void doPipeline();
+    void doRendering();
+
     kvs::UInt32 currentTimeIndex() const { return m_current_time_index; }
     kvs::UInt32 currentSpaceIndex() const { return m_current_space_index; }
     void setCurrentTimeIndex( const size_t index ) { m_current_time_index = index; }
@@ -104,11 +112,9 @@ protected:
     void incrementTimeCounter() { m_time_counter++; }
     void decrementTimeCounter() { m_time_counter--; }
     bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
-    float pipeTime() const { return m_pipe_time; }
-    void setPipeTime( const float time ) { m_pipe_time = time; }
+    void clearObjects() { m_objects.clear(); }
+    ObjectList& objects() { return m_objects; }
 
-    void doPipeline( const Object& object );
-    void doRendering();
     kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const;
     std::string outputImageName( const std::string& surfix = "" ) const;
     ColorBuffer backgroundColorBuffer() const;

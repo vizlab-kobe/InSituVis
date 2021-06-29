@@ -48,25 +48,24 @@ inline bool Adaptor::finalize()
 
 inline void Adaptor::exec( const kvs::UInt32 time_index )
 {
-    // Stamp the pipeline execution time.
-    BaseClass::pipeTimer().stamp( BaseClass::pipeTime() );
-    BaseClass::setPipeTime( 0.0f );
-
     // Visualize the processed object.
     BaseClass::setCurrentTimeIndex( time_index );
     {
         if ( this->canVisualize() )
         {
+            this->doPipeline();
             this->doRendering();
         }
         else
         {
-            BaseClass::saveTimer().stamp( 0.0f );
+            BaseClass::pipeTimer().stamp( 0.0f );
             BaseClass::rendTimer().stamp( 0.0f );
+            BaseClass::saveTimer().stamp( 0.0f );
             m_comp_timer.stamp( 0.0f );
         }
     }
     BaseClass::incrementTimeCounter();
+    BaseClass::clearObjects();
 }
 
 inline bool Adaptor::dump()
