@@ -61,7 +61,6 @@ private:
     kvs::UInt32 m_current_time_index = 0; ///< current time index
     kvs::UInt32 m_current_space_index = 0; ///< current space index
     kvs::LogStream m_log{}; ///< log stream
-//    float m_pipe_time = 0.0f; ///< pipeline execution time per frame
     kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
     kvs::StampTimer m_rend_timer{}; ///< timer for rendering process
     kvs::StampTimer m_save_timer{}; ///< timer for image saving process

@@ -62,6 +62,7 @@ public:
 
 protected:
     void doRendering();
+
     std::string outputFinalImageName();
     DepthBuffer backgroundDepthBuffer();
     FrameBuffer readback( const Viewpoint::Point& point );
