@@ -2,12 +2,7 @@
 namespace InSituVis
 {
 
-inline bool AdaptiveTimeSelector::canVis()
-{
-    return BaseClass::canVisualize();
-}
-
-inline void AdaptiveTimeSelector::doVis( const Data& data, const kvs::UInt32 time_index )
+inline void TimestepControlledAdaptor::doVis( const Data& data, const kvs::UInt32 time_index )
 {
     // Reset time index, which is used for output filename, for visualizing the stacked dataset.
     if ( Controller::dataQueue().size() > 0 )
@@ -21,17 +16,12 @@ inline void AdaptiveTimeSelector::doVis( const Data& data, const kvs::UInt32 tim
     BaseClass::doRendering();
 }
 
-inline void AdaptiveTimeSelector::exec( const kvs::UInt32 time_index )
+inline void TimestepControlledAdaptor::exec( const kvs::UInt32 time_index )
 {
     BaseClass::setCurrentTimeIndex( time_index );
     Controller::exec( BaseClass::objects(), time_index );
     BaseClass::incrementTimeCounter();
     BaseClass::clearObjects();
-}
-
-float AdaptiveTimeSelector::divergence( const Data& data0, const Data& data1 ) const
-{
-    return 0.0f;
 }
 
 } // end of namespace InSituVis

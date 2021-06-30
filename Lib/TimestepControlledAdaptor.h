@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /**
- *  @file   AdaptiveTimeSelector.h
+ *  @file   TimestepControlledAdaptor.h
  *  @author Naohisa Sakamoto
  */
 /*****************************************************************************/
@@ -14,26 +14,26 @@
 namespace InSituVis
 {
 
-class AdaptiveTimeSelector : public InSituVis::Adaptor, public InSituVis::AdaptiveTimestepController
+class TimestepControlledAdaptor : public InSituVis::Adaptor, public InSituVis::AdaptiveTimestepController
 {
 public:
     using BaseClass = InSituVis::Adaptor;
     using Controller = InSituVis::AdaptiveTimestepController;
 
 public:
-    AdaptiveTimeSelector() = default;
-    virtual ~AdaptiveTimeSelector() = default;
+    TimestepControlledAdaptor() = default;
+    virtual ~TimestepControlledAdaptor() = default;
 
     virtual void exec( const kvs::UInt32 time_index );
 
 private:
-    bool canVis();
+    bool canVis() { return BaseClass::canVisualize(); }
     void doVis( const Data& data, const kvs::UInt32 time_index );
 
 private:
-    virtual float divergence( const Data& data0, const Data& data1 ) const;
+    virtual float divergence( const Data& data0, const Data& data1 ) const { return 0.0f; }
 };
 
 } // end of namespace InSituVis
 
-#include "AdaptiveTimeSelector.hpp"
+#include "TimestepControlledAdaptor.hpp"

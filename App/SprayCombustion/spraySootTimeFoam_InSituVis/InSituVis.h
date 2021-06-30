@@ -10,15 +10,23 @@
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
-#include <InSituVis/Lib/AdaptiveTimeSelector.h>
+
+#define IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL
+
+#if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
+#include <InSituVis/Lib/TimestepControlledAdaptor.h>
+namespace { using Adaptor = InSituVis::TimestepControlledAdaptor; }
+#else
+namespace { using Adaptor = InSituVis::Adaptor; }
+#endif
 
 
 namespace local
 {
 
-class InSituVis : public ::InSituVis::Adaptor
+class InSituVis : public ::Adaptor
 {
-    using BaseClass = ::InSituVis::Adaptor;
+    using BaseClass = ::Adaptor;
     using Object = BaseClass::Object;
     using Volume = kvs::UnstructuredVolumeObject;
     using Screen = BaseClass::Screen;
@@ -29,21 +37,27 @@ public:
 
 private:
     kvs::StampTimer m_sim_timer{}; ///< timer for simulation process
-    kvs::StampTimer m_imp_timer{}; ///< timer for imporing process
+    kvs::StampTimer m_imp_timer{}; ///< timer for data imporing process
     kvs::StampTimer m_vis_timer{}; ///< timer for visualization process
 
 public:
     InSituVis(): BaseClass()
     {
         // Common parameters.
+        enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
+        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
 
-        // Time interval.
-        this->setTimeInterval( 5 ); // vis. time interval
+        // Time intervals.
+        this->setTimeInterval( 1 ); // l: vis. time interval
+#if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
+        this->setDivergenceInterval( 4 ); // L: div. time interval
+        this->setDivergenceThreshold( 1.0 );
+        this->setSamplingGranularity( 2 ); // R: granularity for the pattern A
+#endif
 
         // Set visualization pipeline.
-        enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
         switch ( pipeline_type )
         {
         case Ortho:
@@ -56,7 +70,6 @@ public:
         }
 
         // Set viewpoint(s)
-        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
         switch ( viewpoint_type )
         {
         case Single:

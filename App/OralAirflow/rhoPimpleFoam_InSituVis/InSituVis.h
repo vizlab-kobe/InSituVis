@@ -14,7 +14,7 @@
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
-#include <InSituVis/Lib/AdaptiveTimeSelector.h>
+#include <InSituVis/Lib/TimestepControlledAdaptor.h>
 
 
 namespace local
@@ -41,6 +41,8 @@ public:
     InSituVis( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root )
     {
         // Common parameters.
+        enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
+        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
@@ -49,7 +51,6 @@ public:
         this->setTimeInterval( 5 ); // vis. time interval
 
         // Set visualization pipeline.
-        enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
         switch ( pipeline_type )
         {
         case Ortho:
@@ -62,7 +63,6 @@ public:
         }
 
         // Set viewpoint(s)
-        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
         switch ( viewpoint_type )
         {
         case Single:
