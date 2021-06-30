@@ -57,7 +57,8 @@ private:
     size_t m_image_height = 512; ///< height of rendering image
     bool m_enable_output_image = true; ///< flag for writing final rendering image data
     size_t m_time_counter = 0; ///< time step counter (t)
-    size_t m_time_interval = 1; ///< visualization time interval (dt)
+//    size_t m_time_interval = 1; ///< visualization time interval (l)
+    size_t m_vis_interval = 1; ///< visualization time interval (l)
     kvs::UInt32 m_current_time_index = 0; ///< current time index
     kvs::UInt32 m_current_space_index = 0; ///< current space index
     kvs::LogStream m_log{}; ///< log stream
@@ -79,13 +80,15 @@ public:
     const InSituVis::Viewpoint& viewpoint() const { return m_viewpoint; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
     size_t timeCounter() const { return m_time_counter; }
-    size_t timeInterval() const { return m_time_interval; }
+//    size_t timeInterval() const { return m_time_interval; }
+    size_t visualizationInterval() const { return m_vis_interval; }
     kvs::StampTimer& pipeTimer() { return m_pipe_timer; }
     kvs::StampTimer& rendTimer() { return m_rend_timer; }
     kvs::StampTimer& saveTimer() { return m_save_timer; }
 
     void setViewpoint( const Viewpoint& viewpoint ) { m_viewpoint = viewpoint; }
-    void setTimeInterval( const size_t interval ) { m_time_interval = interval; }
+//    void setTimeInterval( const size_t interval ) { m_time_interval = interval; }
+    void setVisualizationInterval( const size_t interval ) { m_vis_interval = interval; }
     void setPipeline( Pipeline pipeline ) { m_pipeline = pipeline; }
     void setOutputDirectory( const InSituVis::OutputDirectory& directory ) { m_output_directory = directory; }
     void setOutputFilename( const std::string& filename ) { m_output_filename = filename; }
@@ -110,7 +113,8 @@ protected:
     void setCurrentSpaceIndex( const size_t index ) { m_current_space_index = index; }
     void incrementTimeCounter() { m_time_counter++; }
     void decrementTimeCounter() { m_time_counter--; }
-    bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
+//    bool canVisualize() const { return m_time_counter % m_time_interval == 0; }
+    bool canVisualize() const { return m_time_counter % m_vis_interval == 0; }
     void clearObjects() { m_objects.clear(); }
     ObjectList& objects() { return m_objects; }
 

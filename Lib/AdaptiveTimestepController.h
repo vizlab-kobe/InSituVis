@@ -6,6 +6,8 @@
 /*****************************************************************************/
 #pragma once
 #include <queue>
+#include <functional>
+#include <kvs/VolumeObjectBase>
 #include "Adaptor.h"
 
 
@@ -18,14 +20,21 @@ public:
     using Data = InSituVis::Adaptor::ObjectList;
     using DataQueue = std::queue<Data>;
 
+    using Volume = kvs::VolumeObjectBase;
+    using Values = Volume::Values;
+    using DivergenceFunction = std::function<float(const Values&,const Values&, const float)>;
+
+    static float GaussianKLDivergence( const Values& P0, const Values& P1, const float D_max );
+
 private:
-    size_t m_interval = 1; ///< time interval of KL divergence calculation
+    size_t m_interval = 1; ///< time interval of divergence calculation
     size_t m_granularity = 0; ///< granularity for coarse grained sampling
-    float m_threshold = 0.0f; ///< threshold value for divergence evalution based on KL divergence
+    float m_threshold = 0.0f; ///< threshold value for divergence evalution
 
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
-    float m_previous_divergence = 0.0f; ///< KL divergence for the previous dataset
+    float m_previous_divergence = 0.0f; ///< divergence for the previous dataset
+    DivergenceFunction m_divergence_function = GaussianKLDivergence; ///< divergence function
 
 public:
     AdaptiveTimestepController() = default;
@@ -39,18 +48,13 @@ public:
     void setDivergenceInterval( const size_t interval ) { m_interval = interval; }
     void setDivergenceThreshold( const float threshold ) { m_threshold = threshold; }
     void setSamplingGranularity( const size_t granularity ) { m_granularity = granularity; }
+    void setDivergenceFunction( DivergenceFunction func ) { m_divergence_function = func; }
 
     void exec( const Data& data, const kvs::UInt32 time_index );
 
 protected:
     virtual bool canVis() = 0;
     virtual void doVis( const Data&, const kvs::UInt32 ) = 0;
-
-private:
-    virtual float divergence( const Data& data0, const Data& data1 ) const
-    {
-        return 0.0f;
-    }
 };
 
 } // end of namespace InSituVis

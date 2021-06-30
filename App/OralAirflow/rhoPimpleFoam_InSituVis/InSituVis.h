@@ -48,7 +48,7 @@ public:
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
 
         // Time interval.
-        this->setTimeInterval( 5 ); // vis. time interval
+        this->setVisualizationInterval( 5 ); // l: vis. time interval
 
         // Set visualization pipeline.
         switch ( pipeline_type )

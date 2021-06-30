@@ -1,6 +1,87 @@
+#include <kvs/Math>
+
+
+namespace
+{
+
+template <typename T>
+inline double Variance(
+    const kvs::ValueArray<T>& values,
+    double& mean )
+{
+    double m = 0.0;
+    double var = 0.0;
+    int i = 1;
+    for ( const auto& v : values )
+    {
+        double d = v - m;
+        m += d / i++;
+        var += d * ( v - m );
+    }
+    var /= ( values.size() - 1 );
+    mean = m;
+    return var;
+};
+
+template <typename T>
+inline float Divergence(
+    const kvs::ValueArray<T>& p0,
+    const kvs::ValueArray<T>& p1,
+    const float D_max )
+{
+    auto m0 = 0.0;
+    auto m1 = 0.0;
+    auto s0 = std::sqrt( ::Variance( p0, m0 ) );
+    auto s1 = std::sqrt( ::Variance( p1, m1 ) );
+
+    if ( kvs::Math::IsZero( s0 ) ||
+         kvs::Math::IsZero( s1 ) )
+    {
+        if ( kvs::Math::Equal( s0, s1 ) &&
+             kvs::Math::Equal( m0, m1 ) )
+        {
+            return 0.0f;
+        }
+        return D_max;
+    }
+
+    const auto a = std::log( s1 / s0 );
+    const auto b = s0 * s0 + ( m0 - m1 ) * ( m0 - m1 );
+    const auto c = 2.0 * s1 * s1;
+    return a + b / c - 0.5f;
+}
+
+}
 
 namespace InSituVis
 {
+
+inline float AdaptiveTimestepController::GaussianKLDivergence(
+    const Values& P0,
+    const Values& P1,
+    const float D_max )
+{
+    KVS_ASSERT( P0.typeID() == P1.typeID() );
+
+    std::cout << "GaussianKLDivergence" << std::endl;
+
+    switch ( P0.typeID() )
+    {
+    case kvs::Type::TypeReal32:
+    {
+        const auto p0 = P0.asValueArray<kvs::Real32>();
+        const auto p1 = P1.asValueArray<kvs::Real32>();
+        return ::Divergence( p0, p1, D_max );
+    }
+    case kvs::Type::TypeReal64:
+    {
+        const auto p0 = P0.asValueArray<kvs::Real64>();
+        const auto p1 = P1.asValueArray<kvs::Real64>();
+        return ::Divergence( p0, p1, D_max );
+    }
+    default: return 0.0f;
+    }
+}
 
 inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt32 time_index )
 {
@@ -27,12 +108,20 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
             if ( m_data_queue.size() >= L )
             {
                 const auto V_crr = m_data_queue.back();
-                const auto D_crr = this->divergence( V_prv, V_crr );
+                const auto P_prv = Volume::DownCast( V_prv.front().get() )->values();
+                const auto P_crr = Volume::DownCast( V_crr.front().get() )->values();
+                const auto D_crr = m_divergence_function( P_prv, P_crr, D_thr );
                 m_previous_data = V_crr;
+                m_previous_divergence = D_crr;
+
+                std::cout << "D_prv: " << D_prv << std::endl;
+                std::cout << "D_crr: " << D_crr << std::endl;
 
                 // Pattern A
                 if ( D_prv < D_thr && D_crr < D_thr )
                 {
+                    std::cout << "\tPttern A" << std::endl;
+
                     int i = 1;
                     while ( !m_data_queue.empty() )
                     {
@@ -48,6 +137,8 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                 // Pattern B
                 else if ( D_crr >= D_thr )
                 {
+                    std::cout << "\tPttern B" << std::endl;
+
                     while ( !m_data_queue.empty() )
                     {
                         this->doVis( m_data_queue.front(), time_index );
@@ -58,6 +149,8 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                 // Pattern C
                 else
                 {
+                    std::cout << "\tPttern C" << std::endl;
+
                     const auto queue_size = m_data_queue.size();
                     for ( size_t i = 0; i < queue_size / 2; ++i )
                     {
