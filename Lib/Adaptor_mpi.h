@@ -61,7 +61,7 @@ public:
     virtual bool dump();
 
 protected:
-    void doRendering();
+    void execRendering();
 
     std::string outputFinalImageName();
     DepthBuffer backgroundDepthBuffer();

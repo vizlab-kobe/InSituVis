@@ -87,7 +87,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
 {
     if ( m_data_queue.empty() && m_previous_data.empty() ) // initial step
     {
-        this->doVis( data, time_index );
+        this->execVis( data, time_index );
         m_previous_data = data;
         m_previous_divergence = 0.0f;
     }
@@ -110,7 +110,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                 const auto V_crr = m_data_queue.back();
                 const auto P_prv = Volume::DownCast( V_prv.front().get() )->values();
                 const auto P_crr = Volume::DownCast( V_crr.front().get() )->values();
-                const auto D_crr = m_divergence_function( P_prv, P_crr, D_thr );
+                const auto D_crr = this->divergence( P_prv, P_crr );
                 m_previous_data = V_crr;
                 m_previous_divergence = D_crr;
 
@@ -127,7 +127,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                     {
                         if ( i % R == 0 )
                         {
-                            this->doVis( m_data_queue.front(), time_index );
+                            this->execVis( m_data_queue.front(), time_index );
                         }
                         m_data_queue.pop();
                         i++;
@@ -141,7 +141,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
 
                     while ( !m_data_queue.empty() )
                     {
-                        this->doVis( m_data_queue.front(), time_index );
+                        this->execVis( m_data_queue.front(), time_index );
                         m_data_queue.pop();
                     }
                 }
@@ -154,7 +154,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                     const auto queue_size = m_data_queue.size();
                     for ( size_t i = 0; i < queue_size / 2; ++i )
                     {
-                        this->doVis( m_data_queue.front(), time_index );
+                        this->execVis( m_data_queue.front(), time_index );
                         m_data_queue.pop();
                     }
 
@@ -163,7 +163,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                     {
                         if ( i % R == 0 )
                         {
-                            this->doVis( m_data_queue.front(), time_index );
+                            this->execVis( m_data_queue.front(), time_index );
                         }
                         m_data_queue.pop();
                         i++;
@@ -173,6 +173,11 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
             }
         }
     }
+}
+
+inline float AdaptiveTimestepController::divergence( const Values& P0, const Values& P1 )
+{
+    return m_divergence_function( P0, P1, m_threshold );
 }
 
 } // end of namespace InSituVis

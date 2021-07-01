@@ -50,11 +50,11 @@ public:
         this->setOutputImageEnabled( true );
 
         // Time intervals.
-        this->setVisualizationInterval( 1 ); // l: vis. time interval
+        this->setVisualizationInterval( 3 ); // l: vis. time interval
 #if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
-        this->setDivergenceInterval( 2 ); // L: div. time interval
-        this->setDivergenceThreshold( 1.0 );
-        this->setSamplingGranularity( 1 ); // R: granularity for the pattern A
+        this->setDivergenceInterval( 4 ); // L: div. time interval
+        this->setDivergenceThreshold( 0.8 );
+        this->setSamplingGranularity( 2 ); // R: granularity for the pattern A
 #endif
 
         // Set visualization pipeline.

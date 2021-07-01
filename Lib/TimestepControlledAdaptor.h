@@ -28,7 +28,7 @@ public:
 
 private:
     bool canVis() { return BaseClass::canVisualize(); }
-    void doVis( const Data& data, const kvs::UInt32 time_index );
+    void execVis( const Data& data, const kvs::UInt32 time_index );
 
 private:
     virtual float divergence( const Data& data0, const Data& data1 ) const { return 0.0f; }

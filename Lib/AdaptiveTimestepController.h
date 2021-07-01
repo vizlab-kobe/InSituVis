@@ -50,11 +50,11 @@ public:
     void setSamplingGranularity( const size_t granularity ) { m_granularity = granularity; }
     void setDivergenceFunction( DivergenceFunction func ) { m_divergence_function = func; }
 
-    void exec( const Data& data, const kvs::UInt32 time_index );
-
 protected:
+    void exec( const Data& data, const kvs::UInt32 time_index );
+    virtual float divergence( const Values& P0, const Values& P1 );
     virtual bool canVis() = 0;
-    virtual void doVis( const Data&, const kvs::UInt32 ) = 0;
+    virtual void execVis( const Data&, const kvs::UInt32 ) = 0;
 };
 
 } // end of namespace InSituVis

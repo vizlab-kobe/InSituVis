@@ -17,7 +17,7 @@ std::function<void(int)> Dump;
 void Terminate( int sig ) { Dump( sig ); }
 }
 
-// Shallow copied object pointer.
+// Shallow-copied object pointer.
 namespace
 {
 
@@ -137,8 +137,8 @@ inline void Adaptor::exec( const kvs::UInt32 time_index )
     {
         if ( this->canVisualize() )
         {
-            this->doPipeline( m_objects );
-            this->doRendering();
+            this->execPipeline( m_objects );
+            this->execRendering();
         }
         else
         {
@@ -165,18 +165,18 @@ inline bool Adaptor::dump()
     return timer_list.write( dir + "vis_proc_time" + ".csv" );
 }
 
-inline void Adaptor::doPipeline( const Object& object )
+inline void Adaptor::execPipeline( const Object& object )
 {
     m_pipeline( m_screen, object );
 }
 
-inline void Adaptor::doPipeline( const ObjectList& objects )
+inline void Adaptor::execPipeline( const ObjectList& objects )
 {
     kvs::Timer timer( kvs::Timer::Start );
     for ( const auto& pobject : objects )
     {
         const auto& object = *( pobject.get() );
-        this->doPipeline( object );
+        this->execPipeline( object );
     }
     timer.stop();
 
@@ -184,12 +184,12 @@ inline void Adaptor::doPipeline( const ObjectList& objects )
     m_pipe_timer.stamp( pipe_time );
 }
 
-inline void Adaptor::doPipeline()
+inline void Adaptor::execPipeline()
 {
-    this->doPipeline( m_objects );
+    this->execPipeline( m_objects );
 }
 
-inline void Adaptor::doRendering()
+inline void Adaptor::execRendering()
 {
     float rend_time = 0.0f;
     float save_time = 0.0f;
