@@ -42,7 +42,7 @@ public:
 private:
     kvs::PolygonObject m_boundary_mesh; ///< boundary mesh
     kvs::mpi::StampTimer m_sim_timer{ BaseClass::world() }; ///< timer for sim. process
-    kvs::mpi::StampTimer m_imp_timer{ BaseClass::world() }; ///< timer for impor process
+    kvs::mpi::StampTimer m_cnv_timer{ BaseClass::world() }; ///< timer for cnv. process
     kvs::mpi::StampTimer m_vis_timer{ BaseClass::world() }; ///< timer for vis. process
 
 public:
@@ -101,7 +101,7 @@ public:
     }
 
     kvs::mpi::StampTimer& simTimer() { return m_sim_timer; }
-    kvs::mpi::StampTimer& impTimer() { return m_imp_timer; }
+    kvs::mpi::StampTimer& cnvTimer() { return m_cnv_timer; }
     kvs::mpi::StampTimer& visTimer() { return m_vis_timer; }
 
     void exec( const kvs::UInt32 time_index )
@@ -135,14 +135,14 @@ public:
 
         // For each node
         m_sim_timer.setTitle( "Sim time" );
-        m_imp_timer.setTitle( "Imp time" );
+        m_cnv_timer.setTitle( "Cnv time" );
         m_vis_timer.setTitle( "Vis time" );
 
         const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
         const std::string subdir = BaseClass::outputDirectory().name() + "/";
         kvs::StampTimerList timer_list;
         timer_list.push( m_sim_timer );
-        timer_list.push( m_imp_timer );
+        timer_list.push( m_cnv_timer );
         timer_list.push( m_vis_timer );
         if ( !timer_list.write( subdir + "proc_time_" + rank + ".csv" ) ) return false;
 
@@ -150,9 +150,9 @@ public:
         auto sim_time_min = m_sim_timer; sim_time_min.reduceMin();
         auto sim_time_max = m_sim_timer; sim_time_max.reduceMax();
         auto sim_time_ave = m_sim_timer; sim_time_ave.reduceAve();
-        auto imp_time_min = m_imp_timer; imp_time_min.reduceMin();
-        auto imp_time_max = m_imp_timer; imp_time_max.reduceMax();
-        auto imp_time_ave = m_imp_timer; imp_time_ave.reduceAve();
+        auto cnv_time_min = m_cnv_timer; cnv_time_min.reduceMin();
+        auto cnv_time_max = m_cnv_timer; cnv_time_max.reduceMax();
+        auto cnv_time_ave = m_cnv_timer; cnv_time_ave.reduceAve();
         auto vis_time_min = m_vis_timer; vis_time_min.reduceMin();
         auto vis_time_max = m_vis_timer; vis_time_max.reduceMax();
         auto vis_time_ave = m_vis_timer; vis_time_ave.reduceAve();
@@ -162,9 +162,9 @@ public:
         sim_time_min.setTitle( "Sim time (min)" );
         sim_time_max.setTitle( "Sim time (max)" );
         sim_time_ave.setTitle( "Sim time (ave)" );
-        imp_time_min.setTitle( "Imp time (min)" );
-        imp_time_max.setTitle( "Imp time (max)" );
-        imp_time_ave.setTitle( "Imp time (ave)" );
+        cnv_time_min.setTitle( "Cnv time (min)" );
+        cnv_time_max.setTitle( "Cnv time (max)" );
+        cnv_time_ave.setTitle( "Cnv time (ave)" );
         vis_time_min.setTitle( "Vis time (min)" );
         vis_time_max.setTitle( "Vis time (max)" );
         vis_time_ave.setTitle( "Vis time (ave)" );
@@ -173,9 +173,9 @@ public:
         timer_list.push( sim_time_min );
         timer_list.push( sim_time_max );
         timer_list.push( sim_time_ave );
-        timer_list.push( imp_time_min );
-        timer_list.push( imp_time_max );
-        timer_list.push( imp_time_ave );
+        timer_list.push( cnv_time_min );
+        timer_list.push( cnv_time_max );
+        timer_list.push( cnv_time_ave );
         timer_list.push( vis_time_min );
         timer_list.push( vis_time_max );
         timer_list.push( vis_time_ave );

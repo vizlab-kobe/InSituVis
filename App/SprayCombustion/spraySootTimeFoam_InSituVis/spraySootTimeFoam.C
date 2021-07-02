@@ -156,10 +156,10 @@ int main(int argc, char *argv[])
 
 #if defined( IN_SITU_VIS )
         // Loop information
-        const auto current_time = runTime.timeName();
+        const auto current_time_value = runTime.value();
         const auto current_time_index = runTime.timeIndex();
         vis.log() << "LOOP[" << current_time_index << "/" << end_time_index << "]: " << std::endl;
-        vis.log() << indent << "T: " << current_time << std::endl;
+        vis.log() << indent << "T: " << current_time_value << std::endl;
         vis.log() << indent << "End T: " << end_time << std::endl;
         vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
         vis.simTimer().start();
@@ -230,13 +230,17 @@ int main(int argc, char *argv[])
         const auto max_value = 1031.611;
 
         // Convert OpenFOAM data to KVS data
-        vis.impTimer().start();
+        vis.cnvTimer().start();
         InSituVis::foam::FoamToKVS converter( field, false );
         using CellType = InSituVis::foam::FoamToKVS::CellType;
         auto vol = converter.exec( field, CellType::Hexahedra );
-        vis.impTimer().stamp();
+        vis.cnvTimer().stamp();
 
         vol.setMinMaxValues( min_value, max_value );
+
+        const auto tc = vis.cnvTimer().last();
+        const auto Tc = kvs::String::From( tc, 4 );
+        vis.log() << indent.nextIndent() << "Conversion: " << Tc << " s" << std::endl;
 
         // Execute visualization pipeline and rendering
         vis.visTimer().start();

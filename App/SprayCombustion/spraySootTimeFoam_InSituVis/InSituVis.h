@@ -37,7 +37,7 @@ public:
 
 private:
     kvs::StampTimer m_sim_timer{}; ///< timer for simulation process
-    kvs::StampTimer m_imp_timer{}; ///< timer for data imporing process
+    kvs::StampTimer m_cnv_timer{}; ///< timer for conversion process
     kvs::StampTimer m_vis_timer{}; ///< timer for visualization process
 
 public:
@@ -95,7 +95,7 @@ public:
     }
 
     kvs::StampTimer& simTimer() { return m_sim_timer; }
-    kvs::StampTimer& impTimer() { return m_imp_timer; }
+    kvs::StampTimer& cnvTimer() { return m_cnv_timer; }
     kvs::StampTimer& visTimer() { return m_vis_timer; }
 
     bool dump()
@@ -103,13 +103,13 @@ public:
         if ( !BaseClass::dump() ) return false;
 
         m_sim_timer.setTitle( "Sim time" );
-        m_imp_timer.setTitle( "Imp time" );
+        m_cnv_timer.setTitle( "Cnv time" );
         m_vis_timer.setTitle( "Vis time" );
 
         const auto dir = BaseClass::outputDirectory().name() + "/";
         kvs::StampTimerList timer_list;
         timer_list.push( m_sim_timer );
-        timer_list.push( m_imp_timer );
+        timer_list.push( m_cnv_timer );
         timer_list.push( m_vis_timer );
         return timer_list.write( dir + "proc_time" + ".csv" );
     }
