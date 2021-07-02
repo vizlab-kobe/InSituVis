@@ -132,33 +132,31 @@ inline void Adaptor::put( const Adaptor::Object& object )
 
 inline void Adaptor::exec( const kvs::UInt32 time_index )
 {
-    // Visualize the processed volume data.
-    this->setCurrentTimeIndex( time_index );
+    // Visualize the processed object.
+    if ( this->canVisualize() )
     {
-        if ( this->canVisualize() )
-        {
-            this->execPipeline( m_objects );
-            this->execRendering();
-        }
-        else
-        {
-            m_pipe_timer.stamp( 0.0f );
-            m_rend_timer.stamp( 0.0f );
-            m_save_timer.stamp( 0.0f );
-        }
+        const auto index = static_cast<float>( this->currentTimeIndex() );
+        m_index_list.stamp( index );
+
+        this->execPipeline( m_objects );
+        this->execRendering();
     }
-    this->incrementTimeCounter();
+
+    const auto current_index = this->currentTimeIndex();
+    this->setCurrentTimeIndex( current_index + 1 );
     this->clearObjects();
 }
 
 inline bool Adaptor::dump()
 {
+    if ( m_index_list.title().empty() ) { m_index_list.setTitle( "Time index" ); }
     if ( m_pipe_timer.title().empty() ) { m_pipe_timer.setTitle( "Pipe time" ); }
     if ( m_rend_timer.title().empty() ) { m_rend_timer.setTitle( "Rend time" ); }
     if ( m_save_timer.title().empty() ) { m_save_timer.setTitle( "Save time" ); }
 
     const auto dir = m_output_directory.name() + "/";
     kvs::StampTimerList timer_list;
+    timer_list.push( m_index_list );
     timer_list.push( m_pipe_timer );
     timer_list.push( m_rend_timer );
     timer_list.push( m_save_timer );
@@ -246,12 +244,12 @@ inline std::string Adaptor::outputImageName( const std::string& surfix ) const
 {
     const auto time = this->currentTimeIndex();
     const auto space = this->currentSpaceIndex();
-    const std::string output_time = kvs::String::From( time, 6, '0' );
-    const std::string output_space = kvs::String::From( space, 6, '0' );
+    const auto output_time = kvs::String::From( time, 6, '0' );
+    const auto output_space = kvs::String::From( space, 6, '0' );
 
-    const std::string output_basename = m_output_filename;
-    const std::string output_filename = output_basename + "_" + output_time + "_" + output_space;
-    const std::string filename = m_output_directory.name() + "/" + output_filename + surfix + ".bmp";
+    const auto output_basename = m_output_filename;
+    const auto output_filename = output_basename + "_" + output_time + "_" + output_space;
+    const auto filename = m_output_directory.name() + "/" + output_filename + surfix + ".bmp";
     return filename;
 }
 

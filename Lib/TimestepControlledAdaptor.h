@@ -28,7 +28,7 @@ public:
 
 private:
     bool canPush() { return BaseClass::canVisualize(); }
-    void process( const Data& data, const kvs::UInt32 time_index );
+    void process( const Data& data );
 };
 
 } // end of namespace InSituVis

@@ -49,31 +49,29 @@ inline bool Adaptor::finalize()
 inline void Adaptor::exec( const kvs::UInt32 time_index )
 {
     // Visualize the processed object.
-    BaseClass::setCurrentTimeIndex( time_index );
+    if ( this->canVisualize() )
     {
-        if ( this->canVisualize() )
-        {
-            this->execPipeline();
-            this->execRendering();
-        }
-        else
-        {
-            BaseClass::pipeTimer().stamp( 0.0f );
-            BaseClass::rendTimer().stamp( 0.0f );
-            BaseClass::saveTimer().stamp( 0.0f );
-            m_comp_timer.stamp( 0.0f );
-        }
+        // Stack current time index.
+        const auto index = static_cast<float>( BaseClass::currentTimeIndex() );
+        BaseClass::indexList().stamp( index );
+
+        this->execPipeline();
+        this->execRendering();
     }
-    BaseClass::incrementTimeCounter();
+
+    const auto current_index = BaseClass::currentTimeIndex();
+    BaseClass::setCurrentTimeIndex( current_index + 1 );
     BaseClass::clearObjects();
 }
 
 inline bool Adaptor::dump()
 {
+    auto& index_list = BaseClass::indexList();
     auto& pipe_timer = BaseClass::pipeTimer();
     auto& rend_timer = BaseClass::rendTimer();
     auto& save_timer = BaseClass::saveTimer();
     auto& comp_timer = m_comp_timer;
+    if ( index_list.title().empty() ) { index_list.setTitle( "Time index" ); }
     if ( pipe_timer.title().empty() ) { pipe_timer.setTitle( "Pipe time" ); }
     if ( rend_timer.title().empty() ) { rend_timer.setTitle( "Rend time" ); }
     if ( save_timer.title().empty() ) { save_timer.setTitle( "Save time" ); }
@@ -82,6 +80,7 @@ inline bool Adaptor::dump()
     const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
     const std::string subdir = BaseClass::outputDirectory().name() + "/";
     kvs::StampTimerList timer_list;
+    timer_list.push( index_list );
     timer_list.push( pipe_timer );
     timer_list.push( rend_timer );
     timer_list.push( save_timer );
@@ -118,6 +117,7 @@ inline bool Adaptor::dump()
     comp_time_ave.setTitle( comp_timer.title() + " (ave)" );
 
     timer_list.clear();
+    timer_list.push( index_list );
     timer_list.push( pipe_time_min );
     timer_list.push( pipe_time_max );
     timer_list.push( pipe_time_ave );

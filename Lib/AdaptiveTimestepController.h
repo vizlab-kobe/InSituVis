@@ -51,9 +51,9 @@ public:
     void setDivergenceFunction( DivergenceFunction func ) { m_divergence_function = func; }
 
 protected:
-    void push( const Data& data, const kvs::UInt32 time_index );
+    void push( const Data& data );
     virtual bool canPush() { return true; }
-    virtual void process( const Data&, const kvs::UInt32 ) {}
+    virtual void process( const Data& ) {}
     virtual float divergence( const Values& P0, const Values& P1 );
 };
 
