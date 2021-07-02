@@ -83,11 +83,12 @@ inline float AdaptiveTimestepController::GaussianKLDivergence(
     }
 }
 
-inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt32 time_index )
+inline void AdaptiveTimestepController::push( const Data& data, const kvs::UInt32 time_index )
 {
-    if ( m_data_queue.empty() && m_previous_data.empty() ) // initial step
+    if ( m_data_queue.empty() && m_previous_data.empty() )
     {
-        this->execVis( data, time_index );
+        // Initial step.
+        this->process( data, time_index );
         m_previous_data = data;
         m_previous_divergence = 0.0f;
     }
@@ -99,8 +100,8 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
         const auto D_thr = m_threshold;
         const auto V_prv = m_previous_data;
 
-        // Vis. time-step: t % dt' == 0
-        if ( this->canVis() )
+        // Vis. time-step
+        if ( this->canPush() )
         {
             m_data_queue.push( data );
 
@@ -127,7 +128,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                     {
                         if ( i % R == 0 )
                         {
-                            this->execVis( m_data_queue.front(), time_index );
+                            this->process( m_data_queue.front(), time_index );
                         }
                         m_data_queue.pop();
                         i++;
@@ -141,7 +142,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
 
                     while ( !m_data_queue.empty() )
                     {
-                        this->execVis( m_data_queue.front(), time_index );
+                        this->process( m_data_queue.front(), time_index );
                         m_data_queue.pop();
                     }
                 }
@@ -154,7 +155,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                     const auto queue_size = m_data_queue.size();
                     for ( size_t i = 0; i < queue_size / 2; ++i )
                     {
-                        this->execVis( m_data_queue.front(), time_index );
+                        this->process( m_data_queue.front(), time_index );
                         m_data_queue.pop();
                     }
 
@@ -163,7 +164,7 @@ inline void AdaptiveTimestepController::exec( const Data& data, const kvs::UInt3
                     {
                         if ( i % R == 0 )
                         {
-                            this->execVis( m_data_queue.front(), time_index );
+                            this->process( m_data_queue.front(), time_index );
                         }
                         m_data_queue.pop();
                         i++;

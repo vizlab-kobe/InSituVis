@@ -51,10 +51,10 @@ public:
     void setDivergenceFunction( DivergenceFunction func ) { m_divergence_function = func; }
 
 protected:
-    void exec( const Data& data, const kvs::UInt32 time_index );
+    void push( const Data& data, const kvs::UInt32 time_index );
+    virtual bool canPush() { return true; }
+    virtual void process( const Data&, const kvs::UInt32 ) {}
     virtual float divergence( const Values& P0, const Values& P1 );
-    virtual bool canVis() = 0;
-    virtual void execVis( const Data&, const kvs::UInt32 ) = 0;
 };
 
 } // end of namespace InSituVis

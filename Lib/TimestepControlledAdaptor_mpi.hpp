@@ -2,6 +2,9 @@
 namespace InSituVis
 {
 
+namespace mpi
+{
+
 inline void TimestepControlledAdaptor::exec( const kvs::UInt32 time_index )
 {
     BaseClass::setCurrentTimeIndex( time_index );
@@ -24,5 +27,16 @@ inline void TimestepControlledAdaptor::process( const Data& data, const kvs::UIn
     BaseClass::execPipeline( data );
     BaseClass::execRendering();
 }
+
+inline float TimestepControlledAdaptor::divergence(
+    const Controller::Values& P0,
+    const Controller::Values& P1 )
+{
+    auto D = Controller::divergence( P0, P1 );
+    BaseClass::world().allReduce( D, D, MPI_MAX );
+    return D;
+}
+
+} // end of namespace mpi
 
 } // end of namespace InSituVis

@@ -14,15 +14,23 @@
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/DistributedViewpoint.h>
+
+#define IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL
+
+#if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
 #include <InSituVis/Lib/TimestepControlledAdaptor.h>
+namespace { using Adaptor = InSituVis::mpi::TimestepControlledAdaptor; }
+#else
+namespace { using Adaptor = InSituVis::mpi::Adaptor; }
+#endif
 
 
 namespace local
 {
 
-class InSituVis : public ::InSituVis::mpi::Adaptor
+class InSituVis : public ::Adaptor
 {
-    using BaseClass = ::InSituVis::mpi::Adaptor;
+    using BaseClass = ::Adaptor;
     using Object = BaseClass::Object;
     using Volume = kvs::UnstructuredVolumeObject;
     using Screen = BaseClass::Screen;
@@ -47,8 +55,13 @@ public:
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
 
-        // Time interval.
+        // Time intervals.
         this->setVisualizationInterval( 3 ); // l: vis. time interval
+#if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
+        this->setDivergenceInterval( 4 ); // L: div. time interval
+        this->setSamplingGranularity( 2 ); // R: granularity for the pattern A
+        this->setDivergenceThreshold( 0.01 );
+#endif
 
         // Set visualization pipeline.
         switch ( pipeline_type )

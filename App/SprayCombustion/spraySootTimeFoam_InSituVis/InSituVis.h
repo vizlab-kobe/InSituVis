@@ -53,8 +53,8 @@ public:
         this->setVisualizationInterval( 3 ); // l: vis. time interval
 #if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
         this->setDivergenceInterval( 4 ); // L: div. time interval
-        this->setDivergenceThreshold( 0.8 );
         this->setSamplingGranularity( 2 ); // R: granularity for the pattern A
+        this->setDivergenceThreshold( 0.8 );
 #endif
 
         // Set visualization pipeline.
