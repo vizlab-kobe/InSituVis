@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
         // Execute visualization pipeline and rendering
         vis.visTimer().start();
         vis.put( vol );
-        vis.exec( runTime.timeIndex() );
+        vis.exec( { current_time_value, current_time_index } );
         vis.visTimer().stamp();
 
         const auto tv = vis.visTimer().last();

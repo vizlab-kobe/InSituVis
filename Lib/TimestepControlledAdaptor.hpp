@@ -2,7 +2,7 @@
 namespace InSituVis
 {
 
-inline void TimestepControlledAdaptor::exec( const kvs::UInt32 time_index )
+inline void TimestepControlledAdaptor::exec( const BaseClass::Time sim_time )
 {
     Controller::push( BaseClass::objects() );
 

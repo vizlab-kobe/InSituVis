@@ -24,7 +24,7 @@ public:
     TimestepControlledAdaptor() = default;
     virtual ~TimestepControlledAdaptor() = default;
 
-    virtual void exec( const kvs::UInt32 time_index );
+    virtual void exec( const BaseClass::Time sim_time );
 
 private:
     bool canPush() { return BaseClass::canVisualize(); }

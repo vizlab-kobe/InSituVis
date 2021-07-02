@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
         vis.put( vol_hex );
         vis.put( vol_pri );
         vis.put( vol_pyr );
-        vis.exec( runTime.timeIndex() );
+        vis.exec( { current_time_value, current_time_index } );
         vis.visTimer().stamp();
 
         const auto tv = vis.visTimer().last();

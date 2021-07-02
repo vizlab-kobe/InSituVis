@@ -46,7 +46,7 @@ inline bool Adaptor::finalize()
     return false;
 }
 
-inline void Adaptor::exec( const kvs::UInt32 time_index )
+inline void Adaptor::exec( const BaseClass::Time sim_time )
 {
     // Visualize the processed object.
     if ( this->canVisualize() )

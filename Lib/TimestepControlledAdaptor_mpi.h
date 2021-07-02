@@ -28,7 +28,7 @@ public:
     TimestepControlledAdaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
     virtual ~TimestepControlledAdaptor() = default;
 
-    virtual void exec( const kvs::UInt32 time_index );
+    virtual void exec( const BaseClass::Time sim_time );
 
 private:
     bool canPush() { return BaseClass::canVisualize(); }

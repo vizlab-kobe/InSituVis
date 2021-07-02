@@ -104,7 +104,7 @@ public:
     kvs::mpi::StampTimer& cnvTimer() { return m_cnv_timer; }
     kvs::mpi::StampTimer& visTimer() { return m_vis_timer; }
 
-    void exec( const kvs::UInt32 time_index )
+    void exec( const BaseClass::Time sim_time )
     {
         if ( !BaseClass::screen().scene()->hasObject( "BoundaryMesh") )
         {
@@ -118,7 +118,7 @@ public:
             }
         }
 
-        BaseClass::exec( time_index );
+        BaseClass::exec( sim_time );
     }
 
     void importBoundaryMesh( const std::string& filename )

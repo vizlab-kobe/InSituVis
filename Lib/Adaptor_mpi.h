@@ -57,7 +57,7 @@ public:
 
     virtual bool initialize();
     virtual bool finalize();
-    virtual void exec( const kvs::UInt32 time_index );
+    virtual void exec( const BaseClass::Time sim_time );
     virtual bool dump();
 
 protected:

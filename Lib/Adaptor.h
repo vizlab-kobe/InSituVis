@@ -45,6 +45,7 @@ public:
     using ObjectList = std::list<Object::Pointer>;
     using Pipeline = std::function<void(Screen&,const Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
+    struct Time { float value = 0.0f; size_t index = 0; Time( float v, size_t i ): value(v), index(i) {} };
 
 private:
     Screen m_screen{}; ///< rendering screen (off-screen)
@@ -95,7 +96,7 @@ public:
     virtual bool initialize();
     virtual bool finalize();
     virtual void put( const Object& Object );
-    virtual void exec( const kvs::UInt32 time_index );
+    virtual void exec( const Time sim_time );
     virtual bool dump();
 
 protected:
