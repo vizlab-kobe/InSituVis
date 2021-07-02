@@ -41,14 +41,16 @@ Description
 #include "fvIOoptionList.H"
 
 // In-situ visualization
+#define IN_SITU_VIS
+#if defined( IN_SITU_VIS )
 #include "InSituVis.h"
 #include <InSituVis/Lib.foam/FoamToKVS.h>
-#define IN_SITU_VIS
 
 // IN_SITU_VIS__P: Pressure
 // IN_SITU_VIS__U: Velocity
 // IN_SITU_VIS__T: Temperature
 #define IN_SITU_VIS__T
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -77,9 +79,7 @@ int main(int argc, char *argv[])
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
         vis.world().abort();
     }
-#endif // IN_SITU_VIS
 
-#if defined( IN_SITU_VIS )
     // Time-loop information
     const auto start_time = runTime.startTime().value();
     const auto start_time_index = runTime.startTimeIndex();

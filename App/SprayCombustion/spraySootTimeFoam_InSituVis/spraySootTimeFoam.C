@@ -62,12 +62,16 @@ Description
 // #include "sootMomentTest.H"
 
 // In-situ visualization
+#define IN_SITU_VIS
+#if defined( IN_SITU_VIS )
 #include "InSituVis.h"
 #include <InSituVis/Lib.foam/FoamToKVS.h>
-#define IN_SITU_VIS
-
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
@@ -119,15 +123,12 @@ int main(int argc, char *argv[])
     // In-situ visualization setup
     Foam::messageStream::level = 0; // Disable Foam::Info
     const kvs::Indent indent(4); // indent for log stream
-//    kvs::Timer timer; // timer for measuring sim and vis processing times
     local::InSituVis vis;
     if ( !vis.initialize() )
     {
         vis.log() << "ERROR: " << "Cannot initialize visualization process." << std::endl;
     }
-#endif // IN_SITU_VIS
 
-#if defined( IN_SITU_VIS )
     // Time-loop information
     const auto start_time = runTime.startTime().value();
     const auto start_time_index = runTime.startTimeIndex();
@@ -161,7 +162,6 @@ int main(int argc, char *argv[])
         vis.log() << indent << "T: " << current_time << std::endl;
         vis.log() << indent << "End T: " << end_time << std::endl;
         vis.log() << indent << "Delta T: " << runTime.deltaT().value() << std::endl;
-//        timer.start(); // begin sim.
         vis.simTimer().start();
 #endif // IN_SITU_VIS
 
@@ -217,41 +217,33 @@ int main(int argc, char *argv[])
         }
 
 #if defined( IN_SITU_VIS )
-//        timer.stop(); // end sim.
         vis.simTimer().stamp();
-//        const auto ts = timer.sec();
         const auto ts = vis.simTimer().last();
         const auto Ts = kvs::String::From( ts, 4 );
         vis.log() << indent << "Processing Times:" << std::endl;
         vis.log() << indent.nextIndent() << "Simulation: " << Ts << " s" << std::endl;
 
         // Execute in-situ visualization process
-//        timer.start(); // begin vis.
-        {
-            // T: temperature
-            auto& field = thermo.T();
-            const auto min_value = 731.341;
-            const auto max_value = 1031.611;
-//            vis.setMinMaxValues( 731.341, 1031.611 );
+        // T: temperature
+        auto& field = thermo.T();
+        const auto min_value = 731.341;
+        const auto max_value = 1031.611;
 
-            // Convert OpenFOAM data to KVS data
-            vis.impTimer().start();
-            InSituVis::foam::FoamToKVS converter( field, false );
-            using CellType = InSituVis::foam::FoamToKVS::CellType;
-            auto vol = converter.exec( field, CellType::Hexahedra );
-            vis.impTimer().stamp();
+        // Convert OpenFOAM data to KVS data
+        vis.impTimer().start();
+        InSituVis::foam::FoamToKVS converter( field, false );
+        using CellType = InSituVis::foam::FoamToKVS::CellType;
+        auto vol = converter.exec( field, CellType::Hexahedra );
+        vis.impTimer().stamp();
 
-            vol.setMinMaxValues( 731.341, 1031.611 );
+        vol.setMinMaxValues( min_value, max_value );
 
-            // Execute visualization pipeline and rendering
-            vis.visTimer().start();
-            vis.put( vol );
-            vis.exec( runTime.timeIndex() );
-            vis.visTimer().stamp();
-        }
-//        timer.stop(); // end vis.
+        // Execute visualization pipeline and rendering
+        vis.visTimer().start();
+        vis.put( vol );
+        vis.exec( runTime.timeIndex() );
+        vis.visTimer().stamp();
 
-//        const auto tv = timer.sec();
         const auto tv = vis.visTimer().last();
         const auto Tv = kvs::String::From( tv, 4 );
         vis.log() << indent.nextIndent() << "Visualization: " << Tv << " s" << std::endl;
