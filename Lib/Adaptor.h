@@ -45,7 +45,13 @@ public:
     using ObjectList = std::list<Object::Pointer>;
     using Pipeline = std::function<void(Screen&,const Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
-    struct Time { float value = 0.0f; size_t index = 0; Time( float v, size_t i ): value(v), index(i) {} };
+
+    struct Time
+    {
+        float value = 0.0f;
+        size_t index = 0;
+        Time( float v = 0.0f, size_t i = 0 ): value(v), index(i) {}
+    };
 
 private:
     Screen m_screen{}; ///< rendering screen (off-screen)
