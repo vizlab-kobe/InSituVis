@@ -21,106 +21,40 @@ namespace InSituVis
 class Viewpoint
 {
 public:
-    enum DirType
+    enum Direction
     {
-        SingleDir, ///< single direction
-        OmniDir, ///< omni-direction
-        AdaptiveDir ///< adaptive direction
+        Uni, ///< uni-direction
+        Omni, ///< omni-direction
+        Adaptive ///< adaptive selection
     };
 
-    struct Point
+    struct Location
     {
-        kvs::Vec3 position; ///< viewpoint position in world coordinate
-        DirType dir_type; ///< view direction type
-        Point( const kvs::Vec3& p, const DirType d ): position( p ), dir_type( d ) {}
+        Direction direction{ Direction::Uni }; ///< view direction type
+        kvs::Vec3 position{ 0, 0, 12 }; ///< viewpoint position in world coordinate
+        kvs::Vec3 look_at{ 0, 0, 0 }; ///< look-at position in world coordinate
+        Location( const Direction d, const kvs::Vec3& p, const kvs::Vec3& l = { 0, 0, 0 } ):
+            direction( d ), position( p ), look_at( l ) {}
+        Location( const kvs::Vec3& p, const kvs::Vec3& l = { 0, 0, 0 } ):
+            direction( Uni ), position( p ), look_at( l ) {}
     };
 
-    using Points = std::vector<Point>;
-    using Counter = std::function<size_t(void)>;
-    using Locator = std::function<Point(const size_t index)>;
+    using Locations = std::vector<Location>;
 
 private:
-    kvs::Vec3 m_look_at_point{0,0,0}; ///< look-at point in world coordinate (ignored in the case of 'OmniDir')
-    Points m_points{}; ///< set of viewpoints
-    Counter m_counter{}; ///< counter for number of viewpoints
-    Locator m_locator{}; ///< locator for viewpoint
+    Locations m_locations{}; ///< set of viewpoint locations
 
 public:
     Viewpoint() = default;
     virtual ~Viewpoint() = default;
+    Viewpoint( const Location& location ) { this->set( location ); }
 
-    Viewpoint(
-        const kvs::Vec3& position,
-        const DirType dir_type = DirType::SingleDir,
-        const kvs::Vec3& lookat = { 0, 0, 0 } ):
-        m_look_at_point( lookat )
-    {
-        this->setPoint( position, dir_type );
-    }
-
-    Viewpoint(
-        const kvs::Vec3& position,
-        const kvs::Vec3& lookat ):
-        m_look_at_point( lookat )
-    {
-        const DirType dir_type = DirType::SingleDir;
-        this->setPoint( position, dir_type );
-    }
-
-    void setNumberOfPointsCounter( Counter counter )
-    {
-        m_counter = counter;
-    }
-
-    void setPointLocator( Locator locator )
-    {
-        m_locator = locator;
-    }
-
-    size_t numberOfPoints() const
-    {
-        return m_points.size() == 0 ? m_counter() : m_points.size();
-    }
-
-    Point point( const size_t index ) const
-    {
-        return m_points.size() == 0 ? m_locator( index ) : m_points[index];
-    }
-
-    const Points& points() const
-    {
-        return m_points;
-    }
-
-    const kvs::Vec3& lookAtPoint() const
-    {
-        return m_look_at_point;
-    }
-
-    void setLookAtPoint( const kvs::Vec3& point )
-    {
-        m_look_at_point = point;
-    }
-
-    void setPoint( const kvs::Vec3& position, const DirType dir_type )
-    {
-        this->clearPoints();
-        this->addPoint( position, dir_type );
-    }
-
-    void addPoint( const kvs::Vec3& position, const DirType dir_type )
-    {
-        m_points.push_back( Point( position, dir_type ) );
-    }
-
-    void clearPoints()
-    {
-        m_points.shrink_to_fit();
-    }
-
-protected:
-    size_t counter() const { return m_counter(); }
-    Point locator( const size_t index ) const { return m_locator( index ); }
+    const Locations& locations() const { return m_locations; }
+    size_t numberOfLocations() const { return m_locations.size(); }
+    const Location& at( const size_t index ) const { return m_locations.at( index ); }
+    void set( const Location& location ) { this->clear(); this->add( location ); }
+    void add( const Location& location ) { m_locations.push_back( location ); }
+    void clear() { m_locations.shrink_to_fit(); }
 };
 
 } // end of namespace InSituVis

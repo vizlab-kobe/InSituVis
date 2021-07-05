@@ -141,14 +141,14 @@ inline void Adaptor::execRendering()
     m_comp_time = 0.0f;
     float save_time = 0.0f;
     {
-        const auto npoints = BaseClass::viewpoint().numberOfPoints();
+        const auto npoints = BaseClass::viewpoint().numberOfLocations();
         for ( size_t i = 0; i < npoints; ++i )
         {
             BaseClass::setCurrentSpaceIndex( i );
 
             // Draw and readback framebuffer
-            const auto& point = BaseClass::viewpoint().point( i );
-            auto frame_buffer = this->readback( point );
+            const auto& location = BaseClass::viewpoint().at( i );
+            auto frame_buffer = this->readback( location );
 
             // Output framebuffer to image file at the root node
             kvs::Timer timer( kvs::Timer::Start );
@@ -192,28 +192,28 @@ inline Adaptor::DepthBuffer Adaptor::backgroundDepthBuffer()
     return buffer;
 }
 
-inline Adaptor::FrameBuffer Adaptor::readback( const Viewpoint::Point& point )
+inline Adaptor::FrameBuffer Adaptor::readback( const Viewpoint::Location& location )
 {
     FrameBuffer frame_buffer;
 
-    switch ( point.dir_type )
+    switch ( location.direction )
     {
-    case Viewpoint::SingleDir:
+    case Viewpoint::Direction::Uni:
     {
-        frame_buffer = this->readback_plane_buffer( point.position );
+        frame_buffer = this->readback_plane_buffer( location.position );
         break;
     }
-    case Viewpoint::OmniDir:
+    case Viewpoint::Direction::Omni:
     {
-        frame_buffer = this->readback_spherical_buffer( point.position );
+        frame_buffer = this->readback_spherical_buffer( location.position );
         break;
     }
-    case Viewpoint::AdaptiveDir:
+    case Viewpoint::Direction::Adaptive:
     {
         const auto* object = BaseClass::screen().scene()->objectManager();
-        frame_buffer = BaseClass::isInsideObject( point.position, object ) ?
-            this->readback_spherical_buffer( point.position ) :
-            this->readback_plane_buffer( point.position );
+        frame_buffer = BaseClass::isInsideObject( location.position, object ) ?
+            this->readback_spherical_buffer( location.position ) :
+            this->readback_plane_buffer( location.position );
         break;
     }
     default:

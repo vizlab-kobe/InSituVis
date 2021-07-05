@@ -13,7 +13,9 @@
 #include <kvs/mpi/StampTimer>
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
-#include <InSituVis/Lib/DistributedViewpoint.h>
+#include <InSituVis/Lib/CubicViewpoint.h>
+#include <InSituVis/Lib/SphericalViewpoint.h>
+
 
 #define IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL
 
@@ -81,20 +83,21 @@ public:
         case Single:
         {
             using Viewpoint = ::InSituVis::Viewpoint;
-            const auto p = kvs::Vec3( 0, 0, 12 );
-            this->setViewpoint( Viewpoint{ p } );
+            auto location = Viewpoint::Location( {0, 0, 12} );
+            auto vp = Viewpoint( location );
+            this->setViewpoint( vp );
             break;
         }
         case Dist:
         {
-            using Viewpoint = ::InSituVis::DistributedViewpoint;
-            const auto dim = kvs::Vec3ui( 3, 3, 3 );
-            const auto dist = Viewpoint::CubicDist;
-            //const auto dist = Viewpoint::SphericalDist;
-            const auto dir = Viewpoint::SingleDir;
-            //const auto dir = Viewpoint::OmniDir;
-            //const auto dir = Viewpoint::AdaptiveDir;
-            this->setViewpoint( Viewpoint{ dim, dist, dir } );
+            using Viewpoint = ::InSituVis::CubicViewpoint;
+            auto dims = kvs::Vec3ui( 3, 3, 3 );
+            auto dir = Viewpoint::Direction::Uni;
+            auto vp = Viewpoint();
+            vp.setDims( dims );
+            vp.create( dir );
+            this->setViewpoint( vp );
+            break;
         }
         default: break;
         }

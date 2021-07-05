@@ -194,15 +194,15 @@ inline void Adaptor::execRendering()
     {
         kvs::Timer timer_rend;
         kvs::Timer timer_save;
-        const auto npoints = m_viewpoint.numberOfPoints();
-        for ( size_t i = 0; i < npoints; ++i )
+        const auto nlocations = m_viewpoint.numberOfLocations();
+        for ( size_t i = 0; i < nlocations; ++i )
         {
             this->setCurrentSpaceIndex( i );
 
             // Draw and readback framebuffer
             timer_rend.start();
-            const auto& point = m_viewpoint.point( i );
-            auto color_buffer = this->readback( point );
+            const auto& location = m_viewpoint.at( i );
+            auto color_buffer = this->readback( location );
             timer_rend.stop();
             rend_time += m_rend_timer.time( timer_rend );
 
@@ -210,7 +210,7 @@ inline void Adaptor::execRendering()
             timer_save.start();
             if ( m_enable_output_image )
             {
-                const auto image_size = this->outputImageSize( point );
+                const auto image_size = this->outputImageSize( location );
                 kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
                 image.write( this->outputImageName() );
             }
@@ -222,20 +222,23 @@ inline void Adaptor::execRendering()
     m_save_timer.stamp( save_time );
 }
 
-inline kvs::Vec2ui Adaptor::outputImageSize( const Viewpoint::Point& point ) const
+inline kvs::Vec2ui Adaptor::outputImageSize( const Viewpoint::Location& location ) const
 {
     const auto image_size = kvs::Vec2ui( m_image_width, m_image_height );
-    switch ( point.dir_type )
+    switch ( location.direction )
     {
-    case Viewpoint::SingleDir: return image_size;
-    case Viewpoint::OmniDir: return image_size * kvs::Vec2ui( 4, 3 );
-    default:
+    case Viewpoint::Direction::Uni: return image_size;
+    case Viewpoint::Direction::Omni: return image_size * kvs::Vec2ui( 4, 3 );
+    case Viewpoint::Direction::Adaptive:
+    {
         const auto* object = m_screen.scene()->objectManager();
-        if ( this->isInsideObject( point.position, object ) )
+        if ( this->isInsideObject( location.position, object ) )
         {
             return image_size * kvs::Vec2ui( 4, 3 );
         }
         break;
+    }
+    default: break;
     }
     return image_size;
 }
@@ -281,21 +284,22 @@ inline bool Adaptor::isInsideObject( const kvs::Vec3& position, const kvs::Objec
         ( min_obj.z() <= p_obj.z() ) && ( p_obj.z() <= max_obj.z() );
 }
 
-inline Adaptor::ColorBuffer Adaptor::readback( const Viewpoint::Point& point )
+inline Adaptor::ColorBuffer Adaptor::readback( const Viewpoint::Location& location )
 {
-    switch ( point.dir_type )
+    switch ( location.direction )
     {
-    case Viewpoint::SingleDir:
-        return this->readback_plane_buffer( point.position );
-    case Viewpoint::OmniDir:
-        return this->readback_spherical_buffer( point.position );
-    case Viewpoint::AdaptiveDir:
+    case Viewpoint::Direction::Uni:
+        return this->readback_plane_buffer( location.position );
+    case Viewpoint::Direction::Omni:
+        return this->readback_spherical_buffer( location.position );
+    case Viewpoint::Direction::Adaptive:
     {
-        if ( this->isInsideObject( point.position, m_screen.scene()->objectManager() ) )
+        const auto* object = m_screen.scene()->objectManager();
+        if ( this->isInsideObject( location.position, object ) )
         {
-            return this->readback_spherical_buffer( point.position );
+            return this->readback_spherical_buffer( location.position );
         }
-        return this->readback_plane_buffer( point.position );
+        return this->readback_plane_buffer( location.position );
     }
     default:
         break;

@@ -119,11 +119,11 @@ protected:
     void clearObjects() { m_objects.clear(); }
     ObjectList& objects() { return m_objects; }
 
-    kvs::Vec2ui outputImageSize( const Viewpoint::Point& point ) const;
+    kvs::Vec2ui outputImageSize( const Viewpoint::Location& location ) const;
     std::string outputImageName( const std::string& surfix = "" ) const;
     ColorBuffer backgroundColorBuffer() const;
     bool isInsideObject( const kvs::Vec3& position, const kvs::ObjectBase* object ) const;
-    ColorBuffer readback( const Viewpoint::Point& point );
+    ColorBuffer readback( const Viewpoint::Location& location );
 
 private:
     ColorBuffer readback_plane_buffer( const kvs::Vec3& position );

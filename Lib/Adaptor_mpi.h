@@ -65,7 +65,7 @@ protected:
 
     std::string outputFinalImageName();
     DepthBuffer backgroundDepthBuffer();
-    FrameBuffer readback( const Viewpoint::Point& point );
+    FrameBuffer readback( const Viewpoint::Location& location );
 
 private:
     FrameBuffer readback_plane_buffer( const kvs::Vec3& position );
