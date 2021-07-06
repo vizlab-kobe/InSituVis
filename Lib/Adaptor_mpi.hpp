@@ -52,7 +52,7 @@ inline void Adaptor::exec( const BaseClass::SimTime sim_time )
     {
         // Stack current time step.
         const auto step = static_cast<float>( BaseClass::timeStep() );
-        BaseClass::stepList().stamp( step );
+        BaseClass::tstepList().stamp( step );
 
         this->execPipeline();
         this->execRendering();
@@ -64,12 +64,12 @@ inline void Adaptor::exec( const BaseClass::SimTime sim_time )
 
 inline bool Adaptor::dump()
 {
-    auto& step_list = BaseClass::stepList();
+    auto& tstep_list = BaseClass::tstepList();
     auto& pipe_timer = BaseClass::pipeTimer();
     auto& rend_timer = BaseClass::rendTimer();
     auto& save_timer = BaseClass::saveTimer();
     auto& comp_timer = m_comp_timer;
-    if ( step_list.title().empty() ) { step_list.setTitle( "Time step" ); }
+    if ( tstep_list.title().empty() ) { tstep_list.setTitle( "Time step" ); }
     if ( pipe_timer.title().empty() ) { pipe_timer.setTitle( "Pipe time" ); }
     if ( rend_timer.title().empty() ) { rend_timer.setTitle( "Rend time" ); }
     if ( save_timer.title().empty() ) { save_timer.setTitle( "Save time" ); }
@@ -78,7 +78,7 @@ inline bool Adaptor::dump()
     const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
     const std::string subdir = BaseClass::outputDirectory().name() + "/";
     kvs::StampTimerList timer_list;
-    timer_list.push( step_list );
+    timer_list.push( tstep_list );
     timer_list.push( pipe_timer );
     timer_list.push( rend_timer );
     timer_list.push( save_timer );
@@ -115,7 +115,7 @@ inline bool Adaptor::dump()
     comp_time_ave.setTitle( comp_timer.title() + " (ave)" );
 
     timer_list.clear();
-    timer_list.push( step_list );
+    timer_list.push( tstep_list );
     timer_list.push( pipe_time_min );
     timer_list.push( pipe_time_max );
     timer_list.push( pipe_time_ave );

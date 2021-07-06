@@ -66,7 +66,7 @@ private:
     size_t m_analysis_interval = 1; ///< analysis time interval (l)
     kvs::UInt32 m_time_step = 0; ///< current time step
     kvs::LogStream m_log{}; ///< log stream
-    kvs::StampTimer m_step_list{}; ///< time step list
+    kvs::StampTimer m_tstep_list{}; ///< time step list
     kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
     kvs::StampTimer m_rend_timer{}; ///< timer for rendering process
     kvs::StampTimer m_save_timer{}; ///< timer for image saving process
@@ -85,7 +85,7 @@ public:
     const InSituVis::Viewpoint& viewpoint() const { return m_viewpoint; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
     size_t analysisInterval() const { return m_analysis_interval; }
-    kvs::StampTimer& stepList() { return m_step_list; }
+    kvs::StampTimer& tstepList() { return m_tstep_list; }
     kvs::StampTimer& pipeTimer() { return m_pipe_timer; }
     kvs::StampTimer& rendTimer() { return m_rend_timer; }
     kvs::StampTimer& saveTimer() { return m_save_timer; }

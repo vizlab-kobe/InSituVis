@@ -26,7 +26,7 @@ inline void TimestepControlledAdaptor::process( const Data& data )
 
         // Stack current time step.
         const auto step = static_cast<float>( BaseClass::timeStep() );
-        BaseClass::stepList().stamp( step );
+        BaseClass::tstepList().stamp( step );
 
         // Execute vis. pipeline and rendering.
         BaseClass::execPipeline( data );

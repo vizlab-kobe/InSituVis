@@ -135,7 +135,7 @@ inline void Adaptor::exec( const SimTime sim_time )
     if ( this->isAnalysisTimeStep() )
     {
         const auto step = static_cast<float>( this->timeStep() );
-        m_step_list.stamp( step );
+        m_tstep_list.stamp( step );
 
         this->execPipeline( m_objects );
         this->execRendering();
@@ -147,14 +147,14 @@ inline void Adaptor::exec( const SimTime sim_time )
 
 inline bool Adaptor::dump()
 {
-    if ( m_step_list.title().empty() ) { m_step_list.setTitle( "Time step" ); }
+    if ( m_tstep_list.title().empty() ) { m_tstep_list.setTitle( "Time step" ); }
     if ( m_pipe_timer.title().empty() ) { m_pipe_timer.setTitle( "Pipe time" ); }
     if ( m_rend_timer.title().empty() ) { m_rend_timer.setTitle( "Rend time" ); }
     if ( m_save_timer.title().empty() ) { m_save_timer.setTitle( "Save time" ); }
 
     const auto dir = m_output_directory.name() + "/";
     kvs::StampTimerList timer_list;
-    timer_list.push( m_step_list );
+    timer_list.push( m_tstep_list );
     timer_list.push( m_pipe_timer );
     timer_list.push( m_rend_timer );
     timer_list.push( m_save_timer );
