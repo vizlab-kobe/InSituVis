@@ -52,11 +52,12 @@ public:
     {
         // Common parameters.
         enum { Ortho, Iso } pipeline_type = Ortho; // 'Ortho' or 'Iso'
-        //enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
-        enum { Single, Dist } viewpoint_type = Dist; // 'Single' or 'Dist'
+        enum { Single, Dist } viewpoint_type = Single; // 'Single' or 'Dist'
+        //enum { Single, Dist } viewpoint_type = Dist; // 'Single' or 'Dist'
         this->setImageSize( 1024, 1024 );
         this->setOutputImageEnabled( true );
         this->setOutputSubImageEnabled( false, false, false ); // color, depth, alpha
+        //this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
 
         // Time intervals.
         this->setVisualizationInterval( 3 ); // l: vis. time interval

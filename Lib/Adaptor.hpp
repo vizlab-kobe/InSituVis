@@ -194,12 +194,10 @@ inline void Adaptor::execRendering()
     {
         kvs::Timer timer_rend;
         kvs::Timer timer_save;
-        const auto nlocations = m_viewpoint.numberOfLocations();
-        for ( size_t i = 0; i < nlocations; ++i )
+        for ( const auto& location : m_viewpoint.locations() )
         {
             // Draw and readback framebuffer
             timer_rend.start();
-            const auto& location = m_viewpoint.at( i );
             auto color_buffer = this->readback( location );
             timer_rend.stop();
             rend_time += m_rend_timer.time( timer_rend );
@@ -208,8 +206,10 @@ inline void Adaptor::execRendering()
             timer_save.start();
             if ( m_enable_output_image )
             {
-                const auto image_size = this->outputImageSize( location );
-                kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
+                const auto size = this->outputImageSize( location );
+                const auto width = size.x();
+                const auto height = size.y();
+                kvs::ColorImage image( width, height, color_buffer );
                 image.write( this->outputImageName( location ) );
             }
             timer_save.stop();
@@ -286,33 +286,20 @@ inline Adaptor::ColorBuffer Adaptor::readback( const Viewpoint::Location& locati
 {
     switch ( location.direction )
     {
-    case Viewpoint::Direction::Uni:
-        return this->readback_plane_buffer( location.position );
-    case Viewpoint::Direction::Omni:
-        return this->readback_spherical_buffer( location.position );
-    case Viewpoint::Direction::Adaptive:
-    {
-        const auto* object = m_screen.scene()->objectManager();
-        if ( this->isInsideObject( location.position, object ) )
-        {
-            return this->readback_spherical_buffer( location.position );
-        }
-        return this->readback_plane_buffer( location.position );
+    case Viewpoint::Direction::Uni: return this->readback_uni_buffer( location );
+    case Viewpoint::Direction::Omni: return this->readback_omn_buffer( location );
+    case Viewpoint::Direction::Adaptive: return this->readback_adp_buffer( location );
+    default: return this->backgroundColorBuffer();
     }
-    default:
-        break;
-    }
-
-    return this->backgroundColorBuffer();
 }
 
-inline Adaptor::ColorBuffer Adaptor::readback_plane_buffer( const kvs::Vec3& position )
+inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Location& location )
 {
-    ColorBuffer color_buffer;
+    const auto position = location.position;
     const auto lookat = m_screen.scene()->camera()->lookAt();
     if ( lookat == position )
     {
-        color_buffer = this->backgroundColorBuffer();
+        return this->backgroundColorBuffer();
     }
     else
     {
@@ -325,12 +312,11 @@ inline Adaptor::ColorBuffer Adaptor::readback_plane_buffer( const kvs::Vec3& pos
         m_screen.scene()->camera()->setPosition( position, lookat, up );
         m_screen.scene()->light()->setPosition( position );
         m_screen.draw();
-        color_buffer = m_screen.readbackColorBuffer();
+        return m_screen.readbackColorBuffer();
     }
-    return color_buffer;
 }
 
-inline Adaptor::ColorBuffer Adaptor::readback_spherical_buffer( const kvs::Vec3& position )
+inline Adaptor::ColorBuffer Adaptor::readback_omn_buffer( const Viewpoint::Location& location )
 {
     using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
 
@@ -338,9 +324,9 @@ inline Adaptor::ColorBuffer Adaptor::readback_spherical_buffer( const kvs::Vec3&
     const auto front = m_screen.scene()->camera()->front();
     const auto pc = m_screen.scene()->camera()->position();
     const auto pl = m_screen.scene()->light()->position();
-    const auto& p = position;
+    const auto& p = location.position;
 
-    m_screen.scene()->light()->setPosition( position );
+    m_screen.scene()->light()->setPosition( p );
     m_screen.scene()->camera()->setFieldOfView( 90.0 );
     m_screen.scene()->camera()->setFront( 0.1 );
 
@@ -364,6 +350,14 @@ inline Adaptor::ColorBuffer Adaptor::readback_spherical_buffer( const kvs::Vec3&
 
     const size_t nchannels = 4; // rgba
     return color_buffer.stitch<nchannels>();
+}
+
+inline Adaptor::ColorBuffer Adaptor::readback_adp_buffer( const Viewpoint::Location& location )
+{
+    const auto* object = m_screen.scene()->objectManager();
+    return this->isInsideObject( location.position, object ) ?
+        this->readback_omn_buffer( location ) :
+        this->readback_uni_buffer( location );
 }
 
 } // end of namespace InSituVis

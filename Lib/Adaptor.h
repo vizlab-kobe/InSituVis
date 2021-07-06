@@ -123,8 +123,9 @@ protected:
     ColorBuffer readback( const Viewpoint::Location& location );
 
 private:
-    ColorBuffer readback_plane_buffer( const kvs::Vec3& position );
-    ColorBuffer readback_spherical_buffer( const kvs::Vec3& position );
+    ColorBuffer readback_uni_buffer( const Viewpoint::Location& location );
+    ColorBuffer readback_omn_buffer( const Viewpoint::Location& location );
+    ColorBuffer readback_adp_buffer( const Viewpoint::Location& location );
 };
 
 } // end of namespace InSituVis

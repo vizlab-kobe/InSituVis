@@ -29,7 +29,15 @@ class Adaptor : public InSituVis::Adaptor
 public:
     using BaseClass = InSituVis::Adaptor;
     using DepthBuffer = kvs::ValueArray<kvs::Real32>;
-    struct FrameBuffer { ColorBuffer color_buffer; DepthBuffer depth_buffer; };
+
+    struct FrameBuffer
+    {
+        ColorBuffer color_buffer;
+        DepthBuffer depth_buffer;
+        FrameBuffer() = default;
+        FrameBuffer( const ColorBuffer& cb, const DepthBuffer& db ):
+            color_buffer( cb ), depth_buffer( db ) {}
+    };
 
 private:
     kvs::mpi::Communicator m_world{}; ///< MPI communicator
@@ -63,16 +71,19 @@ public:
 protected:
     void execRendering();
 
-//    std::string outputFinalImageName();
     std::string outputFinalImageName( const Viewpoint::Location& location );
     DepthBuffer backgroundDepthBuffer();
     FrameBuffer readback( const Viewpoint::Location& location );
 
 private:
-//    FrameBuffer readback_plane_buffer( const kvs::Vec3& position );
-    FrameBuffer readback_plane_buffer( const Viewpoint::Location& location );
-//    FrameBuffer readback_spherical_buffer( const kvs::Vec3& position );
-    FrameBuffer readback_spherical_buffer( const Viewpoint::Location& location );
+    FrameBuffer readback_uni_buffer( const Viewpoint::Location& location );
+    FrameBuffer readback_omn_buffer( const Viewpoint::Location& location );
+    FrameBuffer readback_adp_buffer( const Viewpoint::Location& location );
+    void output_sub_images(
+        const ColorBuffer& color_buffer,
+        const DepthBuffer& depth_buffer,
+        const Viewpoint::Location& location,
+        const std::string& dname = "" );
 };
 
 } // end of namespace mpi

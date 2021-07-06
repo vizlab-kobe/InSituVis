@@ -141,11 +141,9 @@ inline void Adaptor::execRendering()
     m_comp_time = 0.0f;
     float save_time = 0.0f;
     {
-        const auto npoints = BaseClass::viewpoint().numberOfLocations();
-        for ( size_t i = 0; i < npoints; ++i )
+        for ( const auto& location : BaseClass::viewpoint().locations() )
         {
             // Draw and readback framebuffer
-            const auto& location = BaseClass::viewpoint().at( i );
             auto frame_buffer = this->readback( location );
 
             // Output framebuffer to image file at the root node
@@ -154,8 +152,11 @@ inline void Adaptor::execRendering()
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    const auto image_size = BaseClass::outputImageSize( location );
-                    kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
+                    const auto size = BaseClass::outputImageSize( location );
+                    const auto width = size.x();
+                    const auto height = size.y();
+                    const auto buffer = frame_buffer.color_buffer;
+                    kvs::ColorImage image( width, height, buffer );
                     image.write( this->outputFinalImageName( location ) );
                 }
             }
@@ -192,58 +193,32 @@ inline Adaptor::DepthBuffer Adaptor::backgroundDepthBuffer()
 
 inline Adaptor::FrameBuffer Adaptor::readback( const Viewpoint::Location& location )
 {
-    FrameBuffer frame_buffer;
-
     switch ( location.direction )
     {
-    case Viewpoint::Direction::Uni:
-    {
-        frame_buffer = this->readback_plane_buffer( location );
-        break;
+    case Viewpoint::Direction::Uni: return this->readback_uni_buffer( location );
+    case Viewpoint::Direction::Omni: return this->readback_omn_buffer( location );
+    case Viewpoint::Direction::Adaptive: return this->readback_adp_buffer( location );
+    default: return { BaseClass::backgroundColorBuffer(), this->backgroundDepthBuffer() };
     }
-    case Viewpoint::Direction::Omni:
-    {
-        frame_buffer = this->readback_spherical_buffer( location );
-        break;
-    }
-    case Viewpoint::Direction::Adaptive:
-    {
-        const auto* object = BaseClass::screen().scene()->objectManager();
-        frame_buffer = BaseClass::isInsideObject( location.position, object ) ?
-            this->readback_spherical_buffer( location ) :
-            this->readback_plane_buffer( location );
-        break;
-    }
-    default:
-    {
-        frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
-        frame_buffer.depth_buffer = this->backgroundDepthBuffer();
-        break;
-    }
-    }
-
-    return frame_buffer;
 }
 
-inline Adaptor::FrameBuffer Adaptor::readback_plane_buffer( const Viewpoint::Location& location )
+inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Location& location )
 {
-    FrameBuffer frame_buffer;
-
     kvs::Timer timer_rend;
     kvs::Timer timer_comp;
 
     const auto* camera = BaseClass::screen().scene()->camera();
     const auto* light = BaseClass::screen().scene()->light();
-
     const auto position = location.position;
     const auto lookat = camera->lookAt();
     if ( lookat == position )
     {
         timer_rend.start();
-        frame_buffer.color_buffer = BaseClass::backgroundColorBuffer();
-        frame_buffer.depth_buffer = this->backgroundDepthBuffer();
+        auto color_buffer = BaseClass::backgroundColorBuffer();
+        auto depth_buffer = this->backgroundDepthBuffer();
         timer_rend.stop();
         m_rend_time += BaseClass::rendTimer().time( timer_rend );
+        return { color_buffer, depth_buffer };
     }
     else
     {
@@ -276,35 +251,14 @@ inline Adaptor::FrameBuffer Adaptor::readback_plane_buffer( const Viewpoint::Loc
         auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
 
         // Restore camera and light info.
-//            BaseClass::screen().scene()->camera()->setPosition( cp, lookat, cu );
-//            BaseClass::screen().scene()->light()->setPosition( lp );
+//        BaseClass::screen().scene()->camera()->setPosition( cp, lookat, cu );
+//        BaseClass::screen().scene()->light()->setPosition( lp );
 
         timer_rend.stop();
         m_rend_time += BaseClass::rendTimer().time( timer_rend );
 
         // Output rendering image (partial rendering image)
-        if ( m_enable_output_subimage )
-        {
-            // RGB image
-            const auto width = BaseClass::imageWidth();
-            const auto height = BaseClass::imageHeight();
-            kvs::ColorImage image( width, height, color_buffer );
-            image.write( BaseClass::outputImageName( location, "_color") );
-
-            // Depth image
-            if ( m_enable_output_subimage_depth )
-            {
-                kvs::GrayImage depth_image( width, height, depth_buffer );
-                depth_image.write( BaseClass::outputImageName( location, "_depth" ) );
-            }
-
-            // Alpha image
-            if ( m_enable_output_subimage_alpha )
-            {
-                kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
-                alpha_image.write( BaseClass::outputImageName( location, "_alpha" ) );
-            }
-        }
+        this->output_sub_images( color_buffer, depth_buffer, location );
 
         // Image composition
         timer_comp.start();
@@ -315,14 +269,11 @@ inline Adaptor::FrameBuffer Adaptor::readback_plane_buffer( const Viewpoint::Loc
         timer_comp.stop();
         m_comp_time += m_comp_timer.time( timer_comp );
 
-        frame_buffer.color_buffer = color_buffer;
-        frame_buffer.depth_buffer = depth_buffer;
+        return { color_buffer, depth_buffer };
     }
-
-    return frame_buffer;
 }
 
-inline Adaptor::FrameBuffer Adaptor::readback_spherical_buffer( const Viewpoint::Location& location )
+inline Adaptor::FrameBuffer Adaptor::readback_omn_buffer( const Viewpoint::Location& location )
 {
     using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
     using SphericalDepthBuffer = InSituVis::SphericalBuffer<kvs::Real32>;
@@ -357,12 +308,14 @@ inline Adaptor::FrameBuffer Adaptor::readback_spherical_buffer( const Viewpoint:
         {
             timer_rend.start();
 
+            // Rendering.
             const auto d = SphericalColorBuffer::Direction(i);
             const auto dir = SphericalColorBuffer::DirectionVector(d);
             const auto up = SphericalColorBuffer::UpVector(d);
             BaseClass::screen().scene()->camera()->setPosition( p, p + dir, up );
             BaseClass::screen().draw();
 
+            // Readback.
             auto cbuffer = BaseClass::screen().readbackColorBuffer();
             auto dbuffer = BaseClass::screen().readbackDepthBuffer();
 
@@ -370,29 +323,8 @@ inline Adaptor::FrameBuffer Adaptor::readback_spherical_buffer( const Viewpoint:
             rend_time += BaseClass::rendTimer().time( timer_rend );
 
             // Output rendering image (partial rendering image) for each direction
-            if ( m_enable_output_subimage )
-            {
-                // RGB image
-                const auto dname = SphericalColorBuffer::DirectionName(d);
-                const auto width = BaseClass::imageWidth();
-                const auto height = BaseClass::imageHeight();
-                kvs::ColorImage image( width, height, cbuffer );
-                image.write( BaseClass::outputImageName( location, "_color_" + dname ) );
-
-                // Depth image
-                if ( m_enable_output_subimage_depth )
-                {
-                    kvs::GrayImage depth_image( width, height, dbuffer );
-                    depth_image.write( BaseClass::outputImageName( location, "_depth_" + dname ) );
-                }
-
-                // Alpha image
-                if ( m_enable_output_subimage_alpha )
-                {
-                    kvs::GrayImage alpha_image( width, height, cbuffer, 3 );
-                    alpha_image.write( BaseClass::outputImageName( location, "_alpha_" + dname ) );
-                }
-            }
+            const auto dname = SphericalColorBuffer::DirectionName(d);
+            this->output_sub_images( cbuffer, dbuffer, location, dname );
 
             // Image composition
             timer_comp.start();
@@ -417,10 +349,45 @@ inline Adaptor::FrameBuffer Adaptor::readback_spherical_buffer( const Viewpoint:
     BaseClass::screen().scene()->light()->setPosition( lp );
 
     // Return frame buffer
-    FrameBuffer frame_buffer;
-    frame_buffer.color_buffer = color_buffer.stitch<4>();
-    frame_buffer.depth_buffer = depth_buffer.stitch<1>();
-    return frame_buffer;
+    return { color_buffer.stitch<4>(), depth_buffer.stitch<1>() };
+}
+
+inline Adaptor::FrameBuffer Adaptor::readback_adp_buffer( const Viewpoint::Location& location )
+{
+    const auto* object = BaseClass::screen().scene()->objectManager();
+    return BaseClass::isInsideObject( location.position, object ) ?
+        this->readback_omn_buffer( location ) :
+        this->readback_uni_buffer( location );
+}
+
+inline void Adaptor::output_sub_images(
+    const ColorBuffer& color_buffer,
+    const DepthBuffer& depth_buffer,
+    const Viewpoint::Location& location,
+    const std::string& dname )
+{
+    if ( m_enable_output_subimage )
+    {
+        // RGB image
+        const auto width = BaseClass::imageWidth();
+        const auto height = BaseClass::imageHeight();
+        kvs::ColorImage image( width, height, color_buffer );
+        image.write( BaseClass::outputImageName( location, "_color_" + dname ) );
+
+        // Depth image
+        if ( m_enable_output_subimage_depth )
+        {
+            kvs::GrayImage depth_image( width, height, depth_buffer );
+            depth_image.write( BaseClass::outputImageName( location, "_depth_" + dname ) );
+        }
+
+        // Alpha image
+        if ( m_enable_output_subimage_alpha )
+        {
+            kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
+            alpha_image.write( BaseClass::outputImageName( location, "_alpha_" + dname ) );
+        }
+    }
 }
 
 } // end of namespace mpi
