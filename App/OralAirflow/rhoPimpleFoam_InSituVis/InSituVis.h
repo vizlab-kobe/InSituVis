@@ -107,7 +107,7 @@ public:
     kvs::mpi::StampTimer& cnvTimer() { return m_cnv_timer; }
     kvs::mpi::StampTimer& visTimer() { return m_vis_timer; }
 
-    void exec( const BaseClass::Time sim_time )
+    void exec( const BaseClass::SimTime sim_time )
     {
         if ( !BaseClass::screen().scene()->hasObject( "BoundaryMesh") )
         {

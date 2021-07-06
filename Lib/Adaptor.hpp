@@ -130,7 +130,7 @@ inline void Adaptor::put( const Adaptor::Object& object )
     if ( p ) { m_objects.push_back( Object::Pointer( p ) ); }
 }
 
-inline void Adaptor::exec( const Time sim_time )
+inline void Adaptor::exec( const SimTime sim_time )
 {
     // Visualize the processed object.
     if ( this->canVisualize() )

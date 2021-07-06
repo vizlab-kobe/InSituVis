@@ -24,7 +24,7 @@ public:
     TimestepControlledAdaptor() = default;
     virtual ~TimestepControlledAdaptor() = default;
 
-    virtual void exec( const BaseClass::Time sim_time );
+    virtual void exec( const BaseClass::SimTime sim_time );
 
 private:
     bool canPush() { return BaseClass::canVisualize(); }

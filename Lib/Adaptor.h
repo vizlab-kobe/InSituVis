@@ -24,7 +24,6 @@
 #include <kvs/StampTimer>
 #include <kvs/StampTimerList>
 #include "Viewpoint.h"
-#include "DistributedViewpoint.h"
 #include "OutputDirectory.h"
 #include "SphericalBuffer.h"
 
@@ -46,11 +45,12 @@ public:
     using Pipeline = std::function<void(Screen&,const Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
 
-    struct Time
+    // Simulation time information.
+    struct SimTime
     {
         float value = 0.0f;
         size_t index = 0;
-        Time( float v = 0.0f, size_t i = 0 ): value(v), index(i) {}
+        SimTime( float v = 0.0f, size_t i = 0 ): value(v), index(i) {}
     };
 
 private:
@@ -102,7 +102,7 @@ public:
     virtual bool initialize();
     virtual bool finalize();
     virtual void put( const Object& Object );
-    virtual void exec( const Time sim_time );
+    virtual void exec( const SimTime sim_time );
     virtual bool dump();
 
 protected:

@@ -5,7 +5,7 @@ namespace InSituVis
 namespace mpi
 {
 
-inline void TimestepControlledAdaptor::exec( const BaseClass::Time sim_time )
+inline void TimestepControlledAdaptor::exec( const BaseClass::SimTime sim_time )
 {
     Controller::push( BaseClass::objects() );
 

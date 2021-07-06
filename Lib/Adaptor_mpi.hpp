@@ -46,7 +46,7 @@ inline bool Adaptor::finalize()
     return false;
 }
 
-inline void Adaptor::exec( const BaseClass::Time sim_time )
+inline void Adaptor::exec( const BaseClass::SimTime sim_time )
 {
     // Visualize the processed object.
     if ( this->canVisualize() )
@@ -156,7 +156,7 @@ inline void Adaptor::execRendering()
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    const auto image_size = BaseClass::outputImageSize( point );
+                    const auto image_size = BaseClass::outputImageSize( location );
                     kvs::ColorImage image( image_size.x(), image_size.y(), frame_buffer.color_buffer );
                     image.write( this->outputFinalImageName() );
                 }
