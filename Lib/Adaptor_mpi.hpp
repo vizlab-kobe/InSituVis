@@ -51,27 +51,26 @@ inline void Adaptor::exec( const BaseClass::SimTime sim_time )
     // Visualize the processed object.
     if ( this->canVisualize() )
     {
-        // Stack current time index.
-        const auto index = static_cast<float>( BaseClass::timeIndex() );
-        BaseClass::indexList().stamp( index );
+        // Stack current time step.
+        const auto step = static_cast<float>( BaseClass::timeStep() );
+        BaseClass::stepList().stamp( step );
 
         this->execPipeline();
         this->execRendering();
     }
 
-    const auto index = BaseClass::timeIndex();
-    BaseClass::setTimeIndex( index + 1 );
+    BaseClass::incrementTimeStep();
     BaseClass::clearObjects();
 }
 
 inline bool Adaptor::dump()
 {
-    auto& index_list = BaseClass::indexList();
+    auto& step_list = BaseClass::stepList();
     auto& pipe_timer = BaseClass::pipeTimer();
     auto& rend_timer = BaseClass::rendTimer();
     auto& save_timer = BaseClass::saveTimer();
     auto& comp_timer = m_comp_timer;
-    if ( index_list.title().empty() ) { index_list.setTitle( "Time index" ); }
+    if ( step_list.title().empty() ) { step_list.setTitle( "Time step" ); }
     if ( pipe_timer.title().empty() ) { pipe_timer.setTitle( "Pipe time" ); }
     if ( rend_timer.title().empty() ) { rend_timer.setTitle( "Rend time" ); }
     if ( save_timer.title().empty() ) { save_timer.setTitle( "Save time" ); }
@@ -80,7 +79,7 @@ inline bool Adaptor::dump()
     const std::string rank = kvs::String::From( this->world().rank(), 4, '0' );
     const std::string subdir = BaseClass::outputDirectory().name() + "/";
     kvs::StampTimerList timer_list;
-    timer_list.push( index_list );
+    timer_list.push( step_list );
     timer_list.push( pipe_timer );
     timer_list.push( rend_timer );
     timer_list.push( save_timer );
@@ -117,7 +116,7 @@ inline bool Adaptor::dump()
     comp_time_ave.setTitle( comp_timer.title() + " (ave)" );
 
     timer_list.clear();
-    timer_list.push( index_list );
+    timer_list.push( step_list );
     timer_list.push( pipe_time_min );
     timer_list.push( pipe_time_max );
     timer_list.push( pipe_time_ave );
@@ -171,7 +170,7 @@ inline void Adaptor::execRendering()
 
 inline std::string Adaptor::outputFinalImageName( const Viewpoint::Location& location )
 {
-    const auto time = BaseClass::timeIndex();
+    const auto time = BaseClass::timeStep();
     const auto space = location.index;
     const auto output_time = kvs::String::From( time, 6, '0' );
     const auto output_space = kvs::String::From( space, 6, '0' );

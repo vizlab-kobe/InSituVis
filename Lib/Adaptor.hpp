@@ -135,28 +135,27 @@ inline void Adaptor::exec( const SimTime sim_time )
     // Visualize the processed object.
     if ( this->canVisualize() )
     {
-        const auto index = static_cast<float>( this->timeIndex() );
-        m_index_list.stamp( index );
+        const auto step = static_cast<float>( this->timeStep() );
+        m_step_list.stamp( step );
 
         this->execPipeline( m_objects );
         this->execRendering();
     }
 
-    const auto index = this->timeIndex();
-    this->setTimeIndex( index + 1 );
+    this->incrementTimeStep();
     this->clearObjects();
 }
 
 inline bool Adaptor::dump()
 {
-    if ( m_index_list.title().empty() ) { m_index_list.setTitle( "Time index" ); }
+    if ( m_step_list.title().empty() ) { m_step_list.setTitle( "Time step" ); }
     if ( m_pipe_timer.title().empty() ) { m_pipe_timer.setTitle( "Pipe time" ); }
     if ( m_rend_timer.title().empty() ) { m_rend_timer.setTitle( "Rend time" ); }
     if ( m_save_timer.title().empty() ) { m_save_timer.setTitle( "Save time" ); }
 
     const auto dir = m_output_directory.name() + "/";
     kvs::StampTimerList timer_list;
-    timer_list.push( m_index_list );
+    timer_list.push( m_step_list );
     timer_list.push( m_pipe_timer );
     timer_list.push( m_rend_timer );
     timer_list.push( m_save_timer );
@@ -243,7 +242,7 @@ inline kvs::Vec2ui Adaptor::outputImageSize( const Viewpoint::Location& location
 
 inline std::string Adaptor::outputImageName( const Viewpoint::Location& location, const std::string& surfix ) const
 {
-    const auto time = this->timeIndex();
+    const auto time = this->timeStep();
     const auto space = location.index;
     const auto output_time = kvs::String::From( time, 6, '0' );
     const auto output_space = kvs::String::From( space, 6, '0' );

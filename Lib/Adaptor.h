@@ -64,9 +64,9 @@ private:
     size_t m_image_height = 512; ///< height of rendering image
     bool m_enable_output_image = true; ///< flag for writing final rendering image data
     size_t m_vis_interval = 1; ///< visualization time interval (l)
-    kvs::UInt32 m_time_index = 0; ///< current time index
+    kvs::UInt32 m_time_step = 0; ///< current time step
     kvs::LogStream m_log{}; ///< log stream
-    kvs::StampTimer m_index_list{}; ///< time index list
+    kvs::StampTimer m_step_list{}; ///< time step list
     kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
     kvs::StampTimer m_rend_timer{}; ///< timer for rendering process
     kvs::StampTimer m_save_timer{}; ///< timer for image saving process
@@ -85,7 +85,7 @@ public:
     const InSituVis::Viewpoint& viewpoint() const { return m_viewpoint; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
     size_t visualizationInterval() const { return m_vis_interval; }
-    kvs::StampTimer& indexList() { return m_index_list; }
+    kvs::StampTimer& stepList() { return m_step_list; }
     kvs::StampTimer& pipeTimer() { return m_pipe_timer; }
     kvs::StampTimer& rendTimer() { return m_rend_timer; }
     kvs::StampTimer& saveTimer() { return m_save_timer; }
@@ -110,9 +110,10 @@ protected:
     void execPipeline();
     void execRendering();
 
-    kvs::UInt32 timeIndex() const { return m_time_index; }
-    void setTimeIndex( const size_t index ) { m_time_index = index; }
-    bool canVisualize() const { return m_time_index % m_vis_interval == 0; }
+    kvs::UInt32 timeStep() const { return m_time_step; }
+    void setTimeStep( const size_t step ) { m_time_step = step; }
+    void incrementTimeStep() { m_time_step++; }
+    bool canVisualize() const { return m_time_step % m_vis_interval == 0; }
     void clearObjects() { m_objects.clear(); }
     ObjectList& objects() { return m_objects; }
 

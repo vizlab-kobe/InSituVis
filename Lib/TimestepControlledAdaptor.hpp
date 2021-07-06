@@ -6,40 +6,33 @@ inline void TimestepControlledAdaptor::exec( const BaseClass::SimTime sim_time )
 {
     Controller::push( BaseClass::objects() );
 
-//    const auto index = BaseClass::currentTimeIndex();
-    const auto index = BaseClass::timeIndex();
-//    BaseClass::setCurrentTimeIndex( index + 1 );
-    BaseClass::setTimeIndex( index + 1 );
+    BaseClass::incrementTimeStep();
     BaseClass::clearObjects();
 }
 
 inline void TimestepControlledAdaptor::process( const Data& data )
 {
-//    const auto current_index = BaseClass::currentTimeIndex();
-    const auto current_index = BaseClass::timeIndex();
+    const auto current_step = BaseClass::timeStep();
     {
-        // Reset time index, which is used for output filename,
+        // Reset time step, which is used for output filename,
         // for visualizing the stacked dataset.
         const auto L_crr = Controller::dataQueue().size();
         if ( L_crr > 0 )
         {
             const auto l = BaseClass::visualizationInterval();
-            const auto index = current_index - ( L_crr - 1 ) * l;
-//            BaseClass::setCurrentTimeIndex( index );
-            BaseClass::setTimeIndex( index );
+            const auto step = current_step - ( L_crr - 1 ) * l;
+            BaseClass::setTimeStep( step );
         }
 
-        // Stack current time index.
-//        const auto index = static_cast<float>( BaseClass::currentTimeIndex() );
-        const auto index = static_cast<float>( BaseClass::timeIndex() );
-        BaseClass::indexList().stamp( index );
+        // Stack current time step.
+        const auto step = static_cast<float>( BaseClass::timeStep() );
+        BaseClass::stepList().stamp( step );
 
         // Execute vis. pipeline and rendering.
         BaseClass::execPipeline( data );
         BaseClass::execRendering();
     }
-//    BaseClass::setCurrentTimeIndex( current_index );
-    BaseClass::setTimeIndex( current_index );
+    BaseClass::setTimeStep( current_step );
 }
 
 } // end of namespace InSituVis
