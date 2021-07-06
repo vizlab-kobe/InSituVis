@@ -60,7 +60,7 @@ public:
         //this->setOutputSubImageEnabled( true, true, true ); // color, depth, alpha
 
         // Time intervals.
-        this->setVisualizationInterval( 3 ); // l: vis. time interval
+        this->setAnalysisInterval( 3 ); // l: analysis time interval
 #if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
         this->setDivergenceInterval( 4 ); // L: div. time interval
         this->setSamplingGranularity( 2 ); // R: granularity for the pattern A

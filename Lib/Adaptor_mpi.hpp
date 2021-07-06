@@ -48,8 +48,7 @@ inline bool Adaptor::finalize()
 
 inline void Adaptor::exec( const BaseClass::SimTime sim_time )
 {
-    // Visualize the processed object.
-    if ( this->canVisualize() )
+    if ( this->isAnalysisTimeStep() )
     {
         // Stack current time step.
         const auto step = static_cast<float>( BaseClass::timeStep() );

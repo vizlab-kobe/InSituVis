@@ -22,7 +22,7 @@ inline void TimestepControlledAdaptor::process( const Data& data )
         const auto L_crr = Controller::dataQueue().size();
         if ( L_crr > 0 )
         {
-            const auto l = BaseClass::visualizationInterval();
+            const auto l = BaseClass::analysisInterval();
             const auto step = current_step - ( L_crr - 1 ) * l;
             BaseClass::setTimeStep( step );
         }

@@ -132,8 +132,7 @@ inline void Adaptor::put( const Adaptor::Object& object )
 
 inline void Adaptor::exec( const SimTime sim_time )
 {
-    // Visualize the processed object.
-    if ( this->canVisualize() )
+    if ( this->isAnalysisTimeStep() )
     {
         const auto step = static_cast<float>( this->timeStep() );
         m_step_list.stamp( step );

@@ -27,7 +27,8 @@ public:
     virtual void exec( const BaseClass::SimTime sim_time );
 
 private:
-    bool canPush() { return BaseClass::canVisualize(); }
+//    bool canPush() { return BaseClass::canVisualize(); }
+    bool canPush() { return BaseClass::isAnalysisTimeStep(); }
     void process( const Data& data );
 };
 

@@ -63,7 +63,7 @@ private:
     size_t m_image_width = 512; ///< width of rendering image
     size_t m_image_height = 512; ///< height of rendering image
     bool m_enable_output_image = true; ///< flag for writing final rendering image data
-    size_t m_vis_interval = 1; ///< visualization time interval (l)
+    size_t m_analysis_interval = 1; ///< analysis time interval (l)
     kvs::UInt32 m_time_step = 0; ///< current time step
     kvs::LogStream m_log{}; ///< log stream
     kvs::StampTimer m_step_list{}; ///< time step list
@@ -84,14 +84,14 @@ public:
     Screen& screen() { return m_screen; }
     const InSituVis::Viewpoint& viewpoint() const { return m_viewpoint; }
     InSituVis::OutputDirectory& outputDirectory() { return m_output_directory; }
-    size_t visualizationInterval() const { return m_vis_interval; }
+    size_t analysisInterval() const { return m_analysis_interval; }
     kvs::StampTimer& stepList() { return m_step_list; }
     kvs::StampTimer& pipeTimer() { return m_pipe_timer; }
     kvs::StampTimer& rendTimer() { return m_rend_timer; }
     kvs::StampTimer& saveTimer() { return m_save_timer; }
 
     void setViewpoint( const Viewpoint& viewpoint ) { m_viewpoint = viewpoint; }
-    void setVisualizationInterval( const size_t interval ) { m_vis_interval = interval; }
+    void setAnalysisInterval( const size_t interval ) { m_analysis_interval = interval; }
     void setPipeline( Pipeline pipeline ) { m_pipeline = pipeline; }
     void setOutputDirectory( const InSituVis::OutputDirectory& directory ) { m_output_directory = directory; }
     void setOutputFilename( const std::string& filename ) { m_output_filename = filename; }
@@ -113,7 +113,7 @@ protected:
     kvs::UInt32 timeStep() const { return m_time_step; }
     void setTimeStep( const size_t step ) { m_time_step = step; }
     void incrementTimeStep() { m_time_step++; }
-    bool canVisualize() const { return m_time_step % m_vis_interval == 0; }
+    bool isAnalysisTimeStep() const { return m_time_step % m_analysis_interval == 0; }
     void clearObjects() { m_objects.clear(); }
     ObjectList& objects() { return m_objects; }
 
