@@ -135,15 +135,15 @@ inline void Adaptor::exec( const SimTime sim_time )
     // Visualize the processed object.
     if ( this->canVisualize() )
     {
-        const auto index = static_cast<float>( this->currentTimeIndex() );
+        const auto index = static_cast<float>( this->timeIndex() );
         m_index_list.stamp( index );
 
         this->execPipeline( m_objects );
         this->execRendering();
     }
 
-    const auto current_index = this->currentTimeIndex();
-    this->setCurrentTimeIndex( current_index + 1 );
+    const auto index = this->timeIndex();
+    this->setTimeIndex( index + 1 );
     this->clearObjects();
 }
 
@@ -197,8 +197,6 @@ inline void Adaptor::execRendering()
         const auto nlocations = m_viewpoint.numberOfLocations();
         for ( size_t i = 0; i < nlocations; ++i )
         {
-            this->setCurrentSpaceIndex( i );
-
             // Draw and readback framebuffer
             timer_rend.start();
             const auto& location = m_viewpoint.at( i );
@@ -212,7 +210,7 @@ inline void Adaptor::execRendering()
             {
                 const auto image_size = this->outputImageSize( location );
                 kvs::ColorImage image( image_size.x(), image_size.y(), color_buffer );
-                image.write( this->outputImageName() );
+                image.write( this->outputImageName( location ) );
             }
             timer_save.stop();
             save_time += m_save_timer.time( timer_save );
@@ -243,10 +241,10 @@ inline kvs::Vec2ui Adaptor::outputImageSize( const Viewpoint::Location& location
     return image_size;
 }
 
-inline std::string Adaptor::outputImageName( const std::string& surfix ) const
+inline std::string Adaptor::outputImageName( const Viewpoint::Location& location, const std::string& surfix ) const
 {
-    const auto time = this->currentTimeIndex();
-    const auto space = this->currentSpaceIndex();
+    const auto time = this->timeIndex();
+    const auto space = location.index;
     const auto output_time = kvs::String::From( time, 6, '0' );
     const auto output_space = kvs::String::From( space, 6, '0' );
 

@@ -63,13 +63,16 @@ public:
 protected:
     void execRendering();
 
-    std::string outputFinalImageName();
+//    std::string outputFinalImageName();
+    std::string outputFinalImageName( const Viewpoint::Location& location );
     DepthBuffer backgroundDepthBuffer();
     FrameBuffer readback( const Viewpoint::Location& location );
 
 private:
-    FrameBuffer readback_plane_buffer( const kvs::Vec3& position );
-    FrameBuffer readback_spherical_buffer( const kvs::Vec3& position );
+//    FrameBuffer readback_plane_buffer( const kvs::Vec3& position );
+    FrameBuffer readback_plane_buffer( const Viewpoint::Location& location );
+//    FrameBuffer readback_spherical_buffer( const kvs::Vec3& position );
+    FrameBuffer readback_spherical_buffer( const Viewpoint::Location& location );
 };
 
 } // end of namespace mpi

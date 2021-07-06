@@ -6,6 +6,7 @@
 /*****************************************************************************/
 #pragma once
 #include <kvs/Vector3>
+#include <kvs/Value>
 #include <functional>
 #include <vector>
 
@@ -20,6 +21,9 @@ namespace InSituVis
 /*===========================================================================*/
 class Viewpoint
 {
+private:
+    static const size_t MaxIndex() { return kvs::Value<size_t>::Max(); }
+
 public:
     enum Direction
     {
@@ -30,13 +34,42 @@ public:
 
     struct Location
     {
+        size_t index{ MaxIndex() }; ///< location index
         Direction direction{ Direction::Uni }; ///< view direction type
         kvs::Vec3 position{ 0, 0, 12 }; ///< viewpoint position in world coordinate
         kvs::Vec3 look_at{ 0, 0, 0 }; ///< look-at position in world coordinate
-        Location( const Direction d, const kvs::Vec3& p, const kvs::Vec3& l = { 0, 0, 0 } ):
-            direction( d ), position( p ), look_at( l ) {}
-        Location( const kvs::Vec3& p, const kvs::Vec3& l = { 0, 0, 0 } ):
-            direction( Uni ), position( p ), look_at( l ) {}
+
+        Location(
+            const kvs::Vec3& p,
+            const kvs::Vec3& l = { 0, 0, 0 } ):
+            position( p ),
+            look_at( l ) {}
+
+        Location(
+            const size_t i,
+            const kvs::Vec3& p,
+            const kvs::Vec3& l = { 0, 0, 0 } ):
+            index( i ),
+            position( p ),
+            look_at( l ) {}
+
+        Location(
+            const Direction d,
+            const kvs::Vec3& p,
+            const kvs::Vec3& l = { 0, 0, 0 } ):
+            direction( d ),
+            position( p ),
+            look_at( l ) {}
+
+        Location(
+            const size_t i,
+            const Direction d,
+            const kvs::Vec3& p,
+            const kvs::Vec3& l = { 0, 0, 0 } ):
+            index( i ),
+            direction( d ),
+            position( p ),
+            look_at( l ) {}
     };
 
     using Locations = std::vector<Location>;
@@ -46,15 +79,27 @@ private:
 
 public:
     Viewpoint() = default;
-    virtual ~Viewpoint() = default;
     Viewpoint( const Location& location ) { this->set( location ); }
+    virtual ~Viewpoint() = default;
 
     const Locations& locations() const { return m_locations; }
     size_t numberOfLocations() const { return m_locations.size(); }
     const Location& at( const size_t index ) const { return m_locations.at( index ); }
-    void set( const Location& location ) { this->clear(); this->add( location ); }
-    void add( const Location& location ) { m_locations.push_back( location ); }
     void clear() { m_locations.shrink_to_fit(); }
+    void set( const Location& location ) { this->clear(); this->add( location ); }
+    void add( const Location& location )
+    {
+        if ( location.index < MaxIndex() )
+        {
+            m_locations.push_back( location );
+        }
+        else
+        {
+            auto l = location;
+            l.index = m_locations.size();
+            m_locations.push_back( l );
+        }
+    }
 };
 
 } // end of namespace InSituVis

@@ -42,3 +42,4 @@ App/CubicImages/CubicImages
 .DS_Store
 
 App/OralAirflow/realistic-s3/Output
+App/SprayCombustion/sprayH_2mm_O2_15/logSummary.0.dat

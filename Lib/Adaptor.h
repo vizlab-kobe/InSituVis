@@ -64,8 +64,7 @@ private:
     size_t m_image_height = 512; ///< height of rendering image
     bool m_enable_output_image = true; ///< flag for writing final rendering image data
     size_t m_vis_interval = 1; ///< visualization time interval (l)
-    kvs::UInt32 m_current_time_index = 0; ///< current time index
-    kvs::UInt32 m_current_space_index = 0; ///< current space index
+    kvs::UInt32 m_time_index = 0; ///< current time index
     kvs::LogStream m_log{}; ///< log stream
     kvs::StampTimer m_index_list{}; ///< time index list
     kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
@@ -111,16 +110,14 @@ protected:
     void execPipeline();
     void execRendering();
 
-    kvs::UInt32 currentTimeIndex() const { return m_current_time_index; }
-    kvs::UInt32 currentSpaceIndex() const { return m_current_space_index; }
-    void setCurrentTimeIndex( const size_t index ) { m_current_time_index = index; }
-    void setCurrentSpaceIndex( const size_t index ) { m_current_space_index = index; }
-    bool canVisualize() const { return m_current_time_index % m_vis_interval == 0; }
+    kvs::UInt32 timeIndex() const { return m_time_index; }
+    void setTimeIndex( const size_t index ) { m_time_index = index; }
+    bool canVisualize() const { return m_time_index % m_vis_interval == 0; }
     void clearObjects() { m_objects.clear(); }
     ObjectList& objects() { return m_objects; }
 
     kvs::Vec2ui outputImageSize( const Viewpoint::Location& location ) const;
-    std::string outputImageName( const std::string& surfix = "" ) const;
+    std::string outputImageName( const Viewpoint::Location& location, const std::string& surfix = "" ) const;
     ColorBuffer backgroundColorBuffer() const;
     bool isInsideObject( const kvs::Vec3& position, const kvs::ObjectBase* object ) const;
     ColorBuffer readback( const Viewpoint::Location& location );
