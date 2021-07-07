@@ -7,6 +7,7 @@ namespace mpi
 
 inline void TimestepControlledAdaptor::exec( const BaseClass::SimTime sim_time )
 {
+    Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();

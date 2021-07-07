@@ -48,7 +48,7 @@ inline bool Adaptor::finalize()
 
 inline void Adaptor::exec( const BaseClass::SimTime sim_time )
 {
-    if ( this->isAnalysisTimeStep() )
+    if ( this->isAnalysisStep() )
     {
         // Stack current time step.
         const auto step = static_cast<float>( BaseClass::timeStep() );

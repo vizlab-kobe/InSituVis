@@ -100,12 +100,10 @@ inline void AdaptiveTimestepController::push( const Data& data )
         const auto D_thr = m_threshold;
         const auto V_prv = m_previous_data;
 
-        // Vis. time-step
-        if ( this->canPush() )
+        if ( this->isCacheEnabled() )
         {
             m_data_queue.push( data );
 
-            // KL time-step
             if ( m_data_queue.size() >= L )
             {
                 const auto V_crr = m_data_queue.back();

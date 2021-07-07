@@ -132,7 +132,7 @@ inline void Adaptor::put( const Adaptor::Object& object )
 
 inline void Adaptor::exec( const SimTime sim_time )
 {
-    if ( this->isAnalysisTimeStep() )
+    if ( this->isAnalysisStep() )
     {
         const auto step = static_cast<float>( this->timeStep() );
         m_tstep_list.stamp( step );

@@ -62,7 +62,7 @@ public:
         // Time intervals.
         this->setAnalysisInterval( 3 ); // l: analysis time interval
 #if defined( IN_SITU_VIS__ADAPTIVE_TIMESTEP_CONTROLL )
-        this->setDivergenceInterval( 4 ); // L: div. time interval
+        this->setValidationInterval( 4 ); // L: validation time interval
         this->setSamplingGranularity( 2 ); // R: granularity for the pattern A
         this->setDivergenceThreshold( 0.01 );
 #endif

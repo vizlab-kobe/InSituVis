@@ -113,7 +113,7 @@ protected:
     kvs::UInt32 timeStep() const { return m_time_step; }
     void setTimeStep( const size_t step ) { m_time_step = step; }
     void incrementTimeStep() { m_time_step++; }
-    bool isAnalysisTimeStep() const { return m_time_step % m_analysis_interval == 0; }
+    bool isAnalysisStep() const { return m_time_step % m_analysis_interval == 0; }
     void clearObjects() { m_objects.clear(); }
     ObjectList& objects() { return m_objects; }
 

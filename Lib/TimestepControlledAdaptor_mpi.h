@@ -31,8 +31,6 @@ public:
     virtual void exec( const BaseClass::SimTime sim_time );
 
 private:
-//    bool canPush() { return BaseClass::canVisualize(); }
-    bool canPush() { return BaseClass::isAnalysisTimeStep(); }
     void process( const Data& data );
     float divergence( const Controller::Values& P0, const Controller::Values& P1 );
 };
