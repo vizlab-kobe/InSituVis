@@ -101,7 +101,7 @@ public:
     virtual bool initialize();
     virtual bool finalize();
     virtual void put( const Object& Object );
-    virtual void exec( const SimTime sim_time );
+    virtual void exec( const SimTime sim_time = {} );
     virtual bool dump();
 
 protected:

@@ -4,6 +4,8 @@
  *  @author Naohisa Sakamoto
  */
 /*****************************************************************************/
+#include <kvs/Light>
+#include <kvs/Camera>
 #include <kvs/PointObject>
 #include <kvs/LineObject>
 #include <kvs/PolygonObject>

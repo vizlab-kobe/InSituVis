@@ -24,7 +24,7 @@ public:
     TimestepControlledAdaptor() = default;
     virtual ~TimestepControlledAdaptor() = default;
 
-    virtual void exec( const BaseClass::SimTime sim_time );
+    virtual void exec( const BaseClass::SimTime sim_time = {} );
 
 private:
     void process( const Data& data );

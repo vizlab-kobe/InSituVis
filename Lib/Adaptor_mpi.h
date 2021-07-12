@@ -65,7 +65,7 @@ public:
 
     virtual bool initialize();
     virtual bool finalize();
-    virtual void exec( const BaseClass::SimTime sim_time );
+    virtual void exec( const BaseClass::SimTime sim_time = {} );
     virtual bool dump();
 
 protected:
