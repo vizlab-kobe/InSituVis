@@ -1,9 +1,0 @@
-
- JANAF polynomial warnings:   1 found. 
-
- Species   29: C3H4              
- specific heat   values differ by  1.84%
- internal energy values differ by  0.09%
- entropy         values differ by  0.06%
- enthalpy        values differ by  0.08%
- at low-high temperature switch: 1000.00 K
