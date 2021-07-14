@@ -194,7 +194,7 @@ inline InSituVis::Pipeline InSituVis::OrthoSlice()
 {
     return [&] ( Screen& screen, const Object& object )
     {
-        const auto& volume = dynamic_cast<const Volume&>( object );
+        const auto& volume = Volume::DownCast( object );
         if ( volume.numberOfCells() == 0 ) { return; }
 
         // Setup a transfer function.
@@ -238,7 +238,7 @@ inline InSituVis::Pipeline InSituVis::Isosurface()
 {
     return [&] ( Screen& screen, const Object& object )
     {
-        const auto& volume = dynamic_cast<const Volume&>( object );
+        const auto& volume = Volume::DownCast( object );
         if ( volume.numberOfCells() == 0 ) { return; }
 
         // Setup a transfer function.

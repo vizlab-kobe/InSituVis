@@ -1,9 +1,10 @@
 #include <kvs/Math>
-
+#include <kvs/Stat>
 
 namespace
 {
 
+/*
 template <typename T>
 inline double Variance(
     const kvs::ValueArray<T>& values,
@@ -22,6 +23,7 @@ inline double Variance(
     mean = m;
     return var;
 };
+*/
 
 template <typename T>
 inline float Divergence(
@@ -29,16 +31,15 @@ inline float Divergence(
     const kvs::ValueArray<T>& p1,
     const float D_max )
 {
-    auto m0 = 0.0;
-    auto m1 = 0.0;
-    auto s0 = std::sqrt( ::Variance( p0, m0 ) );
-    auto s1 = std::sqrt( ::Variance( p1, m1 ) );
-
-    if ( kvs::Math::IsZero( s0 ) ||
-         kvs::Math::IsZero( s1 ) )
+    auto m0 = T(0);
+    auto m1 = T(0);
+//    auto s0 = std::sqrt( ::Variance( p0, m0 ) );
+//    auto s1 = std::sqrt( ::Variance( p1, m1 ) );
+    auto s0 = kvs::Stat::StdDev( p0, kvs::Stat::OnlineVar<T>, &m0 );
+    auto s1 = kvs::Stat::StdDev( p1, kvs::Stat::OnlineVar<T>, &m1 );
+    if ( kvs::Math::IsZero( s0 ) || kvs::Math::IsZero( s1 ) )
     {
-        if ( kvs::Math::Equal( s0, s1 ) &&
-             kvs::Math::Equal( m0, m1 ) )
+        if ( kvs::Math::Equal( s0, s1 ) && kvs::Math::Equal( m0, m1 ) )
         {
             return 0.0f;
         }
