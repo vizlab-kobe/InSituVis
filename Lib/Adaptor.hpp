@@ -295,23 +295,36 @@ inline Adaptor::ColorBuffer Adaptor::readback( const Viewpoint::Location& locati
 
 inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Location& location )
 {
-    const auto position = location.position;
-    const auto lookat = m_screen.scene()->camera()->lookAt();
-    if ( lookat == position )
+    const auto p = location.position;
+    const auto a = location.look_at;
+    if ( p == a )
     {
         return this->backgroundColorBuffer();
     }
     else
     {
-        const auto p0 = ( m_screen.scene()->camera()->position() - lookat ).normalized();
-        const auto p1 = ( position- lookat ).normalized();
-        const auto axis = p0.cross( p1 );
-        const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
-        const auto R = kvs::RotationMatrix33<float>( axis, deg );
-        const auto up = m_screen.scene()->camera()->upVector() * R;
-        m_screen.scene()->camera()->setPosition( position, lookat, up );
-        m_screen.scene()->light()->setPosition( position );
+        auto* camera = m_screen.scene()->camera();
+        auto* light = m_screen.scene()->light();
+
+        // Backup camera and light info.
+        const auto p0 = camera->position();
+        const auto a0 = camera->lookAt();
+        const auto u0 = camera->upVector();
+
+        // Draw the scene.
+        const auto zero = kvs::Vec3::Zero();
+        const auto pa = a - p;
+        const auto rr = pa.cross( u0 );
+        const auto r = rr == zero ? ( a0 - p0 ).cross( u0 ) : rr;
+        const auto u = r.cross( pa );
+        camera->setPosition( p, a, u );
+        light->setPosition( p );
         m_screen.draw();
+
+        // Restore camera and light info.
+        camera->setPosition( p0, a0, u0 );
+        light->setPosition( p0 );
+
         return m_screen.readbackColorBuffer();
     }
 }
@@ -320,15 +333,22 @@ inline Adaptor::ColorBuffer Adaptor::readback_omn_buffer( const Viewpoint::Locat
 {
     using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
 
-    const auto fov = m_screen.scene()->camera()->fieldOfView();
-    const auto front = m_screen.scene()->camera()->front();
-    const auto pc = m_screen.scene()->camera()->position();
-    const auto pl = m_screen.scene()->light()->position();
+    auto* camera = m_screen.scene()->camera();
+    auto* light = m_screen.scene()->light();
+
+    // Backup camera and light info.
+    const auto fov = camera->fieldOfView();
+    const auto front = camera->front();
+    const auto cp = camera->position();
+    const auto ca = camera->lookAt();
+    const auto cu = camera->upVector();
+    const auto lp = light->position();
     const auto& p = location.position;
 
-    m_screen.scene()->light()->setPosition( p );
-    m_screen.scene()->camera()->setFieldOfView( 90.0 );
-    m_screen.scene()->camera()->setFront( 0.1 );
+    // Draw the scene.
+    camera->setFieldOfView( 90.0 );
+    camera->setFront( 0.1 );
+    light->setPosition( p );
 
     SphericalColorBuffer color_buffer( m_screen.width(), m_screen.height() );
     for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
@@ -336,17 +356,18 @@ inline Adaptor::ColorBuffer Adaptor::readback_omn_buffer( const Viewpoint::Locat
         const auto d = SphericalColorBuffer::Direction(i);
         const auto dir = SphericalColorBuffer::DirectionVector(d);
         const auto up = SphericalColorBuffer::UpVector(d);
-        m_screen.scene()->camera()->setPosition( p, p + dir, up );
+        camera->setPosition( p, p + dir, up );
         m_screen.draw();
 
         const auto buffer = m_screen.readbackColorBuffer();
         color_buffer.setBuffer( d, buffer );
     }
 
-    m_screen.scene()->camera()->setFieldOfView( fov );
-    m_screen.scene()->camera()->setFront( front );
-    m_screen.scene()->camera()->setPosition( pc );
-    m_screen.scene()->light()->setPosition( pl );
+    // Restore camera and light info.
+    camera->setFieldOfView( fov );
+    camera->setFront( front );
+    camera->setPosition( cp, ca, cu );
+    light->setPosition( lp );
 
     const size_t nchannels = 4; // rgba
     return color_buffer.stitch<nchannels>();

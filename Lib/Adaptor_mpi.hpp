@@ -202,16 +202,11 @@ inline Adaptor::FrameBuffer Adaptor::readback( const Viewpoint::Location& locati
 
 inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Location& location )
 {
-    kvs::Timer timer_rend;
-    kvs::Timer timer_comp;
-
-    const auto* camera = BaseClass::screen().scene()->camera();
-    const auto* light = BaseClass::screen().scene()->light();
-    const auto position = location.position;
-    const auto lookat = camera->lookAt();
-    if ( lookat == position )
+    const auto p = location.position;
+    const auto a = location.look_at;
+    if ( p == a )
     {
-        timer_rend.start();
+        kvs::Timer timer_rend( kvs::Timer::Start );
         auto color_buffer = BaseClass::backgroundColorBuffer();
         auto depth_buffer = this->backgroundDepthBuffer();
         timer_rend.stop();
@@ -220,37 +215,33 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
     }
     else
     {
-        timer_rend.start();
+        kvs::Timer timer_rend( kvs::Timer::Start );
+
+        auto* camera = BaseClass::screen().scene()->camera();
+        auto* light = BaseClass::screen().scene()->light();
 
         // Backup camera and light info.
-        const auto cp = camera->position();
-        const auto cu = camera->upVector();
-        const auto lp = light->position();
-        {
-            // Draw image
-            //
-            // BUGS INCLUDED
-            // {
-            const auto p0 = ( camera->position() - lookat ).normalized();
-            const auto p1 = ( position - lookat ).normalized();
-            const auto axis = p0.cross( p1 );
-            const auto deg = kvs::Math::Rad2Deg( std::acos( p0.dot( p1 ) ) );
-            const auto R = kvs::RotationMatrix33<float>( axis, deg );
-            const auto up = camera->upVector() * R;
-            // }
-            //
-            BaseClass::screen().scene()->camera()->setPosition( position, lookat, up );
-            BaseClass::screen().scene()->light()->setPosition( position );
-            BaseClass::screen().draw();
-        }
+        const auto p0 = camera->position();
+        const auto a0 = camera->lookAt();
+        const auto u0 = camera->upVector();
+
+        // Draw the scene.
+        const auto zero = kvs::Vec3::Zero();
+        const auto pa = a - p;
+        const auto rr = pa.cross( u0 );
+        const auto r = rr == zero ? ( a0 - p0 ).cross( u0 ) : rr;
+        const auto u = r.cross( pa );
+        camera->setPosition( p, a, u );
+        light->setPosition( p );
+        BaseClass::screen().draw();
+
+        // Restore camera and light info.
+        camera->setPosition( p0, a0, u0 );
+        light->setPosition( p0 );
 
         // Read-back image
         auto color_buffer = BaseClass::screen().readbackColorBuffer();
         auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
-
-        // Restore camera and light info.
-//        BaseClass::screen().scene()->camera()->setPosition( cp, lookat, cu );
-//        BaseClass::screen().scene()->light()->setPosition( lp );
 
         timer_rend.stop();
         m_rend_time += BaseClass::rendTimer().time( timer_rend );
@@ -259,6 +250,7 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         this->output_sub_images( color_buffer, depth_buffer, location );
 
         // Image composition
+        kvs::Timer timer_comp;
         timer_comp.start();
         if ( !m_compositor.run( color_buffer, depth_buffer ) )
         {
@@ -276,75 +268,68 @@ inline Adaptor::FrameBuffer Adaptor::readback_omn_buffer( const Viewpoint::Locat
     using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
     using SphericalDepthBuffer = InSituVis::SphericalBuffer<kvs::Real32>;
 
-    kvs::Timer timer_rend;
-    kvs::Timer timer_comp;
-
-    // Color and depth buffers.
-    SphericalColorBuffer color_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
-    SphericalDepthBuffer depth_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
+    auto* camera = BaseClass::screen().scene()->camera();
+    auto* light = BaseClass::screen().scene()->light();
 
     // Backup camera and light info.
-    const auto fov = BaseClass::screen().scene()->camera()->fieldOfView();
-    const auto front = BaseClass::screen().scene()->camera()->front();
-//        const auto pc = BaseClass::screen().scene()->camera()->position();
-//        const auto pl = BaseClass::screen().scene()->light()->position();
-    const auto cp = BaseClass::screen().scene()->camera()->position();
-    const auto cl = BaseClass::screen().scene()->camera()->lookAt();
-    const auto cu = BaseClass::screen().scene()->camera()->upVector();
-    const auto lp = BaseClass::screen().scene()->light()->position();
+    const auto fov = camera->fieldOfView();
+    const auto front = camera->front();
+    const auto cp = camera->position();
+    const auto ca = camera->lookAt();
+    const auto cu = camera->upVector();
+    const auto lp = light->position();
+    const auto& p = location.position;
+
+    // Draw the scene.
+    camera->setFieldOfView( 90.0 );
+    camera->setFront( 0.1 );
+    light->setPosition( p );
+
+    float rend_time = 0.0f;
+    float comp_time = 0.0f;
+    SphericalColorBuffer color_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
+    SphericalDepthBuffer depth_buffer( BaseClass::screen().width(), BaseClass::screen().height() );
+    for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
     {
-        // Draw images.
-        BaseClass::screen().scene()->light()->setPosition( location.position );
-        BaseClass::screen().scene()->camera()->setFieldOfView( 90.0 );
-        BaseClass::screen().scene()->camera()->setFront( 0.1 );
+        // Rendering.
+        kvs::Timer timer_rend( kvs::Timer::Start );
+        const auto d = SphericalColorBuffer::Direction(i);
+        const auto dir = SphericalColorBuffer::DirectionVector(d);
+        const auto up = SphericalColorBuffer::UpVector(d);
+        camera->setPosition( p, p + dir, up );
+        BaseClass::screen().draw();
 
-        float rend_time = 0.0f;
-        float comp_time = 0.0f;
+        auto cbuffer = BaseClass::screen().readbackColorBuffer();
+        auto dbuffer = BaseClass::screen().readbackDepthBuffer();
 
-        const auto& p = location.position;
-        for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
+        timer_rend.stop();
+        rend_time += BaseClass::rendTimer().time( timer_rend );
+
+        // Output rendering image (partial rendering image) for each direction
+        const auto dname = SphericalColorBuffer::DirectionName(d);
+        this->output_sub_images( cbuffer, dbuffer, location, dname );
+
+        // Image composition
+        kvs::Timer timer_comp( kvs::Timer::Start );
+        if ( !m_compositor.run( cbuffer, dbuffer ) )
         {
-            timer_rend.start();
-
-            // Rendering.
-            const auto d = SphericalColorBuffer::Direction(i);
-            const auto dir = SphericalColorBuffer::DirectionVector(d);
-            const auto up = SphericalColorBuffer::UpVector(d);
-            BaseClass::screen().scene()->camera()->setPosition( p, p + dir, up );
-            BaseClass::screen().draw();
-
-            // Readback.
-            auto cbuffer = BaseClass::screen().readbackColorBuffer();
-            auto dbuffer = BaseClass::screen().readbackDepthBuffer();
-
-            timer_rend.stop();
-            rend_time += BaseClass::rendTimer().time( timer_rend );
-
-            // Output rendering image (partial rendering image) for each direction
-            const auto dname = SphericalColorBuffer::DirectionName(d);
-            this->output_sub_images( cbuffer, dbuffer, location, dname );
-
-            // Image composition
-            timer_comp.start();
-            if ( !m_compositor.run( cbuffer, dbuffer ) )
-            {
-                this->log() << "ERROR: " << "Cannot compose images." << std::endl;
-            }
-            timer_comp.stop();
-            comp_time += m_comp_timer.time( timer_comp );
-
-            color_buffer.setBuffer( d, cbuffer );
-            depth_buffer.setBuffer( d, dbuffer );
+            this->log() << "ERROR: " << "Cannot compose images." << std::endl;
         }
+        timer_comp.stop();
+        comp_time += m_comp_timer.time( timer_comp );
 
-        m_rend_time = rend_time;
-        m_comp_time = comp_time;
+        color_buffer.setBuffer( d, cbuffer );
+        depth_buffer.setBuffer( d, dbuffer );
     }
+
+    m_rend_time = rend_time;
+    m_comp_time = comp_time;
+
     // Restore camera and light info.
-    BaseClass::screen().scene()->camera()->setFieldOfView( fov );
-    BaseClass::screen().scene()->camera()->setFront( front );
-    BaseClass::screen().scene()->camera()->setPosition( cp, cl, cu );
-    BaseClass::screen().scene()->light()->setPosition( lp );
+    camera->setFieldOfView( fov );
+    camera->setFront( front );
+    camera->setPosition( cp, ca, cu );
+    light->setPosition( lp );
 
     // Return frame buffer
     return { color_buffer.stitch<4>(), depth_buffer.stitch<1>() };
