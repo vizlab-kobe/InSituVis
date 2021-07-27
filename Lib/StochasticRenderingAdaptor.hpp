@@ -2,6 +2,65 @@
 namespace InSituVis
 {
 
+inline void StochasticRenderingAdaptor::exec( const SimTime sim_time )
+{
+    if ( BaseClass::isAnalysisStep() )
+    {
+        const auto step = static_cast<float>( BaseClass::timeStep() );
+        BaseClass::tstepList().stamp( step );
+
+        BaseClass::execPipeline( BaseClass::objects() );
+        this->execRendering();
+    }
+
+    BaseClass::incrementTimeStep();
+    BaseClass::clearObjects();
+}
+
+inline void StochasticRenderingAdaptor::execRendering()
+{
+    float rend_time = 0.0f;
+    float save_time = 0.0f;
+    {
+        kvs::Timer timer_rend;
+        kvs::Timer timer_save;
+        for ( const auto& location : BaseClass::viewpoint().locations() )
+        {
+            // Draw and readback framebuffer
+            timer_rend.start();
+            auto color_buffer = this->readback( location );
+            timer_rend.stop();
+            rend_time += BaseClass::rendTimer().time( timer_rend );
+
+            // Output framebuffer to image file
+            timer_save.start();
+            if ( BaseClass::isOutputImageEnabled() )
+            {
+                const auto size = BaseClass::outputImageSize( location );
+                const auto width = size.x();
+                const auto height = size.y();
+                kvs::ColorImage image( width, height, color_buffer );
+                image.write( BaseClass::outputImageName( location ) );
+            }
+            timer_save.stop();
+            save_time += BaseClass::saveTimer().time( timer_save );
+        }
+    }
+    BaseClass::rendTimer().stamp( rend_time );
+    BaseClass::saveTimer().stamp( save_time );
+}
+
+inline StochasticRenderingAdaptor::ColorBuffer StochasticRenderingAdaptor::readback( const Viewpoint::Location& location )
+{
+    switch ( location.direction )
+    {
+    case Viewpoint::Direction::Uni: return this->readback_uni_buffer( location );
+    case Viewpoint::Direction::Omni: return this->readback_omn_buffer( location );
+    case Viewpoint::Direction::Adaptive: return this->readback_adp_buffer( location );
+    default: return BaseClass::backgroundColorBuffer();
+    }
+}
+
 inline StochasticRenderingAdaptor::ColorBuffer StochasticRenderingAdaptor::readback_uni_buffer( const Viewpoint::Location& location )
 {
     const auto p = location.position;
@@ -29,8 +88,8 @@ inline StochasticRenderingAdaptor::ColorBuffer StochasticRenderingAdaptor::readb
         const auto u = r.cross( pa );
         camera->setPosition( p, a, u );
         light->setPosition( p );
-//        screen.draw();
-        m_rendering_compositor.update();
+        //screen.draw();
+        m_rendering_compositor.draw();
 
         // Restore camera and light info.
         camera->setPosition( p0, a0, u0 );
@@ -69,8 +128,8 @@ inline StochasticRenderingAdaptor::ColorBuffer StochasticRenderingAdaptor::readb
         const auto dir = SphericalColorBuffer::DirectionVector(d);
         const auto up = SphericalColorBuffer::UpVector(d);
         camera->setPosition( p, p + dir, up );
-//        screen.draw();
-        m_rendering_compositor.update();
+        //screen.draw();
+        m_rendering_compositor.draw();
 
         const auto buffer = screen.readbackColorBuffer();
         color_buffer.setBuffer( d, buffer );

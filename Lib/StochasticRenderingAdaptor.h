@@ -25,7 +25,21 @@ public:
     StochasticRenderingAdaptor() { BaseClass::screen().setEvent( &m_rendering_compositor ); }
     virtual ~StochasticRenderingAdaptor() = default;
 
+    void setRepetitionLevel( const size_t level )
+    {
+        m_rendering_compositor.setRepetitionLevel( level );
+    }
+
+    size_t repetitionLevel() const
+    {
+        return m_rendering_compositor.repetitionLevel();
+    }
+
+    virtual void exec( const SimTime sim_time = {} );
+
 private:
+    void execRendering();
+    ColorBuffer readback( const Viewpoint::Location& location );
     ColorBuffer readback_uni_buffer( const Viewpoint::Location& location );
     ColorBuffer readback_omn_buffer( const Viewpoint::Location& location );
     ColorBuffer readback_adp_buffer( const Viewpoint::Location& location );
