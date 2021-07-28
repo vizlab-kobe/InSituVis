@@ -17,9 +17,10 @@ class StochasticRenderingAdaptor : public InSituVis::Adaptor
 public:
     using BaseClass = InSituVis::Adaptor;
     using ColorBuffer = InSituVis::Adaptor::ColorBuffer;
+    using RenderingCompositor = kvs::StochasticRenderingCompositor;
 
 private:
-    kvs::StochasticRenderingCompositor m_rendering_compositor{ BaseClass::screen().scene() };
+    RenderingCompositor m_rendering_compositor{ BaseClass::screen().scene() };
 
 public:
     StochasticRenderingAdaptor() { BaseClass::screen().setEvent( &m_rendering_compositor ); }

@@ -88,7 +88,6 @@ inline StochasticRenderingAdaptor::ColorBuffer StochasticRenderingAdaptor::readb
         const auto u = r.cross( pa );
         camera->setPosition( p, a, u );
         light->setPosition( p );
-        //screen.draw();
         m_rendering_compositor.draw();
 
         // Restore camera and light info.
@@ -128,7 +127,6 @@ inline StochasticRenderingAdaptor::ColorBuffer StochasticRenderingAdaptor::readb
         const auto dir = SphericalColorBuffer::DirectionVector(d);
         const auto up = SphericalColorBuffer::UpVector(d);
         camera->setPosition( p, p + dir, up );
-        //screen.draw();
         m_rendering_compositor.draw();
 
         const auto buffer = screen.readbackColorBuffer();
