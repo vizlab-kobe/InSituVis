@@ -36,16 +36,11 @@ public:
         return m_rendering_compositor.repetitionLevel();
     }
 
-    virtual void exec( const SimTime sim_time = {} );
-
 private:
-    void execRendering();
-    ColorBuffer readback( const Viewpoint::Location& location );
-    ColorBuffer readback_uni_buffer( const Viewpoint::Location& location );
-    ColorBuffer readback_omn_buffer( const Viewpoint::Location& location );
-    ColorBuffer readback_adp_buffer( const Viewpoint::Location& location );
+    virtual ColorBuffer drawScreen();
 };
 
 } // end of namespace InSituVis
 
 #include "StochasticRenderingAdaptor.hpp"
+#include "StochasticRenderingAdaptor_mpi.h"

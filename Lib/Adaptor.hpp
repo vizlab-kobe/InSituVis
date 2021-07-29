@@ -136,10 +136,12 @@ inline void Adaptor::exec( const SimTime sim_time )
 {
     if ( this->isAnalysisStep() )
     {
+        // Stack current time step.
         const auto step = static_cast<float>( this->timeStep() );
         m_tstep_list.stamp( step );
 
-        this->execPipeline( m_objects );
+        // Execute pipeline and rendering.
+        this->execPipeline();
         this->execRendering();
     }
 
@@ -218,6 +220,12 @@ inline void Adaptor::execRendering()
     }
     m_rend_timer.stamp( rend_time );
     m_save_timer.stamp( save_time );
+}
+
+inline Adaptor::ColorBuffer Adaptor::drawScreen()
+{
+    m_screen.draw();
+    return m_screen.readbackColorBuffer();
 }
 
 inline kvs::Vec2ui Adaptor::outputImageSize( const Viewpoint::Location& location ) const
@@ -319,13 +327,13 @@ inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         const auto u = r.cross( pa );
         camera->setPosition( p, a, u );
         light->setPosition( p );
-        m_screen.draw();
+        const auto buffer = this->drawScreen();
 
         // Restore camera and light info.
         camera->setPosition( p0, a0, u0 );
         light->setPosition( p0 );
 
-        return m_screen.readbackColorBuffer();
+        return buffer;
     }
 }
 
@@ -357,9 +365,8 @@ inline Adaptor::ColorBuffer Adaptor::readback_omn_buffer( const Viewpoint::Locat
         const auto dir = SphericalColorBuffer::DirectionVector(d);
         const auto up = SphericalColorBuffer::UpVector(d);
         camera->setPosition( p, p + dir, up );
-        m_screen.draw();
+        const auto buffer = this->drawScreen();
 
-        const auto buffer = m_screen.readbackColorBuffer();
         color_buffer.setBuffer( d, buffer );
     }
 

@@ -105,10 +105,11 @@ public:
     virtual bool dump();
 
 protected:
-    void execPipeline( const Object& object );
-    void execPipeline( const ObjectList& objects );
-    void execPipeline();
-    void execRendering();
+    virtual void execPipeline( const Object& object );
+    virtual void execPipeline( const ObjectList& objects );
+    virtual void execPipeline();
+    virtual void execRendering();
+    virtual ColorBuffer drawScreen();
 
     kvs::UInt32 timeStep() const { return m_time_step; }
     void setTimeStep( const size_t step ) { m_time_step = step; }

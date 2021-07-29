@@ -25,7 +25,7 @@ inline bool Adaptor::initialize()
     const bool depth_testing = true;
     const auto width = BaseClass::imageWidth();
     const auto height = BaseClass::imageHeight();
-    if ( !m_compositor.initialize( width, height, depth_testing ) )
+    if ( !m_image_compositor.initialize( width, height, depth_testing ) )
     {
         this->log() << "ERROR: " << "Cannot initialize image compositor." << std::endl;
         return false;
@@ -39,7 +39,7 @@ inline bool Adaptor::initialize()
 
 inline bool Adaptor::finalize()
 {
-    if ( m_compositor.destroy() )
+    if ( m_image_compositor.destroy() )
     {
         return BaseClass::finalize();
     }
@@ -167,6 +167,31 @@ inline void Adaptor::execRendering()
     m_comp_timer.stamp( m_comp_time );
 }
 
+inline Adaptor::FrameBuffer Adaptor::drawScreen( std::function<void(const FrameBuffer&)> func )
+{
+    // Draw and read-back image
+    kvs::Timer timer_rend( kvs::Timer::Start );
+    BaseClass::screen().draw();
+    auto color_buffer = BaseClass::screen().readbackColorBuffer();
+    auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
+    timer_rend.stop();
+    m_rend_time += BaseClass::rendTimer().time( timer_rend );
+
+    // Apply the func for partial rendering buffers before image composition.
+    func( { color_buffer, depth_buffer } );
+
+    // Image composition
+    kvs::Timer timer_comp( kvs::Timer::Start );
+    if ( !m_image_compositor.run( color_buffer, depth_buffer ) )
+    {
+        this->log() << "ERROR: " << "Cannot compose images." << std::endl;
+    }
+    timer_comp.stop();
+    m_comp_time += m_comp_timer.time( timer_comp );
+
+    return { color_buffer, depth_buffer };
+}
+
 inline std::string Adaptor::outputFinalImageName( const Viewpoint::Location& location )
 {
     const auto time = BaseClass::timeStep();
@@ -178,6 +203,38 @@ inline std::string Adaptor::outputFinalImageName( const Viewpoint::Location& loc
     const auto output_filename = output_basename + "_" + output_time + "_" + output_space;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
     return filename;
+}
+
+inline void Adaptor::outputSubImages(
+    const FrameBuffer& frame_buffer,
+    const Viewpoint::Location& location,
+    const std::string& suffix )
+{
+    if ( m_enable_output_subimage )
+    {
+        const auto& color_buffer = frame_buffer.color_buffer;
+        const auto& depth_buffer = frame_buffer.depth_buffer;
+
+        // Color image
+        const auto width = BaseClass::imageWidth();
+        const auto height = BaseClass::imageHeight();
+        kvs::ColorImage image( width, height, color_buffer );
+        image.write( BaseClass::outputImageName( location, "_color_" + suffix ) );
+
+        // Depth image
+        if ( m_enable_output_subimage_depth )
+        {
+            kvs::GrayImage depth_image( width, height, depth_buffer );
+            depth_image.write( BaseClass::outputImageName( location, "_depth_" + suffix ) );
+        }
+
+        // Alpha image
+        if ( m_enable_output_subimage_alpha )
+        {
+            kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
+            alpha_image.write( BaseClass::outputImageName( location, "_alpha_" + suffix ) );
+        }
+    }
 }
 
 inline Adaptor::DepthBuffer Adaptor::backgroundDepthBuffer()
@@ -215,8 +272,6 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
     }
     else
     {
-        kvs::Timer timer_rend( kvs::Timer::Start );
-
         auto* camera = BaseClass::screen().scene()->camera();
         auto* light = BaseClass::screen().scene()->light();
 
@@ -233,33 +288,13 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         const auto u = r.cross( pa );
         camera->setPosition( p, a, u );
         light->setPosition( p );
-        BaseClass::screen().draw();
+        const auto buffer = this->drawScreen();
 
         // Restore camera and light info.
         camera->setPosition( p0, a0, u0 );
         light->setPosition( p0 );
 
-        // Read-back image
-        auto color_buffer = BaseClass::screen().readbackColorBuffer();
-        auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
-
-        timer_rend.stop();
-        m_rend_time += BaseClass::rendTimer().time( timer_rend );
-
-        // Output rendering image (partial rendering image)
-        this->output_sub_images( color_buffer, depth_buffer, location );
-
-        // Image composition
-        kvs::Timer timer_comp;
-        timer_comp.start();
-        if ( !m_compositor.run( color_buffer, depth_buffer ) )
-        {
-            this->log() << "ERROR: " << "Cannot compose images." << std::endl;
-        }
-        timer_comp.stop();
-        m_comp_time += m_comp_timer.time( timer_comp );
-
-        return { color_buffer, depth_buffer };
+        return buffer;
     }
 }
 
@@ -292,34 +327,20 @@ inline Adaptor::FrameBuffer Adaptor::readback_omn_buffer( const Viewpoint::Locat
     for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
     {
         // Rendering.
-        kvs::Timer timer_rend( kvs::Timer::Start );
         const auto d = SphericalColorBuffer::Direction(i);
         const auto dir = SphericalColorBuffer::DirectionVector(d);
         const auto up = SphericalColorBuffer::UpVector(d);
         camera->setPosition( p, p + dir, up );
-        BaseClass::screen().draw();
+        const auto buffer = this->drawScreen(
+            [&] ( const FrameBuffer& frame_buffer )
+            {
+                // Output rendering image (partial rendering image) for each direction
+                const auto dname = SphericalColorBuffer::DirectionName(d);
+                this->outputSubImages( frame_buffer, location, dname );
+            } );
 
-        auto cbuffer = BaseClass::screen().readbackColorBuffer();
-        auto dbuffer = BaseClass::screen().readbackDepthBuffer();
-
-        timer_rend.stop();
-        rend_time += BaseClass::rendTimer().time( timer_rend );
-
-        // Output rendering image (partial rendering image) for each direction
-        const auto dname = SphericalColorBuffer::DirectionName(d);
-        this->output_sub_images( cbuffer, dbuffer, location, dname );
-
-        // Image composition
-        kvs::Timer timer_comp( kvs::Timer::Start );
-        if ( !m_compositor.run( cbuffer, dbuffer ) )
-        {
-            this->log() << "ERROR: " << "Cannot compose images." << std::endl;
-        }
-        timer_comp.stop();
-        comp_time += m_comp_timer.time( timer_comp );
-
-        color_buffer.setBuffer( d, cbuffer );
-        depth_buffer.setBuffer( d, dbuffer );
+        color_buffer.setBuffer( d, buffer.color_buffer );
+        depth_buffer.setBuffer( d, buffer.depth_buffer );
     }
 
     m_rend_time = rend_time;
@@ -341,36 +362,6 @@ inline Adaptor::FrameBuffer Adaptor::readback_adp_buffer( const Viewpoint::Locat
     return BaseClass::isInsideObject( location.position, object ) ?
         this->readback_omn_buffer( location ) :
         this->readback_uni_buffer( location );
-}
-
-inline void Adaptor::output_sub_images(
-    const ColorBuffer& color_buffer,
-    const DepthBuffer& depth_buffer,
-    const Viewpoint::Location& location,
-    const std::string& dname )
-{
-    if ( m_enable_output_subimage )
-    {
-        // RGB image
-        const auto width = BaseClass::imageWidth();
-        const auto height = BaseClass::imageHeight();
-        kvs::ColorImage image( width, height, color_buffer );
-        image.write( BaseClass::outputImageName( location, "_color_" + dname ) );
-
-        // Depth image
-        if ( m_enable_output_subimage_depth )
-        {
-            kvs::GrayImage depth_image( width, height, depth_buffer );
-            depth_image.write( BaseClass::outputImageName( location, "_depth_" + dname ) );
-        }
-
-        // Alpha image
-        if ( m_enable_output_subimage_alpha )
-        {
-            kvs::GrayImage alpha_image( width, height, color_buffer, 3 );
-            alpha_image.write( BaseClass::outputImageName( location, "_alpha_" + dname ) );
-        }
-    }
 }
 
 } // end of namespace mpi

@@ -42,7 +42,7 @@ public:
 private:
     kvs::mpi::Communicator m_world{}; ///< MPI communicator
     kvs::mpi::LogStream m_log{ m_world }; ///< MPI log stream
-    kvs::mpi::ImageCompositor m_compositor{ m_world }; ///< image compositor
+    kvs::mpi::ImageCompositor m_image_compositor{ m_world }; ///< image compositor
     bool m_enable_output_subimage = false; ///< flag for writing sub-object rendering image
     bool m_enable_output_subimage_depth = false; ///< flag for writing sub-object rendering image (depth image)
     bool m_enable_output_subimage_alpha = false; ///< flag for writing sub-object rendering image (alpha image)
@@ -69,9 +69,16 @@ public:
     virtual bool dump();
 
 protected:
-    void execRendering();
+    virtual void execRendering();
+    virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func = [] ( const FrameBuffer& ) {} );
 
+    kvs::mpi::ImageCompositor& imageCompositor() { return m_image_compositor; }
     std::string outputFinalImageName( const Viewpoint::Location& location );
+    void outputSubImages(
+        const FrameBuffer& frame_buffer,
+        const Viewpoint::Location& location,
+        const std::string& suffix = "" );
+
     DepthBuffer backgroundDepthBuffer();
     FrameBuffer readback( const Viewpoint::Location& location );
 
@@ -79,11 +86,6 @@ private:
     FrameBuffer readback_uni_buffer( const Viewpoint::Location& location );
     FrameBuffer readback_omn_buffer( const Viewpoint::Location& location );
     FrameBuffer readback_adp_buffer( const Viewpoint::Location& location );
-    void output_sub_images(
-        const ColorBuffer& color_buffer,
-        const DepthBuffer& depth_buffer,
-        const Viewpoint::Location& location,
-        const std::string& dname = "" );
 };
 
 } // end of namespace mpi
