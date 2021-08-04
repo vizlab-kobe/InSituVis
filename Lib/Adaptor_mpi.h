@@ -36,7 +36,11 @@ public:
         DepthBuffer depth_buffer;
         FrameBuffer() = default;
         FrameBuffer( const ColorBuffer& cb, const DepthBuffer& db ):
-            color_buffer( cb ), depth_buffer( db ) {}
+            color_buffer( cb ),
+            depth_buffer( db ) {}
+        FrameBuffer( const size_t width, const size_t height ):
+            color_buffer( width * height * 4 ),
+            depth_buffer( width * height ) {}
     };
 
 private:

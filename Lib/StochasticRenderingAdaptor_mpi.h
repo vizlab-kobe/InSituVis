@@ -19,15 +19,23 @@ public:
     class RenderingCompositor : public kvs::StochasticRenderingCompositor
     {
         using Adaptor = StochasticRenderingAdaptor;
+        using EnsembleBuffer = kvs::ValueArray<kvs::Real32>;
     private:
-        Adaptor* m_parent;
+        Adaptor* m_parent = nullptr;
+        FrameBuffer m_frame_buffer{};
+        EnsembleBuffer m_ensemble_buffer{};
+        size_t m_ensembles = 0; //< counter for ensemble averaging
 
     public:
         RenderingCompositor( kvs::Scene* scene, Adaptor* parent ):
             kvs::StochasticRenderingCompositor( scene ),
             m_parent( parent ) {}
 
-        void ensembleRenderingPass( kvs::EnsembleAverageBuffer& buffer );
+        const FrameBuffer& frameBuffer() const { return m_frame_buffer; }
+        void onWindowCreated();
+        void firstRenderPass( kvs::EnsembleAverageBuffer& buffer );
+        void ensembleRenderPass( kvs::EnsembleAverageBuffer& buffer );
+        void lastRenderPass( kvs::EnsembleAverageBuffer& buffer );
     };
 
 private:

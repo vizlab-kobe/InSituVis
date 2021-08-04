@@ -42,7 +42,7 @@ public:
     using Screen = kvs::OffScreen;
     using Object = kvs::ObjectBase;
     using ObjectList = std::list<Object::Pointer>;
-    using Pipeline = std::function<void(Screen&,const Object&)>;
+    using Pipeline = std::function<void(Screen&,Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
 
     // Simulation time information.
@@ -105,8 +105,8 @@ public:
     virtual bool dump();
 
 protected:
-    virtual void execPipeline( const Object& object );
-    virtual void execPipeline( const ObjectList& objects );
+    virtual void execPipeline( Object& object );
+    virtual void execPipeline( ObjectList& objects );
     virtual void execPipeline();
     virtual void execRendering();
     virtual ColorBuffer drawScreen();
