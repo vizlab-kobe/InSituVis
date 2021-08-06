@@ -1,4 +1,5 @@
 #include "StochasticRenderingAdaptor_mpi.h"
+#include <cfenv>
 
 
 namespace InSituVis
@@ -60,10 +61,15 @@ inline void StochasticRenderingAdaptor::RenderingCompositor::ensembleRenderPass(
     const auto width = m_parent->screen().width();
     const auto height = m_parent->screen().height();
     kvs::OpenGL::DrawPixels( width, height, GL_RGBA, GL_UNSIGNED_BYTE, color_buffer.data() );
-//    kvs::OpenGL::DrawPixels( width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buffer.data() );
+    kvs::OpenGL::DrawPixels( width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depth_buffer.data() );
 
    buffer.unbind();
+
+//   fenv_t fe;
+//   std::feholdexcept( &fe );
    buffer.add();
+//   std::feupdateenv( &fe );
+//   std::cout << "bb (" << m_parent->world().rank() << ")" << std::endl;
 
 //    kvs::StochasticRenderingCompositor::ensembleRenderPass( buffer );
 }
