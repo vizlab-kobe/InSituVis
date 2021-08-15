@@ -1,29 +1,9 @@
 #include <kvs/Math>
 #include <kvs/Stat>
 
+
 namespace
 {
-
-/*
-template <typename T>
-inline double Variance(
-    const kvs::ValueArray<T>& values,
-    double& mean )
-{
-    double m = 0.0;
-    double var = 0.0;
-    int i = 1;
-    for ( const auto& v : values )
-    {
-        double d = v - m;
-        m += d / i++;
-        var += d * ( v - m );
-    }
-    var /= ( values.size() - 1 );
-    mean = m;
-    return var;
-};
-*/
 
 template <typename T>
 inline float Divergence(
@@ -33,8 +13,6 @@ inline float Divergence(
 {
     auto m0 = T(0);
     auto m1 = T(0);
-//    auto s0 = std::sqrt( ::Variance( p0, m0 ) );
-//    auto s1 = std::sqrt( ::Variance( p1, m1 ) );
     auto s0 = kvs::Stat::StdDev( p0, kvs::Stat::OnlineVar<T>, &m0 );
     auto s1 = kvs::Stat::StdDev( p1, kvs::Stat::OnlineVar<T>, &m1 );
     if ( kvs::Math::IsZero( s0 ) || kvs::Math::IsZero( s1 ) )
@@ -63,8 +41,6 @@ inline float AdaptiveTimestepController::GaussianKLDivergence(
     const float D_max )
 {
     KVS_ASSERT( P0.typeID() == P1.typeID() );
-
-    std::cout << "GaussianKLDivergence" << std::endl;
 
     switch ( P0.typeID() )
     {
@@ -114,13 +90,13 @@ inline void AdaptiveTimestepController::push( const Data& data )
                 m_previous_data = V_crr;
                 m_previous_divergence = D_crr;
 
-                std::cout << "D_prv: " << D_prv << std::endl;
-                std::cout << "D_crr: " << D_crr << std::endl;
+                //std::cout << "D_prv: " << D_prv << std::endl;
+                //std::cout << "D_crr: " << D_crr << std::endl;
 
                 // Pattern A
                 if ( D_prv < D_thr && D_crr < D_thr )
                 {
-                    std::cout << "\tPttern A" << std::endl;
+                    //std::cout << "\tPttern A" << std::endl;
 
                     int i = 1;
                     while ( !m_data_queue.empty() )
@@ -137,7 +113,7 @@ inline void AdaptiveTimestepController::push( const Data& data )
                 // Pattern B
                 else if ( D_crr >= D_thr )
                 {
-                    std::cout << "\tPttern B" << std::endl;
+                    //std::cout << "\tPttern B" << std::endl;
 
                     while ( !m_data_queue.empty() )
                     {
@@ -149,7 +125,7 @@ inline void AdaptiveTimestepController::push( const Data& data )
                 // Pattern C
                 else
                 {
-                    std::cout << "\tPttern C" << std::endl;
+                    //std::cout << "\tPttern C" << std::endl;
 
                     const auto queue_size = m_data_queue.size();
                     for ( size_t i = 0; i < queue_size / 2; ++i )

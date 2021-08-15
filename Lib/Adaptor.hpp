@@ -165,12 +165,12 @@ inline bool Adaptor::dump()
     return timer_list.write( dir + "vis_proc_time" + ".csv" );
 }
 
-inline void Adaptor::execPipeline( Object& object )
+inline void Adaptor::execPipeline( const Object& object )
 {
     m_pipeline( m_screen, object );
 }
 
-inline void Adaptor::execPipeline( ObjectList& objects )
+inline void Adaptor::execPipeline( const ObjectList& objects )
 {
     kvs::Timer timer( kvs::Timer::Start );
     for ( auto& pobject : objects )
