@@ -19,12 +19,18 @@ public:
     class RenderingCompositor : public kvs::StochasticRenderingCompositor
     {
         using Adaptor = StochasticRenderingAdaptor;
+        using Compositor = kvs::StochasticRenderingCompositor;
     private:
         Adaptor* m_parent = nullptr;
+        float m_rend_time = 0.0f; ///< rendering time per frame
+        float m_comp_time = 0.0f; ///< image composition time per frame
     public:
         RenderingCompositor( kvs::Scene* scene, Adaptor* parent ):
-            kvs::StochasticRenderingCompositor( scene ),
+            Compositor( scene ),
             m_parent( parent ) {}
+        float rendTime() const { return m_rend_time; }
+        float compTime() const { return m_comp_time; }
+        void firstRenderPass( kvs::EnsembleAverageBuffer& buffer );
         void ensembleRenderPass( kvs::EnsembleAverageBuffer& buffer );
     };
 

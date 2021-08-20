@@ -172,12 +172,12 @@ inline Adaptor::FrameBuffer Adaptor::drawScreen( std::function<void(const FrameB
     // Draw and read-back image
     kvs::Timer timer_rend( kvs::Timer::Start );
     BaseClass::screen().draw();
-    auto color_buffer = BaseClass::screen().readbackColorBuffer();
-    auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
     timer_rend.stop();
     m_rend_time += BaseClass::rendTimer().time( timer_rend );
 
     // Apply the func for partial rendering buffers before image composition.
+    auto color_buffer = BaseClass::screen().readbackColorBuffer();
+    auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
     func( { color_buffer, depth_buffer } );
 
     // Image composition

@@ -61,6 +61,7 @@ public:
     kvs::mpi::Communicator& world() { return m_world; }
     std::ostream& log() { return m_log( m_world.root() ); }
     std::ostream& log( const int rank ) { return m_log( rank ); }
+    kvs::StampTimer& compTimer() { return m_comp_timer; }
 
     void setOutputSubImageEnabled(
         const bool enable = true,
@@ -75,6 +76,11 @@ public:
 protected:
     virtual void execRendering();
     virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func = [] ( const FrameBuffer& ) {} );
+
+    float rendTime() const { return m_rend_time; }
+    float compTime() const { return m_comp_time; }
+    void setRendTime( const float time ) { m_rend_time = time; }
+    void setCompTime( const float time ) { m_comp_time = time; }
 
     kvs::mpi::ImageCompositor& imageCompositor() { return m_image_compositor; }
     std::string outputFinalImageName( const Viewpoint::Location& location );
