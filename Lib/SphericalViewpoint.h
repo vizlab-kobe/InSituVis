@@ -36,12 +36,12 @@ public:
             const size_t layer = static_cast<size_t>( index / ( m_dims[1] * m_dims[2] ) ) + 1;
 
             const float dt = 1.0f / ( m_dims[1] - 1 );
-            const size_t wt = index % ( m_dims[1] * m_dims[2] );
+            const size_t wt = ( index % ( m_dims[1] * m_dims[2] ) ) / m_dims[2];
 
             const float dp = 2.0f / ( m_dims[2] );
             const size_t wp = index % m_dims[2];
 
-            const float r = layer * ( m_max_coord[0] - m_min_coord[0] ) / 2.0f;
+            const float r = layer * ( m_max_coord[0] - m_min_coord[0] ) / ( 2.0f * m_dims[0] );
             const float t = wt * dt * kvs::Math::pi;
             const float p = wp * dp * kvs::Math::pi;
 
