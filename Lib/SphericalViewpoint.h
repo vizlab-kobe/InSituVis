@@ -64,15 +64,12 @@ public:
 
         size_t index = 0;
         const kvs::Vec3 l = { 0, 0, 0 };
-        for ( size_t k = 0; k < m_dims[1]; ++k )
+        for ( size_t k = 0; k < m_dims[0] * m_dims[1] * m_dims[2]; ++k)
         {
-            for ( size_t j = 0; j < 2 * (m_dims[0] + m_dims[1] - 2); ++j )
-            {
-                const auto rtp = index_to_rtp( index );
-                const auto p = rtp_to_xyz( rtp );
-                BaseClass::add( { d, p, l } );
-                index++;
-            }
+            const auto rtp = index_to_rtp( index );
+            const auto p = rtp_to_xyz( rtp );
+            BaseClass::add( { d, p, l } );
+            index++;
         }
     }
 };
