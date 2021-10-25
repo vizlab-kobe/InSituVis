@@ -672,26 +672,30 @@ void FoamToKVS::update_min_max_coords(
     kvs::mpi::Communicator& world,
     VolumeObject* volume )
 {
-    auto min_coord = volume->minObjectCoord();
-    auto max_coord = volume->maxObjectCoord();
-    world.allReduce( min_coord[0], min_coord[0], MPI_MIN );
-    world.allReduce( min_coord[1], min_coord[1], MPI_MIN );
-    world.allReduce( min_coord[2], min_coord[2], MPI_MIN );
-    world.allReduce( max_coord[0], max_coord[0], MPI_MAX );
-    world.allReduce( max_coord[1], max_coord[1], MPI_MAX );
-    world.allReduce( max_coord[2], max_coord[2], MPI_MAX );
-    volume->setMinMaxObjectCoords( min_coord, max_coord );
-    volume->setMinMaxExternalCoords( min_coord, max_coord );
+    kvs::Vec3 global_min( 0, 0, 0 );
+    kvs::Vec3 global_max( 0, 0, 0 );
+    const auto min_coord = volume->minObjectCoord();
+    const auto max_coord = volume->maxObjectCoord();
+    world.allReduce( min_coord[0], global_min[0], MPI_MIN );
+    world.allReduce( min_coord[1], global_min[1], MPI_MIN );
+    world.allReduce( min_coord[2], global_min[2], MPI_MIN );
+    world.allReduce( max_coord[0], global_max[0], MPI_MAX );
+    world.allReduce( max_coord[1], global_max[1], MPI_MAX );
+    world.allReduce( max_coord[2], global_max[2], MPI_MAX );
+    volume->setMinMaxObjectCoords( global_min, global_max );
+    volume->setMinMaxExternalCoords( global_min, global_max );
 }
 
 void FoamToKVS::update_min_max_values(
     kvs::mpi::Communicator& world,
     VolumeObject* volume )
 {
-    auto min_value = volume->minValue();
-    auto max_value = volume->maxValue();
-    world.allReduce( min_value, min_value, MPI_MIN );
-    world.allReduce( max_value, max_value, MPI_MAX );
-    volume->setMinMaxValues( min_value, max_value );
+    double global_min = 0.0;
+    double global_max = 0.0;
+    const auto min_value = volume->minValue();
+    const auto max_value = volume->maxValue();
+    world.allReduce( min_value, global_min, MPI_MIN );
+    world.allReduce( max_value, global_max, MPI_MAX );
+    volume->setMinMaxValues( global_min, global_max );
 }
 #endif // KVS_SUPPORT_MPI
