@@ -66,8 +66,7 @@ public:
         const kvs::Vec3 l = { 0, 0, 0 };
         for ( size_t i = 0; i < m_dims[0] * m_dims[1] * m_dims[2]; ++i)
         {
-            const auto rtp = index_to_rtp( i );
-            const auto p = rtp_to_xyz( rtp );
+            const auto xyz = index_to_xyz( i );
             BaseClass::add( { i, d, p, l } );
         }
     }
