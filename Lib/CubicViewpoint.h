@@ -45,9 +45,7 @@ public:
             const float x = xyz[0];
             const float y = xyz[1];
             const float z = xyz[2];
-            const float r = 0;
-            const float t = 0;
-            const float p = 0;
+            float r, t, p;
             r = sqrt( xyz.dot( xyz ) );
             if( r == 0 ){
                 t = 0;
