@@ -67,7 +67,7 @@ public:
             }
 
             return kvs::Vec3( r, t, p );
-        }
+        };
 
         BaseClass::clear();
 
