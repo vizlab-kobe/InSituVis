@@ -7,6 +7,7 @@
 #pragma once
 #include <kvs/Vector3>
 #include <kvs/Value>
+#include <kvs/Math>
 #include <functional>
 #include <vector>
 
@@ -37,6 +38,7 @@ public:
         size_t index{ MaxIndex() }; ///< location index
         Direction direction{ Direction::Uni }; ///< view direction type
         kvs::Vec3 position{ 0, 0, 12 }; ///< viewpoint position in world coordinate
+        kvs::Vec3 position_rtp{ 12, kvs::Math::pi / 2, 0 };
         kvs::Vec3 look_at{ 0, 0, 0 }; ///< look-at position in world coordinate
 
         Location(
@@ -69,6 +71,16 @@ public:
             index( i ),
             direction( d ),
             position( p ),
+            look_at( l ) {}
+        
+        Location(
+            const Direction d,
+            const kvs::Vec3& p,
+            const kvs::Vec3& p_rtp,
+            const kvs::Vec3& l = { 0, 0, 0 } ):
+            direction( d ),
+            position( p ),
+            position_rtp( p_rtp ),
             look_at( l ) {}
     };
 

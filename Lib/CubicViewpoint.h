@@ -35,29 +35,37 @@ public:
             const size_t i = index % m_dims[0];
             const size_t j = ( index / m_dims[0] ) % m_dims[1];
             const size_t k = index / ( m_dims[0] * m_dims[1] );
-            const kvs::Vec3 ijk = { i, j, k };
+            const auto ijk = kvs::Vec3( { i, j, k } );
             const auto d = kvs::Vec3( m_dims ) - kvs::Vec3::Constant(1);
             return ( ijk / d ) * ( m_max_coord - m_min_coord ) + m_min_coord;
         };
 
         auto index_to_rtp = [&] ( const size_t index ) -> kvs::Vec3 {
-            const kvs::Vec3 xyz = index_to_xyz( index );
+            const auto xyz = index_to_xyz( index );
             const float x = xyz[0];
             const float y = xyz[1];
             const float z = xyz[2];
-            const float r = sqrt( xyz.dot( xyz ) );
-            const float t = acos( y / r );
+            const float r;
+            const float t;
             const float p;
-            if( z == 0 ){
-                if( x == 0 ){
-                    p = 0;
-                }
-                else{
-                    p = ( 1 - x / abs(x) / 2 ) * kvs::Math::pi;
-                }
+            r = sqrt( xyz.dot( xyz ) );
+            if( r == 0 ){
+                t = 0;
+                p = 0;
             }
             else{
-                p = atan( x / z );
+                t = acos( y / r );
+                if( z == 0 ){
+                    if( x == 0 ){
+                        p = 0;
+                    }
+                    else{
+                        p = ( 1 - x / abs(x) / 2 ) * kvs::Math::pi;
+                    }
+                }
+                else{
+                    p = atan( x / z );
+                }
             }
 
             return kvs::Vec3( r, t, p );
@@ -78,10 +86,11 @@ public:
         //    }
         //}
 
-        for ( size_t i = 0; i < m_dims[0] * m_dims[1] * m_dims[2]; ++i)
+        for ( size_t index = 0; index < m_dims[0] * m_dims[1] * m_dims[2]; ++index)
         {
-            const auto p = index_to_xyz( i );
-            BaseClass::add( { i, d, p, l } );
+            const auto p = index_to_xyz( index );
+            const auto p_rtp = index_to_rtp( index );
+            BaseClass::add( { d, p, p_rtp, l } );
         }
     }
 };

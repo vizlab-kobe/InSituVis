@@ -49,7 +49,7 @@ public:
         };
 
         auto index_to_xyz = [&] ( const size_t index ) -> kvs::Vec3 {
-            const kvs::Vec3 rtp = index_to_rtp( index );
+            const auto rtp = index_to_rtp( index );
             const float r = rtp[0];
             const float theta = rtp[1];
             const float phi = rtp[2];
@@ -64,10 +64,11 @@ public:
         BaseClass::clear();
 
         const kvs::Vec3 l = { 0, 0, 0 };
-        for ( size_t i = 0; i < m_dims[0] * m_dims[1] * m_dims[2]; ++i)
+        for ( size_t index = 0; index < m_dims[0] * m_dims[1] * m_dims[2]; ++index)
         {
-            const auto xyz = index_to_xyz( i );
-            BaseClass::add( { i, d, p, l } );
+            const auto p = index_to_xyz( index );
+            const auto p_rtp = index_to_rtp( index );
+            BaseClass::add( { d, p, p_rtp, l } );
         }
     }
 };

@@ -4,6 +4,7 @@
  *  @author Naohisa Sakamoto
  */
 /*****************************************************************************/
+#include <kvs/Math>
 #include <kvs/Light>
 #include <kvs/Camera>
 #include <kvs/PointObject>
@@ -305,6 +306,7 @@ inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
 {
     const auto p = location.position;
     const auto a = location.look_at;
+    const auto p_rtp = location.position_rtp;
     if ( p == a )
     {
         return this->backgroundColorBuffer();
@@ -320,14 +322,26 @@ inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         const auto u0 = camera->upVector();
 
         // Draw the scene.
-        const auto zero = kvs::Vec3::Zero();
-        const auto pa = a - p;
-        const auto rr = pa.cross( u0 );
-        const auto r = rr == zero ? ( a0 - p0 ).cross( u0 ) : rr;
-        const auto u = r.cross( pa );
+        //const auto zero = kvs::Vec3::Zero();
+        //const auto pa = a - p;
+        //const auto rr = pa.cross( u0 );
+        //const auto r = rr == zero ? ( a0 - p0 ).cross( u0 ) : rr;
+        //const auto u = r.cross( pa );
+        //camera->setPosition( p, a, u );
+        //light->setPosition( p );
+        //const auto buffer = this->drawScreen();
+
+        //Draw the scene.
+        const auto pp_rtp = p_rtp - { 0, kvs::Math::pi / 2, 0 };
+        const float pp_x = pp_rtp[0] * std::sin( pp_rtp[1] ) * std::sin( pp_rtp[2] );
+        const float pp_y = pp_rtp[0] * std::cos( pp_rtp[1] );
+        const float pp_z = pp_rtp[0] * std::sin( pp_rtp[1] ) * std::cos( pp_rtp[2] );
+        const auto pp = kvs::Vec3( { pp_x, pp_y, pp_z } );
+        const auto u = pp;
         camera->setPosition( p, a, u );
         light->setPosition( p );
         const auto buffer = this->drawScreen();
+        
 
         // Restore camera and light info.
         camera->setPosition( p0, a0, u0 );
