@@ -261,6 +261,7 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
 {
     const auto p = location.position;
     const auto a = location.look_at;
+    const auto p_rtp = location.position_rtp;
     if ( p == a )
     {
         kvs::Timer timer_rend( kvs::Timer::Start );
@@ -280,19 +281,28 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         const auto a0 = camera->lookAt();
         const auto u0 = camera->upVector();
 
-        // Draw the scene.
-        const auto zero = kvs::Vec3::Zero();
-        const auto pa = a - p;
-        const auto rr = pa.cross( u0 );
-        const auto r = rr == zero ? ( a0 - p0 ).cross( u0 ) : rr;
-        const auto u = r.cross( pa );
+        //Draw the scene.
+        kvs::Vec3 pp_rtp;
+        if( p_rtp[1] > kvs::Math::pi / 2 ){
+            pp_rtp = p_rtp - kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
+        }
+        else{
+            pp_rtp = p_rtp + kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
+        }
+        const float pp_x = pp_rtp[0] * std::sin( pp_rtp[1] ) * std::sin( pp_rtp[2] );
+        const float pp_y = pp_rtp[0] * std::cos( pp_rtp[1] );
+        const float pp_z = pp_rtp[0] * std::sin( pp_rtp[1] ) * std::cos( pp_rtp[2] );
+        kvs::Vec3 pp;
+        if( p_rtp[1] > kvs::Math::pi / 2 ){
+            pp = kvs::Vec3( { pp_x, pp_y, pp_z } );
+        }
+        else{
+            pp = -1 * kvs::Vec3( { pp_x, pp_y, pp_z } );
+        }
+        const auto u = pp;
         camera->setPosition( p, a, u );
         light->setPosition( p );
-        const auto buffer = this->drawScreen(
-            [&] ( const FrameBuffer& frame_buffer )
-            {
-                this->outputSubImages( frame_buffer, location );
-            } );
+        const auto buffer = this->drawScreen();
 
 
         // Restore camera and light info.

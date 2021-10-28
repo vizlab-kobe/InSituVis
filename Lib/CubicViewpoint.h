@@ -72,17 +72,6 @@ public:
         BaseClass::clear();
 
         const kvs::Vec3 l = { 0, 0, 0 };
-        //for ( size_t k = 0; k < m_dims[2]; ++k )
-        //{
-        //    for ( size_t j = 0; j < m_dims[1]; ++j )
-        //    {
-        //        for ( size_t i = 0; i < m_dims[0]; ++i )
-        //        {
-        //            const auto p = ijk_to_xyz( { i, j, k } );
-        //            BaseClass::add( { d, p, l } );
-        //        }
-        //    }
-        //}
 
         for ( size_t index = 0; index < m_dims[0] * m_dims[1] * m_dims[2]; ++index)
         {

@@ -321,16 +321,6 @@ inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         const auto a0 = camera->lookAt();
         const auto u0 = camera->upVector();
 
-        // Draw the scene.
-        //const auto zero = kvs::Vec3::Zero();
-        //const auto pa = a - p;
-        //const auto rr = pa.cross( u0 );
-        //const auto r = rr == zero ? ( a0 - p0 ).cross( u0 ) : rr;
-        //const auto u = r.cross( pa );
-        //camera->setPosition( p, a, u );
-        //light->setPosition( p );
-        //const auto buffer = this->drawScreen();
-
         //Draw the scene.
         kvs::Vec3 pp_rtp;
         if( p_rtp[1] > kvs::Math::pi / 2 ){
