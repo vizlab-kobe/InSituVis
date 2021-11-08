@@ -8,6 +8,7 @@
 #include <kvs/HydrogenVolumeData>
 #include <kvs/Timer>
 #include <kvs/OffScreen>
+#include <kvs/GrayImage>
 
 
 int main( int argc, char** argv )
@@ -38,7 +39,12 @@ int main( int argc, char** argv )
         auto R = kvs::Xform::Rotation( kvs::Mat3::RotationY( 30 ) );
         object->multiplyXform( R );
         screen.draw();
-        screen.capture().write( filename );
+        auto width = screen.width();
+        auto height = screen.height();
+        auto depth_buffer = screen.readbackDepthBuffer();
+        kvs::GrayImage depth_image( width, height, depth_buffer );
+        depth_image.write( "output_depth_" + num.str() + ".bmp" );
+        //screen.capture().write( filename );
         std::cout << filename << std::endl;
     }
     timer.stop();
