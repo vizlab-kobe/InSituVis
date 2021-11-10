@@ -53,17 +53,20 @@ public:
             }
             else{
                 t = acos( y / r );
-                if( z == 0 ){
-                    if( x == 0 ){
-                        p = 0;
-                    }
-                    else{
-                        p = ( 1 - x / abs(x) / 2 ) * kvs::Math::pi;
-                    }
+                if( ( x == 0 ) && ( z == 0 ) ){
+                    p = 0;
                 }
                 else{
-                    p = atan( x / z );
+                    if( x >= 0 ){
+                        p = acos( z / sqrt( z * z + x * x ) );
+                    }
+                    else{
+                        p = -1 * acos( z / sqrt( z * z + x * x ) );
+                    }
                 }
+            }
+            if( p < 0 ){
+                p += 2 * kvs::Math::pi;
             }
 
             return kvs::Vec3( r, t, p );
