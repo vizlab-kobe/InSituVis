@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 #include <kvs/StructuredVolumeObject>
 #include <kvs/StructuredVolumeImporter>
 #include <kvs/PolygonObject>
@@ -9,6 +10,17 @@
 #include <kvs/Timer>
 #include <kvs/OffScreen>
 #include <kvs/GrayImage>
+#include <kvs/ValueArray>
+
+float DepthEntropy( const size_t width, const size_t height, const kvs::ValueArray<float>& buffer ){
+    float entropy = 0.0;
+
+    for( size_t i = 0; i < buffer.size(); i++ ){
+        entropy -= buffer[i] * log( buffer[i] );
+    }
+
+    return entropy;
+}
 
 
 int main( int argc, char** argv )
@@ -42,10 +54,12 @@ int main( int argc, char** argv )
         auto width = screen.width();
         auto height = screen.height();
         auto depth_buffer = screen.readbackDepthBuffer();
+        auto entropy = DepthEntropy( width, height, depth_buffer );
+
         kvs::GrayImage depth_image( width, height, depth_buffer );
         depth_image.write( "output_depth_" + num.str() + ".bmp" );
         //screen.capture().write( filename );
-        std::cout << filename << std::endl;
+        std::cout << filename << "   entropy : " << entropy << std::endl;
     }
     timer.stop();
 
