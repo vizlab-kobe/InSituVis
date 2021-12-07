@@ -49,9 +49,9 @@ float ColorEntropy( const size_t width, const size_t height, const kvs::ValueArr
     float entropy = 0.0;
     for( size_t i = 0; i < width * height; i++ ){
         const float p = dx * exp( -1 * ( buffer[i] - mean ) * ( buffer[i] - mean ) / ( 2 * sigma2 ) ) / sqrt( 2 * kvs::Math::pi * sigma2 );
-        if( buffer[i] < 1 ){
-            entropy -= p * log( p ) / log( 2.0 );
-        }
+        
+        entropy -= p * log( p ) / log( 2.0 );
+
     }
 
     return entropy;
