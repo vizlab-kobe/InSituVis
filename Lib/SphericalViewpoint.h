@@ -61,6 +61,28 @@ public:
             return kvs::Vec3( r * sin_theta * sin_phi, r * cos_theta, r * sin_theta * cos_phi );
         };
 
+        auto calc_up_vector = [&] ( const kvs::Vec3& rtp ) -> kvs::Vec3 {
+            kvs::Vec3 p;
+            if( rtp[1] > kvs::Math::pi / 2 ){
+                p = rtp - kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
+            }
+            else{
+                p = rtp + kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
+            }
+            const float p_x = p[0] * std::sin( p[1] ) * std::sin( p[2] );
+            const float p_y = p[0] * std::cos( p[1] );
+            const float p_z = p[0] * std::sin( p[1] ) * std::cos( p[2] );
+            kvs::Vec3 u;
+            if( rtp[1] > kvs::Math::pi / 2 ){
+                u = kvs::Vec3( { p_x, p_y, p_z } );
+            }
+            else{
+                u = -1 * kvs::Vec3( { p_x, p_y, p_z } );
+            }
+            
+            return u;
+        };
+
         BaseClass::clear();
 
         const kvs::Vec3 l = { 0, 0, 0 };
@@ -68,7 +90,8 @@ public:
         {
             const auto p = index_to_xyz( index );
             const auto p_rtp = index_to_rtp( index );
-            BaseClass::add( { d, p, p_rtp, l } );
+            const auto u = calc_up_vector( p_rtp );
+            BaseClass::add( { d, p, u, l } );
         }
     }
 };

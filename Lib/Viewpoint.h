@@ -38,7 +38,7 @@ public:
         size_t index{ MaxIndex() }; ///< location index
         Direction direction{ Direction::Uni }; ///< view direction type
         kvs::Vec3 position{ 0, 0, 12 }; ///< viewpoint position in world coordinate
-        kvs::Vec3 position_rtp{ 12, kvs::Math::pi / 2, 0 };
+        kvs::Vec3 up_vector{ 0, 1, 0 };
         kvs::Vec3 look_at{ 0, 0, 0 }; ///< look-at position in world coordinate
 
         Location(
@@ -76,11 +76,11 @@ public:
         Location(
             const Direction d,
             const kvs::Vec3& p,
-            const kvs::Vec3& p_rtp,
+            const kvs::Vec3& u,
             const kvs::Vec3& l = { 0, 0, 0 } ):
             direction( d ),
             position( p ),
-            position_rtp( p_rtp ),
+            up_vector( u ),
             look_at( l ) {}
     };
 
