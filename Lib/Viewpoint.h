@@ -10,6 +10,7 @@
 #include <kvs/Math>
 #include <functional>
 #include <vector>
+#include <kvs/Quaternion>
 
 
 namespace InSituVis
@@ -40,6 +41,7 @@ public:
         kvs::Vec3 position{ 0, 0, 12 }; ///< viewpoint position in world coordinate
         kvs::Vec3 up_vector{ 0, 1, 0 };
         kvs::Vec3 look_at{ 0, 0, 0 }; ///< look-at position in world coordinate
+        kvs::Quaternion rotation{ 1, 0, 0, 0 };
 
         Location(
             const kvs::Vec3& p,
@@ -81,6 +83,20 @@ public:
             direction( d ),
             position( p ),
             up_vector( u ),
+            look_at( l ) {}
+        
+        Location(
+            const size_t i,
+            const Direction d,
+            const kvs::Vec3& p,
+            const kvs::Vec3& u,
+            const kvs::Quaternion& q,
+            const kvs::Vec3& l = { 0, 0, 0 } ):
+            index( i ),
+            direction( d ),
+            position( p ),
+            up_vector( u ),
+            rotation( q ),
             look_at( l ) {}
     };
 

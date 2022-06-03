@@ -14,6 +14,7 @@ private:
     kvs::Vec3ui m_dims{ 1, 1, 1 }; // grid resolution
     kvs::Vec3 m_min_coord{ -12, -12, -12 }; ///< min. coord in world coordinate
     kvs::Vec3 m_max_coord{  12,  12,  12 }; ///< max. coord in world coordinate
+    kvs::Vec3 m_base_position{ 0.0f, 12.0f, 0.0f };
 
 public:
     SphericalViewpoint() = default;
@@ -22,6 +23,7 @@ public:
     const kvs::Vec3ui& dims() const { return m_dims; }
     const kvs::Vec3& minCoord() const { return m_min_coord; }
     const kvs::Vec3& maxCoord() const { return m_max_coord; }
+    const kvs::Vec3& basePosition() const { return m_base_position; }
 
     void setDims( const kvs::Vec3ui& dims ) { m_dims = dims; }
     void setMinMaxCoords( const kvs::Vec3& min_coord, const kvs::Vec3& max_coord )
@@ -29,10 +31,14 @@ public:
         m_min_coord = min_coord;
         m_max_coord = max_coord;
     }
+    void setBasePosition( const kvs::Vec3& base_position ) { m_base_position = base_position; }
 
     void create( const Direction d = Direction::Uni )
     {
         auto index_to_rtp = [&] ( const size_t index ) -> kvs::Vec3 {
+            const double max_theta = kvs::Math::pi * 0.99f;
+            const double min_theta = kvs::Math::pi * 0.01f;
+
             const size_t layer = static_cast<size_t>( index / ( m_dims[1] * m_dims[2] ) ) + 1;
 
             const float dt = 1.0f / ( m_dims[1] - 1 );
@@ -42,7 +48,7 @@ public:
             const size_t wp = index % m_dims[2];
 
             const float r = layer * ( m_max_coord[0] - m_min_coord[0] ) / ( 2.0f * m_dims[0] );
-            const float t = wt * dt * kvs::Math::pi;
+            const float t = kvs::Math::Clamp( wt * dt * kvs::Math::pi, min_theta, max_theta );
             const float p = wp * dp * kvs::Math::pi;
 
             return kvs::Vec3( r, t, p );
@@ -83,6 +89,19 @@ public:
             return u;
         };
 
+        auto calc_rotation = [&] ( const size_t index ) -> kvs::Quaternion {
+            const auto rtp = index_to_rtp( index );
+            const float theta = rtp[1];
+            const float phi = rtp[2];
+            const auto axis = kvs::Vec3( { 0.0f, 1.0f, 0.0f } );
+            auto q_phi = kvs::Quaternion( axis, phi );
+
+            const auto xyz = index_to_xyz( index );
+            const auto q_theta = kvs::Quaternion::RotationQuaternion( m_base_position, xyz );
+
+            return q_theta * q_phi;
+        };
+
         BaseClass::clear();
 
         const kvs::Vec3 l = { 0, 0, 0 };
@@ -91,7 +110,8 @@ public:
             const auto p = index_to_xyz( index );
             const auto p_rtp = index_to_rtp( index );
             const auto u = calc_up_vector( p_rtp );
-            BaseClass::add( { d, p, u, l } );
+            const auto q = calc_rotation( index );
+            BaseClass::add( { index, d, p, u, q, l } );
         }
     }
 };
