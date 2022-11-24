@@ -4,32 +4,6 @@
 #include <kvs/LabColor>
 
 
-namespace
-{
-
-inline kvs::Quat slerp(
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const float t,
-    const bool shortest )
-{
-    const bool normalize = true;
-    return kvs::Quat::SphericalLinearInterpolation( q1, q2, t, shortest, normalize );
-}
-
-inline kvs::Quat squad(
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const kvs::Quat& q3,
-    const kvs::Quat& q4,
-    const float t )
-{
-    const bool normalize = true;
-    return kvs::Quat::SphericalQuadrangleInterpolation( q1, q2, q3, q4, t, normalize );
-}
-
-}
-
 namespace InSituVis
 {
 
