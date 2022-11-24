@@ -28,11 +28,23 @@ public:
 
     using FrameBuffer = InSituVis::mpi::Adaptor::FrameBuffer;
     using EntropyFunction = std::function<float(const FrameBuffer&)>;
+    using Interpolator = std::function<kvs::Quat(const kvs::Quat&, const kvs::Quat&, const kvs::Quat&, const kvs::Quat&, float)>;
 
+    /*
     static float Entropy( const FrameBuffer& frame_buffer );
     static float LightnessEntropy( const FrameBuffer& frame_buffer );
     static float ColorEntropy( const FrameBuffer& frame_buffer );
     static float DepthEntropy( const FrameBuffer& frame_buffer );
+    */
+    // Entropy functions
+    static EntropyFunction LightnessEntropy();
+    static EntropyFunction ColorEntropy();
+    static EntropyFunction DepthEntropy();
+    static EntropyFunction MixedEntropy( EntropyFunction e1, EntropyFunction e2, float p );
+
+    // Interpolation functions
+    static Interpolator Slerp();
+    static Interpolator Squad();
 
 private:
     size_t m_interval = 1; ///< time interval of entropy calculation
@@ -42,18 +54,20 @@ private:
     size_t m_max_index = 0;
     float m_max_entropy;
     kvs::Vec3 m_max_position;
-    kvs::Quaternion m_max_rotation;
+    kvs::Quat m_max_rotation;
     float m_erp_radius;
-    kvs::Quaternion m_erp_rotation;
+    kvs::Quat m_erp_rotation;
     std::queue<float> m_max_entropies;
     std::queue<kvs::Vec3> m_max_positions;
-    std::queue<kvs::Quaternion> m_max_rotations;
-    std::queue<std::tuple<float, kvs::Quaternion>> m_path;
+    std::queue<kvs::Quat> m_max_rotations;
+    std::queue<std::tuple<float, kvs::Quat>> m_path;
     std::vector<float> m_path_positions;
     std::vector<float> m_path_entropies;
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
-    EntropyFunction m_entropy_function = Entropy;
+//    EntropyFunction m_entropy_function = Entropy;
+    EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f );
+    Interpolator m_interpolator = Squad();
 
 public:
     EntropyBasedCameraPathController() = default;
@@ -69,6 +83,17 @@ public:
 
     void setEntropyInterval( const size_t interval ) { m_interval = interval; }
     void setEntropyFunction( EntropyFunction func ) { m_entropy_function = func; }
+    void setEntropyFunctionToLightness() { m_entropy_function = LightnessEntropy(); }
+    void setEntropyFunctionToColor() { m_entropy_function = ColorEntropy(); }
+    void setEntropyFunctionToDepth() { m_entropy_function = DepthEntropy(); }
+    void setEntropyFunctionToMixed( EntropyFunction e1, EntropyFunction e2, float p )
+    {
+        m_entropy_function = MixedEntropy( e1, e2, p );
+    }
+
+    void setInterpolator( Interpolator interpolator ) { m_interpolator = interpolator; }
+    void setInterpolatorToSlerp() { m_interpolator = Slerp(); }
+    void setInterpolatorToSquad() { m_interpolator = Squad(); }
 
     void setMaxIndex( const size_t index ) { m_max_index = index; }
     void setMaxEntropy( const float entropy ) { m_max_entropy = entropy; }
@@ -92,6 +117,18 @@ protected:
     virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation ) {}
     virtual float entropy( const FrameBuffer& frame_buffer );
     float radiusInterpolation( const float r1, const float r2, const float t );
+
+    void createPath(
+        const float r2,
+        const float r3,
+        const kvs::Quaternion& q1,
+        const kvs::Quaternion& q2,
+        const kvs::Quaternion& q3,
+        const kvs::Quaternion& q4,
+        const size_t point_interval
+    );
+
+/*
     void createPathSlerp(
         const float r1,
         const float r2,
@@ -108,6 +145,7 @@ protected:
         const kvs::Quaternion& q4,
         const size_t point_interval
     );
+*/
 };
 
 } // end of namespace InSituVis

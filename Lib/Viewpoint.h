@@ -24,7 +24,7 @@ namespace InSituVis
 class Viewpoint
 {
 private:
-    static const size_t MaxIndex() { return kvs::Value<size_t>::Max(); }
+    static size_t MaxIndex() { return kvs::Value<size_t>::Max(); }
 
 public:
     enum Direction
@@ -74,7 +74,7 @@ public:
             direction( d ),
             position( p ),
             look_at( l ) {}
-        
+
         Location(
             const Direction d,
             const kvs::Vec3& p,
@@ -84,7 +84,7 @@ public:
             position( p ),
             up_vector( u ),
             look_at( l ) {}
-        
+
         Location(
             const size_t i,
             const Direction d,
@@ -96,8 +96,8 @@ public:
             direction( d ),
             position( p ),
             up_vector( u ),
-            rotation( q ),
-            look_at( l ) {}
+            look_at( l ),
+            rotation( q ) {}
     };
 
     using Locations = std::vector<Location>;

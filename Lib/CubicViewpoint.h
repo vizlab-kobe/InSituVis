@@ -35,7 +35,7 @@ public:
             const size_t i = index % m_dims[0];
             const size_t j = ( index / m_dims[0] ) % m_dims[1];
             const size_t k = index / ( m_dims[0] * m_dims[1] );
-            const auto ijk = kvs::Vec3( { i, j, k } );
+            const auto ijk = kvs::Vec3( i, j, k );
             const auto d = kvs::Vec3( m_dims ) - kvs::Vec3::Constant(1);
             return ( ijk / d ) * ( m_max_coord - m_min_coord ) + m_min_coord;
         };

@@ -85,13 +85,13 @@ public:
             else{
                 u = -1 * kvs::Vec3( { p_x, p_y, p_z } );
             }
-            
+
             return u;
         };
 
         auto calc_rotation = [&] ( const size_t index ) -> kvs::Quaternion {
             const auto rtp = index_to_rtp( index );
-            const float theta = rtp[1];
+            //const float theta = rtp[1];
             const float phi = rtp[2];
             const auto axis = kvs::Vec3( { 0.0f, 1.0f, 0.0f } );
             auto q_phi = kvs::Quaternion( axis, phi );
