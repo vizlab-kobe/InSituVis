@@ -30,12 +30,6 @@ public:
     using EntropyFunction = std::function<float(const FrameBuffer&)>;
     using Interpolator = std::function<kvs::Quat(const kvs::Quat&, const kvs::Quat&, const kvs::Quat&, const kvs::Quat&, float)>;
 
-    /*
-    static float Entropy( const FrameBuffer& frame_buffer );
-    static float LightnessEntropy( const FrameBuffer& frame_buffer );
-    static float ColorEntropy( const FrameBuffer& frame_buffer );
-    static float DepthEntropy( const FrameBuffer& frame_buffer );
-    */
     // Entropy functions
     static EntropyFunction LightnessEntropy();
     static EntropyFunction ColorEntropy();
@@ -65,7 +59,6 @@ private:
     std::vector<float> m_path_entropies;
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
-//    EntropyFunction m_entropy_function = Entropy;
     EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f );
     Interpolator m_interpolator = Squad();
 
@@ -127,25 +120,6 @@ protected:
         const kvs::Quaternion& q4,
         const size_t point_interval
     );
-
-/*
-    void createPathSlerp(
-        const float r1,
-        const float r2,
-        const kvs::Quaternion& q1,
-        const kvs::Quaternion& q2,
-        const size_t point_interval
-    );
-    void createPathSquad(
-        const float r2,
-        const float r3,
-        const kvs::Quaternion& q1,
-        const kvs::Quaternion& q2,
-        const kvs::Quaternion& q3,
-        const kvs::Quaternion& q4,
-        const size_t point_interval
-    );
-*/
 };
 
 } // end of namespace InSituVis

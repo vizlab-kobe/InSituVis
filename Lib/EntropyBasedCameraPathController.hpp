@@ -7,19 +7,6 @@
 namespace InSituVis
 {
 
-/*
-inline float EntropyBasedCameraPathController::Entropy( const FrameBuffer& frame_buffer )
-{
-    const float p = 0.5f;
-    return p * LightnessEntropy( frame_buffer ) + ( 1 - p ) * DepthEntropy( frame_buffer );
-    //return LightnessEntropy( frame_buffer );
-    //return ColorEntropy( frame_buffer );
-    //return DepthEntropy( frame_buffer );
-}
-*/
-
-
-//inline float EntropyBasedCameraPathController::LightnessEntropy( const FrameBuffer& frame_buffer )
 inline EntropyBasedCameraPathController::EntropyFunction
 EntropyBasedCameraPathController::LightnessEntropy()
 {
@@ -61,7 +48,6 @@ EntropyBasedCameraPathController::LightnessEntropy()
     };
 }
 
-//inline float EntropyBasedCameraPathController::ColorEntropy( const FrameBuffer& frame_buffer )
 inline EntropyBasedCameraPathController::EntropyFunction
 EntropyBasedCameraPathController::ColorEntropy()
 {
@@ -120,7 +106,6 @@ EntropyBasedCameraPathController::ColorEntropy()
     };
 }
 
-//inline float EntropyBasedCameraPathController::DepthEntropy( const FrameBuffer& frame_buffer )
 inline EntropyBasedCameraPathController::EntropyFunction
 EntropyBasedCameraPathController::DepthEntropy()
 {
@@ -221,24 +206,17 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
 
                     if( m_max_rotations.size() == 4 )
                     {
-                        const auto q1 = m_max_rotations.front();
-                        m_max_rotations.pop();
-                        const auto q2 = m_max_rotations.front();
-                        m_max_rotations.pop();
-                        const auto q3 = m_max_rotations.front();
-                        m_max_rotations.pop();
-                        const auto q4 = m_max_rotations.front();
-                        m_max_rotations.pop();
+                        const auto q1 = m_max_rotations.front(); m_max_rotations.pop();
+                        const auto q2 = m_max_rotations.front(); m_max_rotations.pop();
+                        const auto q3 = m_max_rotations.front(); m_max_rotations.pop();
+                        const auto q4 = m_max_rotations.front(); m_max_rotations.pop();
 
-                        const auto p2 = m_max_positions.front();
-                        m_max_positions.pop();
+                        const auto p2 = m_max_positions.front(); m_max_positions.pop();
                         const auto p3 = m_max_positions.front();
 
                         const auto r2 = p2.length();
                         const auto r3 = p3.length();
 
-                        //his->createPathSlerp( r2, r3, q2, q3, m_interval );
-//                        this->createPathSquad( r2, r3, q1, q2, q3, q4, m_interval );
                         this->createPath( r2, r3, q1, q2, q3, q4, m_interval );
 
                         m_data_queue.pop();
@@ -279,23 +257,17 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
     }
     else
     {
-        const auto q1 = m_max_rotations.front();
-        m_max_rotations.pop();
-        const auto q2 = m_max_rotations.front();
-        m_max_rotations.pop();
-        const auto q3 = m_max_rotations.front();
-        m_max_rotations.pop();
+        const auto q1 = m_max_rotations.front(); m_max_rotations.pop();
+        const auto q2 = m_max_rotations.front(); m_max_rotations.pop();
+        const auto q3 = m_max_rotations.front(); m_max_rotations.pop();
         const auto q4 = q3;
 
-        const auto p2 = m_max_positions.front();
-        m_max_positions.pop();
+        const auto p2 = m_max_positions.front(); m_max_positions.pop();
         const auto p3 = m_max_positions.front();
 
         const auto r2 = p2.length();
         const auto r3 = p3.length();
 
-        //this->createPathSlerp( r2, r3, q2, q3, m_interval );
-//        this->createPathSquad( r2, r3, q1, q2, q3, q4, m_interval );
         this->createPath( r2, r3, q1, q2, q3, q4, m_interval );
 
         m_data_queue.pop();
@@ -387,49 +359,5 @@ inline void EntropyBasedCameraPathController::createPath(
         m_path.push( { r, q } );
     }
 }
-
-/*
-inline void EntropyBasedCameraPathController::createPathSlerp(
-    const float r1,
-    const float r2,
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const size_t point_interval )
-{
-    std::queue<std::tuple<float, kvs::Quat>> empty;
-    m_path.swap( empty );
-
-    for( size_t i = 1; i < point_interval; i++ )
-    {
-        const auto t = static_cast<double>( i ) / static_cast<double>( point_interval );
-        const auto r = radiusInterpolation( r1, r2, t );
-        //const auto q = slerp( q1, q2, t, true );
-        const auto q = kvs::Quat::SphericalLinearInterpolation( q1, q2, t, true, true );
-        m_path.push( { r, q } );
-    }
-}
-
-inline void EntropyBasedCameraPathController::createPathSquad(
-    const float r2,
-    const float r3,
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const kvs::Quat& q3,
-    const kvs::Quat& q4,
-    const size_t point_interval )
-{
-    std::queue<std::tuple<float, kvs::Quat>> empty;
-    m_path.swap( empty );
-
-    for( size_t i = 1; i < point_interval; i++ )
-    {
-        const float t = static_cast<float>( i ) / static_cast<float>( point_interval );
-        const auto r = radiusInterpolation( r2, r3, t );
-        //const auto q = squad( q1, q2, q3, q4, t );
-        const auto q = kvs::Quat::SphericalQuadrangleInterpolation( q1, q2, q3, q4, t, true );
-        m_path.push( { r, q } );
-    }
-}
-*/
 
 } // end of namespace InSituVis
