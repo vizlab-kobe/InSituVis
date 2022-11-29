@@ -36,6 +36,8 @@ EntropyBasedCameraPathController::LightnessEntropy()
             }
         }
 
+        if ( n == 0 ) { return 0.0f; }
+
         float entropy = 0.0f;
         const auto log2 = std::log( 2.0f );
         for ( const auto h : histogram )
@@ -79,6 +81,8 @@ EntropyBasedCameraPathController::ColorEntropy()
                 n += 1;
             }
         }
+
+        if ( n == 0 ) { return 0.0f; }
 
         float entropy_R = 0.0f;
         float entropy_G = 0.0f;
@@ -125,6 +129,8 @@ EntropyBasedCameraPathController::DepthEntropy()
                 n += 1;
             }
         }
+
+        if ( n == 0 ) { return 0.0f; }
 
         float entropy = 0.0f;
         const auto log2 = std::log( 2.0f );

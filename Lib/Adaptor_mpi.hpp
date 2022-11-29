@@ -286,7 +286,6 @@ inline Adaptor::FrameBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         light->setPosition( p );
         const auto buffer = this->drawScreen();
 
-
         // Restore camera and light info.
         camera->setPosition( p0, a0, u0 );
         light->setPosition( p0 );

@@ -38,8 +38,8 @@ inline bool CameraPathControlledAdaptor::dump()
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
         ret = timer_list.write( basedir + "ent_proc_time.csv" );
 
-        this->output_path_entropies( Controller::pathEntropies() );
-        this->output_path_positions( Controller::pathPositions() );
+        this->outputPathEntropies( Controller::pathEntropies() );
+        this->outputPathPositions( Controller::pathPositions() );
     }
 
     return BaseClass::dump() && ret;
@@ -71,7 +71,7 @@ inline void CameraPathControlledAdaptor::execRendering()
     int max_index = 0;
 
     std::vector<float> entropies;
-    std::vector<BaseClass::FrameBuffer> frame_buffers;
+    std::vector<FrameBuffer> frame_buffers;
 
     if ( this->isEntropyStep() )
     {
@@ -95,7 +95,7 @@ inline void CameraPathControlledAdaptor::execRendering()
                     max_index = location.index;
                 }
 
-                //this->output_color_image( location, frame_buffer );
+                //this->outputColorImage( location, frame_buffer );
             }
             timer.stop();
             entr_time += BaseClass::saveTimer().time( timer );
@@ -120,9 +120,9 @@ inline void CameraPathControlledAdaptor::execRendering()
                 const auto index = Controller::maxIndex();
                 const auto& location = BaseClass::viewpoint().at( index );
                 const auto& frame_buffer = frame_buffers[ index ];
-                this->output_color_image( location, frame_buffer );
-                //this->output_depth_image( location, frame_buffer );
-                this->output_entropy_table( entropies );
+                this->outputColorImage( location, frame_buffer );
+                //this->outputDepthImage( location, frame_buffer );
+                this->outputEntropyTable( entropies );
             }
         }
         timer.stop();
@@ -134,8 +134,8 @@ inline void CameraPathControlledAdaptor::execRendering()
         auto rotation = Controller::erpRotation();
         const size_t i = 999999;
         const auto d = InSituVis::Viewpoint::Direction::Uni;
-        const auto p = kvs::Quaternion::Rotate( kvs::Vec3( { 0.0f, radius, 0.0f } ), rotation );
-        const auto u = kvs::Quaternion::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rotation );
+        const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, radius, 0.0f } ), rotation );
+        const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rotation );
         const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
         const auto location = InSituVis::Viewpoint::Location( i, d, p, u, rotation, l );
         auto frame_buffer = BaseClass::readback( location );
@@ -148,8 +148,8 @@ inline void CameraPathControlledAdaptor::execRendering()
         {
             if ( BaseClass::isOutputImageEnabled() )
             {
-                this->output_color_image( location, frame_buffer );
-                //this->output_depth_image( location, frame_buffer );
+                this->outputColorImage( location, frame_buffer );
+                //this->outputDepthImage( location, frame_buffer );
             }
         }
         timer.stop();
@@ -194,9 +194,9 @@ inline void CameraPathControlledAdaptor::process( const Data& data, const float 
     BaseClass::setTimeStep( current_step );
 }
 
-inline void CameraPathControlledAdaptor::output_color_image(
+inline void CameraPathControlledAdaptor::outputColorImage(
     const InSituVis::Viewpoint::Location& location,
-    const BaseClass::FrameBuffer& frame_buffer )
+    const FrameBuffer& frame_buffer )
 {
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.color_buffer;
@@ -204,9 +204,9 @@ inline void CameraPathControlledAdaptor::output_color_image(
     image.write( BaseClass::outputFinalImageName( location ) );
 }
 
-inline void CameraPathControlledAdaptor::output_depth_image(
+inline void CameraPathControlledAdaptor::outputDepthImage(
     const InSituVis::Viewpoint::Location& location,
-    const BaseClass::FrameBuffer& frame_buffer )
+    const FrameBuffer& frame_buffer )
 {
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.depth_buffer;
@@ -214,7 +214,7 @@ inline void CameraPathControlledAdaptor::output_depth_image(
     image.write( BaseClass::outputFinalImageName( location ) );
 }
 
-inline void CameraPathControlledAdaptor::output_entropy_table(
+inline void CameraPathControlledAdaptor::outputEntropyTable(
     const std::vector<float> entropies )
 {
     const auto time = BaseClass::timeStep();
@@ -249,7 +249,7 @@ inline void CameraPathControlledAdaptor::output_entropy_table(
     table.close();
 }
 
-inline void CameraPathControlledAdaptor::output_path_entropies(
+inline void CameraPathControlledAdaptor::outputPathEntropies(
     const std::vector<float> path_entropies )
 {
     const auto output_filename =  "output_path_entropies";
@@ -266,7 +266,7 @@ inline void CameraPathControlledAdaptor::output_path_entropies(
     path_entropy.close();
 }
 
-inline void CameraPathControlledAdaptor::output_path_positions(
+inline void CameraPathControlledAdaptor::outputPathPositions(
     const std::vector<float> path_positions )
 {
     const auto output_filename =  "output_path_positions";

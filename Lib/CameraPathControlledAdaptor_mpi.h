@@ -22,6 +22,7 @@ class CameraPathControlledAdaptor : public InSituVis::mpi::Adaptor, public InSit
 {
 public:
     using BaseClass = InSituVis::mpi::Adaptor;
+    using FrameBuffer = BaseClass::FrameBuffer;
     using Controller = InSituVis::EntropyBasedCameraPathController;
 
 private:
@@ -39,6 +40,8 @@ public:
         const bool enable = true,
         const bool enable_depth = false );
 
+    kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
+
     virtual void exec( const BaseClass::SimTime sim_time = {} );
     virtual bool dump();
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
@@ -46,27 +49,26 @@ public:
 protected:
     bool isEntropyStep();
     bool isFinalTimeStep();
+
     virtual void execRendering();
+    virtual void process( const Data& data );
+    virtual void process( const Data& data , const float radius, const kvs::Quaternion& rotation );
 
-private:
-    void process( const Data& data );
-    void process( const Data& data , const float radius, const kvs::Quaternion& rotation );
-
-    void output_color_image(
+    void outputColorImage(
         const InSituVis::Viewpoint::Location& location,
-        const BaseClass::FrameBuffer& frame_buffer );
+        const FrameBuffer& frame_buffer );
 
-    void output_depth_image(
+    void outputDepthImage(
         const InSituVis::Viewpoint::Location& location,
-        const BaseClass::FrameBuffer& frame_buffer );
+        const FrameBuffer& frame_buffer );
 
-    void output_entropy_table(
+    void outputEntropyTable(
         const std::vector<float> entropies );
 
-    void output_path_entropies(
+    void outputPathEntropies(
         const std::vector<float> path_entropies );
 
-    void output_path_positions(
+    void outputPathPositions(
         const std::vector<float> path_positions );
 };
 
