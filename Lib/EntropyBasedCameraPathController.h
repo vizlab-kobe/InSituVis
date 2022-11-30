@@ -46,17 +46,17 @@ private:
     bool m_cache_enabled = true; ///< flag for data caching
     bool m_final_step = false;
     size_t m_max_index = 0;
-    float m_max_entropy;
-    kvs::Vec3 m_max_position;
-    kvs::Quat m_max_rotation;
-    float m_erp_radius;
-    kvs::Quat m_erp_rotation;
-    std::queue<float> m_max_entropies;
-    std::queue<kvs::Vec3> m_max_positions;
-    std::queue<kvs::Quat> m_max_rotations;
-    std::queue<std::tuple<float, kvs::Quat>> m_path;
-    std::vector<float> m_path_positions;
-    std::vector<float> m_path_entropies;
+    float m_max_entropy = 0.0f;
+    kvs::Vec3 m_max_position{ 0.0f, 12.0f, 0.0f };
+    kvs::Quat m_max_rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+    float m_erp_radius = 12.0f;
+    kvs::Quat m_erp_rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
+    std::queue<float> m_max_entropies{};
+    std::queue<kvs::Vec3> m_max_positions{};
+    std::queue<kvs::Quat> m_max_rotations{};
+    std::queue<std::tuple<float, kvs::Quat>> m_path{};
+    std::vector<float> m_path_positions{};
+    std::vector<float> m_path_entropies{};
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
     EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f );
