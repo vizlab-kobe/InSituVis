@@ -122,7 +122,7 @@ inline void CameraPathControlledAdaptor::execRendering()
                 const auto& frame_buffer = frame_buffers[ index ];
                 this->outputColorImage( location, frame_buffer );
                 //this->outputDepthImage( location, frame_buffer );
-                this->outputEntropyTable( entropies );
+                this->outputEntropies( entropies );
             }
         }
         timer.stop();
@@ -214,39 +214,22 @@ inline void CameraPathControlledAdaptor::outputDepthImage(
     image.write( BaseClass::outputFinalImageName( location ) );
 }
 
-inline void CameraPathControlledAdaptor::outputEntropyTable(
+inline void CameraPathControlledAdaptor::outputEntropies(
     const std::vector<float> entropies )
 {
     const auto time = BaseClass::timeStep();
     const auto output_time = kvs::String::From( time, 6, '0' );
-    const auto output_filename =  "output_entropy_table_" + output_time;
+    const auto output_filename =  "output_entropies_" + output_time;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream table( filename );
-
-    const size_t dim = BaseClass::viewpoint().numberOfLocations();
-    size_t dim_long = 1;
-    auto y0 = BaseClass::viewpoint().at( 0 ).position[1];
-    for( size_t i = 1; i < dim; i++ )
+    std::ofstream file( filename );
+    file << "Index,Entropy" << std::endl;
+    
+    for( size_t i = 0; i < entropies.size(); i++ )
     {
-        auto y = BaseClass::viewpoint().at( i ).position[1];
-        if( y != y0 )
-        {
-            dim_long = i;
-            break;
-        }
+        file << i << "," << entropies[i] << std::endl;
     }
 
-    for( size_t i = 0; i < dim; i++ )
-    {
-        table << entropies[i];
-        table << ",";
-        if( ( i + 1 ) % dim_long == 0 )
-        {
-            table << std::endl;
-        }
-    }
-
-    table.close();
+    file.close();
 }
 
 inline void CameraPathControlledAdaptor::outputPathEntropies(
@@ -254,16 +237,16 @@ inline void CameraPathControlledAdaptor::outputPathEntropies(
 {
     const auto output_filename =  "output_path_entropies";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream path_entropy( filename );
+    std::ofstream file( filename );
     const auto interval = BaseClass::analysisInterval();
-
-    path_entropy << "Time,Entropy" << std::endl;
+    file << "Time,Entropy" << std::endl;
+    
     for( size_t i = 0; i < path_entropies.size(); i++ )
     {
-        path_entropy << interval * i << "," << path_entropies[i] << std::endl;
+        file << interval * i << "," << path_entropies[i] << std::endl;
     }
 
-    path_entropy.close();
+    file.close();
 }
 
 inline void CameraPathControlledAdaptor::outputPathPositions(
@@ -271,19 +254,19 @@ inline void CameraPathControlledAdaptor::outputPathPositions(
 {
     const auto output_filename =  "output_path_positions";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream position( filename );
+    std::ofstream file( filename );
     const auto interval = BaseClass::analysisInterval();
-
-    position << "Time,X,Y,Z" << std::endl;
+    file << "Time,X,Y,Z" << std::endl;
+    
     for( size_t i = 0; i < path_positions.size() / 3; i++ )
     {
         const auto x = path_positions[ 3 * i ];
         const auto y = path_positions[ 3 * i + 1 ];
         const auto z = path_positions[ 3 * i + 2 ];
-        position << interval * i << "," << x << "," << y << "," << z << std::endl;
+        file << interval * i << "," << x << "," << y << "," << z << std::endl;
     }
 
-    position.close();
+    file.close();
 }
 
 } // end of namespace mpi

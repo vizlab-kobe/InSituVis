@@ -180,7 +180,14 @@ EntropyBasedCameraPathController::Squad()
         const kvs::Quat& q4,
         float t ) -> kvs::Quat
     {
-        return kvs::Quat::SphericalQuadrangleInterpolation( q1, q2, q3, q4, t, true );
+        kvs::Quat qq1 = q1;
+        kvs::Quat qq2 = q2;
+        kvs::Quat qq3 = q3;
+        kvs::Quat qq4 = q4;
+        if( qq1.dot( qq2 ) < 0 ) qq2 = -qq2;
+        if( qq2.dot( qq3 ) < 0 ) qq3 = -qq3;
+        if( qq3.dot( qq4 ) < 0 ) qq4 = -qq4;
+        return kvs::Quat::SphericalQuadrangleInterpolation( qq1, qq2, qq3, qq4, t, true );
     };
 }
 

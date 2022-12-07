@@ -62,7 +62,7 @@ protected:
         const InSituVis::Viewpoint::Location& location,
         const FrameBuffer& frame_buffer );
 
-    void outputEntropyTable(
+    void outputEntropies(
         const std::vector<float> entropies );
 
     void outputPathEntropies(
