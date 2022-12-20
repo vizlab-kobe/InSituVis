@@ -113,7 +113,7 @@ public:
     const Locations& locations() const { return m_locations; }
     size_t numberOfLocations() const { return m_locations.size(); }
     const Location& at( const size_t index ) const { return m_locations.at( index ); }
-    void clear() { m_location.clear(); m_locations.shrink_to_fit(); }
+    void clear() { m_locations.clear(); m_locations.shrink_to_fit(); }
     void set( const Location& location ) { this->clear(); this->add( location ); }
     void add( const Location& location )
     {
