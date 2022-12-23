@@ -72,8 +72,8 @@ public:
             const std::vector<kvs::Vec3>& coords, 
             const std::vector<kvs::Vec3ui>& connections )
         {
-            ofstream coord( "coords.csv" );
-            ofstream connection( "connections.csv" );
+            std::ofstream coord( "coords.csv" );
+            std::ofstream connection( "connections.csv" );
 
             for( size_t i = 0; i < coords.size(); i++ )
             {
