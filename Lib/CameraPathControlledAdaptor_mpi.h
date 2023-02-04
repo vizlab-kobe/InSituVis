@@ -54,6 +54,8 @@ protected:
     virtual void process( const Data& data );
     virtual void process( const Data& data , const float radius, const kvs::Quaternion& rotation );
 
+    std::string outputDepthImageName( const Viewpoint::Location& location );
+
     void outputColorImage(
         const InSituVis::Viewpoint::Location& location,
         const FrameBuffer& frame_buffer );
@@ -70,6 +72,11 @@ protected:
 
     void outputPathPositions(
         const std::vector<float> path_positions );
+
+    void outputPathCalcTimes(
+        const std::vector<float> path_calc_times );
+    
+    void outputViewpointCoords();
 };
 
 } // end of namespace mpi

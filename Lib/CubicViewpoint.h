@@ -13,6 +13,8 @@ private:
     kvs::Vec3ui m_dims{ 1, 1, 1 }; // grid resolution
     kvs::Vec3 m_min_coord{ -12, -12, -12 }; ///< min. coord in world coordinate
     kvs::Vec3 m_max_coord{  12,  12,  12 }; ///< max. coord in world coordinate
+    kvs::Vec3 m_base_position{ 0.0f, 12.0f, 0.0f };
+    kvs::Vec3 m_base_up_vector{ 0.0f, 0.0f, -1.0f };
 
 public:
     CubicViewpoint() = default;
@@ -40,58 +42,25 @@ public:
             return ( ijk / d ) * ( m_max_coord - m_min_coord ) + m_min_coord;
         };
 
-        auto index_to_rtp = [&] ( const size_t index ) -> kvs::Vec3 {
-            const auto xyz = index_to_xyz( index );
+        auto xyz_to_rtp = [&] ( const kvs::Vec3& xyz ) -> kvs::Vec3 {
             const float x = xyz[0];
             const float y = xyz[1];
             const float z = xyz[2];
-            float r, t, p;
-            r = sqrt( xyz.dot( xyz ) );
-            if( r == 0 ){
-                t = 0;
-                p = 0;
-            }
-            else{
-                t = acos( y / r );
-                if( ( x == 0 ) && ( z == 0 ) ){
-                    p = 0;
-                }
-                else{
-                    if( x >= 0 ){
-                        p = acos( z / sqrt( z * z + x * x ) );
-                    }
-                    else{
-                        p = -1 * acos( z / sqrt( z * z + x * x ) );
-                    }
-                }
-            }
-            if( p < 0 ){
-                p += 2 * kvs::Math::pi;
-            }
+
+            const float r = sqrt( x * x + y * y + z * z );
+            const float t = std::acos( y / r );
+            const float p = std::atan2( x, z );
 
             return kvs::Vec3( r, t, p );
         };
 
-        auto calc_up_vector = [&] ( const kvs::Vec3& rtp ) -> kvs::Vec3 {
-            kvs::Vec3 p;
-            if( rtp[1] > kvs::Math::pi / 2 ){
-                p = rtp - kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
-            }
-            else{
-                p = rtp + kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
-            }
-            const float p_x = p[0] * std::sin( p[1] ) * std::sin( p[2] );
-            const float p_y = p[0] * std::cos( p[1] );
-            const float p_z = p[0] * std::sin( p[1] ) * std::cos( p[2] );
-            kvs::Vec3 u;
-            if( rtp[1] > kvs::Math::pi / 2 ){
-                u = kvs::Vec3( { p_x, p_y, p_z } );
-            }
-            else{
-                u = -1 * kvs::Vec3( { p_x, p_y, p_z } );
-            }
-            
-            return u;
+        auto calc_rotation = [&] ( const kvs::Vec3& xyz ) -> kvs::Quaternion {
+            const auto rtp = xyz_to_rtp( xyz );
+            const float phi = rtp[2];
+            const auto axis = kvs::Vec3( { 0.0f, 1.0f, 0.0f } );
+            auto q_phi = kvs::Quaternion( axis, phi );
+            const auto q_theta = kvs::Quaternion::RotationQuaternion( m_base_position, xyz );
+            return q_theta * q_phi;
         };
 
         BaseClass::clear();
@@ -101,9 +70,9 @@ public:
         for ( size_t index = 0; index < m_dims[0] * m_dims[1] * m_dims[2]; ++index)
         {
             const auto p = index_to_xyz( index );
-            const auto p_rtp = index_to_rtp( index );
-            const auto u = calc_up_vector( p_rtp );
-            BaseClass::add( { d, p, u, l } );
+            const auto q = calc_rotation( p );
+            const auto u = kvs::Quaternion::Rotate( m_base_up_vector, q );
+            BaseClass::add( { index, d, p, u, q, l } );
         }
     }
 };

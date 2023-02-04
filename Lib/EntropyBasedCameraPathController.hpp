@@ -2,6 +2,8 @@
 #include <kvs/Stat>
 #include <kvs/Quaternion>
 #include <kvs/LabColor>
+#include <time.h>
+#include <chrono>
 
 
 namespace InSituVis
@@ -19,19 +21,37 @@ EntropyBasedCameraPathController::LightnessEntropy()
         const auto& depth_buffer = frame_buffer.depth_buffer;
         const auto& color_buffer = frame_buffer.color_buffer;
         const auto length = depth_buffer.size();
+        const float Yn = 1.0f;
+
+        auto f = [&] ( const kvs::Real32 t ) -> kvs::Real32 {
+            if ( t > 0.008856f ) { return std::pow( t, 1.0f / 3.0f ); }
+            else { return 7.787037f * t + 16.0f / 116.0f; }
+        };
+
+        auto toLinear = [&] ( const kvs::Real32 C ) -> kvs::Real32 {
+            kvs::Real32 Cl = 0;
+            if ( C <= 0.04045f ) { Cl = C / 12.92f; }
+            else { Cl = std::pow( ( C + 0.055f ) / 1.055f, 2.4f ); }
+            return kvs::Math::Clamp( Cl, 0.0f, 1.0f );
+        };
+
         for ( size_t i = 0; i < length; i++ )
         {
             const auto depth = depth_buffer[i];
-            const auto r = color_buffer[ 4 * i ];
-            const auto g = color_buffer[ 4 * i + 1 ];
-            const auto b = color_buffer[ 4 * i + 2 ];
-            const auto lab = kvs::LabColor( kvs::RGBColor( r, g, b ) );
+            //const auto r = color_buffer[ 4 * i ];
+            //const auto g = color_buffer[ 4 * i + 1 ];
+            //const auto b = color_buffer[ 4 * i + 2 ];
 
             if ( depth < 1.0f )
             {
-                int l = static_cast<int>( lab.l() / 100 * 256 );
-                if( l > 255 ) l = 255;
-                histogram[l] += 1;
+                const kvs::Real32 r = static_cast<kvs::Real32>( color_buffer[ 4 * i ] ) / 255.0f;
+                const kvs::Real32 g = static_cast<kvs::Real32>( color_buffer[ 4 * i + 1 ] ) / 255.0f;
+                const kvs::Real32 b = static_cast<kvs::Real32>( color_buffer[ 4 * i + 2 ] ) / 255.0f;
+                const float Y = 0.212639f * toLinear( r ) + 0.715169f * toLinear( g ) + 0.072192f * toLinear( b );
+                const kvs::Real32 l = 116.0f * ( f( Y / Yn ) - 16.0f / 116.0f );
+                int j = static_cast<int>( l / 100 * 256 );
+                if( j > 255 ) j = 255;
+                histogram[j] += 1;
                 n += 1;
             }
         }
@@ -162,11 +182,11 @@ EntropyBasedCameraPathController::Slerp()
     return [] (
         const kvs::Quat& q1,
         const kvs::Quat& q2,
-        const kvs::Quat&,
-        const kvs::Quat&,
+        const kvs::Quat& q3,
+        const kvs::Quat& q4,
         float t ) -> kvs::Quat
     {
-        return kvs::Quat::SphericalLinearInterpolation( q1, q2, t, true, true );
+        return kvs::Quat::SphericalLinearInterpolation( q2, q3, t, true, true );
     };
 }
 
@@ -361,9 +381,11 @@ inline void EntropyBasedCameraPathController::createPath(
     const kvs::Quat& q4,
     const size_t point_interval )
 {
+    //float path_calc_time = 0.0f;
     std::queue<std::tuple<float, kvs::Quat>> empty;
     m_path.swap( empty );
 
+    kvs::Timer timer( kvs::Timer::Start );
     for( size_t i = 1; i < point_interval; i++ )
     {
         const float t = static_cast<float>( i ) / static_cast<float>( point_interval );
@@ -371,6 +393,10 @@ inline void EntropyBasedCameraPathController::createPath(
         const auto q = m_interpolator( q1, q2, q3, q4, t );
         m_path.push( { r, q } );
     }
+    timer.stop();
+    //path_calc_time += timer.sec();
+    float path_calc_time = timer.sec();
+    m_path_calc_times.push_back( path_calc_time );
 }
 
 } // end of namespace InSituVis

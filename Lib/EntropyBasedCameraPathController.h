@@ -57,6 +57,7 @@ private:
     std::queue<std::tuple<float, kvs::Quat>> m_path{};
     std::vector<float> m_path_positions{};
     std::vector<float> m_path_entropies{};
+    std::vector<float> m_path_calc_times{};
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
     EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f );
@@ -99,6 +100,7 @@ public:
     const Data& previousData() const { return m_previous_data; }
     const std::vector<float>& pathPositions() const { return m_path_positions; }
     const std::vector<float>& pathEntropies() const { return m_path_entropies; }
+    const std::vector<float>& pathCalcTimes() const { return m_path_calc_times; }
     bool isCacheEnabled() const { return m_cache_enabled; }
     void setCacheEnabled( const bool enabled = true ) { m_cache_enabled = enabled; }
     bool isFinalStep() const { return m_final_step; }

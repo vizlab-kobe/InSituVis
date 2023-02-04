@@ -32,14 +32,16 @@ inline bool CameraPathControlledAdaptor::dump()
     if ( BaseClass::world().isRoot() )
     {
         if ( m_entr_timer.title().empty() ) { m_entr_timer.setTitle( "Ent time" ); }
-        kvs::StampTimerList timer_list;
-        timer_list.push( m_entr_timer );
+        kvs::StampTimerList entr_timer_list;
+        entr_timer_list.push( m_entr_timer );
 
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-        ret = timer_list.write( basedir + "ent_proc_time.csv" );
+        ret = entr_timer_list.write( basedir + "ent_proc_time.csv" );
 
         this->outputPathEntropies( Controller::pathEntropies() );
         this->outputPathPositions( Controller::pathPositions() );
+        this->outputPathCalcTimes( Controller::pathCalcTimes() );
+        this->outputViewpointCoords();
     }
 
     return BaseClass::dump() && ret;
@@ -96,6 +98,7 @@ inline void CameraPathControlledAdaptor::execRendering()
                 }
 
                 //this->outputColorImage( location, frame_buffer );
+                //this->outputDepthImage( location, frame_buffer );
             }
             timer.stop();
             entr_time += BaseClass::saveTimer().time( timer );
@@ -194,6 +197,19 @@ inline void CameraPathControlledAdaptor::process( const Data& data, const float 
     BaseClass::setTimeStep( current_step );
 }
 
+inline std::string CameraPathControlledAdaptor::outputDepthImageName( const Viewpoint::Location& location )
+{
+    const auto time = BaseClass::timeStep();
+    const auto space = location.index;
+    const auto output_time = kvs::String::From( time, 6, '0' );
+    const auto output_space = kvs::String::From( space, 6, '0' );
+
+    const auto output_basename = BaseClass::outputFilename();
+    const auto output_filename = output_basename + "_depth_" + output_time + "_" + output_space;
+    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
+    return filename;
+}
+
 inline void CameraPathControlledAdaptor::outputColorImage(
     const InSituVis::Viewpoint::Location& location,
     const FrameBuffer& frame_buffer )
@@ -211,7 +227,7 @@ inline void CameraPathControlledAdaptor::outputDepthImage(
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.depth_buffer;
     kvs::GrayImage image( size.x(), size.y(), buffer );
-    image.write( BaseClass::outputFinalImageName( location ) );
+    image.write( this->outputDepthImageName( location ) );
 }
 
 inline void CameraPathControlledAdaptor::outputEntropies(
@@ -264,6 +280,38 @@ inline void CameraPathControlledAdaptor::outputPathPositions(
         const auto y = path_positions[ 3 * i + 1 ];
         const auto z = path_positions[ 3 * i + 2 ];
         file << interval * i << "," << x << "," << y << "," << z << std::endl;
+    }
+
+    file.close();
+}
+
+inline void CameraPathControlledAdaptor::outputPathCalcTimes(
+    const std::vector<float> path_calc_times )
+{
+    const auto output_filename =  "output_path_calc_times";
+    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
+    std::ofstream file( filename );
+    file << "Calculation time" << std::endl;
+    
+    for( size_t i = 0; i < path_calc_times.size(); i++ )
+    {
+        file << path_calc_times[i] << std::endl;
+    }
+
+    file.close();
+}
+
+inline void CameraPathControlledAdaptor::outputViewpointCoords()
+{
+    const auto output_filename =  "output_viewpoint_coords";
+    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
+    std::ofstream file( filename );
+    file << "Index,X,Y,Z" << std::endl;
+    
+    for( size_t i = 0; i < BaseClass::viewpoint().numberOfLocations(); i++ )
+    {
+        const auto l = BaseClass::viewpoint().at( i );
+        file << i << "," << l.position.x() << "," << l.position.y() << "," << l.position.z() << std::endl;
     }
 
     file.close();
