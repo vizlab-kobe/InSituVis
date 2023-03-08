@@ -213,163 +213,157 @@ EntropyBasedCameraPathController::Squad()
 
 inline void EntropyBasedCameraPathController::push( const Data& data )
 {
-    if( !( this->isFinalStep() ) )
+    const auto interval = this->entropyInterval();
+
+    if ( !( this->isFinalStep() ) )
     {
-        if ( m_previous_data.empty() )
+        if ( this->previousData().empty() )
         {
             // Initial step.
             this->process( data );
-            m_previous_data = data;
-            m_max_entropies.push( m_max_entropy );
-            m_max_positions.push( m_max_position );
-            m_max_rotations.push( m_max_rotation );
-            m_max_rotations.push( m_max_rotation );
-            m_data_queue.push( data );
+            this->setPreviousData( data );
+            this->pushMaxEntropies( this->maxEntropy() );
+            this->pushMaxPositions( this->maxPosition() );
+            this->pushMaxRotations( this->maxRotation() );
+            this->pushMaxRotations( this->maxRotation() );
+            this->dataQueue().push( data );
         }
         else
         {
             if ( this->isCacheEnabled() )
             {
-                if( m_data_queue.size() % m_interval == 0 )
+                if ( this->dataQueue().size() % interval == 0 )
                 {
                     this->process( data );
-                    m_max_entropies.push( m_max_entropy );
-                    m_max_positions.push( m_max_position );
-                    m_max_rotations.push( m_max_rotation );
+                    this->pushMaxEntropies( this->maxEntropy() );
+                    this->pushMaxPositions( this->maxPosition() );
+                    this->pushMaxRotations( this->maxRotation() );
 
-                    if( m_max_rotations.size() == 4 )
+                    if ( this->maxRotations().size() == 4 )
                     {
-                        const auto q1 = m_max_rotations.front(); m_max_rotations.pop();
-                        const auto q2 = m_max_rotations.front(); m_max_rotations.pop();
-                        const auto q3 = m_max_rotations.front(); m_max_rotations.pop();
-                        const auto q4 = m_max_rotations.front(); m_max_rotations.pop();
+                        const auto q1 = this->maxRotations().front(); this->maxRotations().pop();
+                        const auto q2 = this->maxRotations().front(); this->maxRotations().pop();
+                        const auto q3 = this->maxRotations().front(); this->maxRotations().pop();
+                        const auto q4 = this->maxRotations().front(); this->maxRotations().pop();
 
-                        const auto p2 = m_max_positions.front(); m_max_positions.pop();
-                        const auto p3 = m_max_positions.front();
+                        const auto p2 = this->maxPositions().front(); this->maxPositions().pop();
+                        const auto p3 = this->maxPositions().front();
 
                         const auto r2 = p2.length();
                         const auto r3 = p3.length();
 
-                        this->createPath( r2, r3, q1, q2, q3, q4, m_interval );
+                        this->createPath( r2, r3, q1, q2, q3, q4, interval );
 
-                        m_data_queue.pop();
-                        m_path_entropies.push_back( m_max_entropies.front() );
-                        m_max_entropies.pop();
-                        m_path_positions.push_back( p2[0] );
-                        m_path_positions.push_back( p2[1] );
-                        m_path_positions.push_back( p2[2] );
+                        this->dataQueue().pop();
+                        this->pushPathEntropies( this->maxEntropies().front() );
+                        this->maxEntropies().pop();
+                        this->pushPathPositions( p2 );
 
-                        for ( size_t i = 0; i < m_interval - 1; i++ )
+                        for ( size_t i = 0; i < interval - 1; i++ )
                         {
-                            const auto data_front = m_data_queue.front();
-                            const auto [ rad, rot ] = m_path.front();
-                            const float radius = rad;
-                            const kvs::Quat rotation = rot;
+                            const auto data_front = this->dataQueue().front();
+                            const auto [ radius, rotation ] = this->path().front();
                             this->process( data_front, radius, rotation );
-                            m_data_queue.pop();
-                            m_path.pop();
+                            this->dataQueue().pop();
+                            this->path().pop();
 
-                            m_path_entropies.push_back( m_max_entropy );
-                            m_path_positions.push_back( m_max_position[0] );
-                            m_path_positions.push_back( m_max_position[1] );
-                            m_path_positions.push_back( m_max_position[2] );
+                            this->pushPathEntropies( this->maxEntropy() );
+                            this->pushPathPositions( this->maxPosition() );
                         }
 
-                        m_max_rotations.push( q2 );
-                        m_max_rotations.push( q3 );
-                        m_max_rotations.push( q4 );
+                        this->pushMaxRotations( q2 );
+                        this->pushMaxRotations( q3 );
+                        this->pushMaxRotations( q4 );
                     }
-                    m_data_queue.push( data );
+                    this->dataQueue().push( data );
                 }
                 else
                 {
-                    m_data_queue.push( data );
+                    this->dataQueue().push( data );
                 }
             }
         }
     }
     else
     {
-        const auto q1 = m_max_rotations.front(); m_max_rotations.pop();
-        const auto q2 = m_max_rotations.front(); m_max_rotations.pop();
-        const auto q3 = m_max_rotations.front(); m_max_rotations.pop();
+        const auto q1 = this->maxRotations().front(); this->maxRotations().pop();
+        const auto q2 = this->maxRotations().front(); this->maxRotations().pop();
+        const auto q3 = this->maxRotations().front(); this->maxRotations().pop();
         const auto q4 = q3;
 
-        const auto p2 = m_max_positions.front(); m_max_positions.pop();
-        const auto p3 = m_max_positions.front();
+        const auto p2 = this->maxPositions().front(); this->maxPositions().pop();
+        const auto p3 = this->maxPositions().front();
 
         const auto r2 = p2.length();
         const auto r3 = p3.length();
 
-        this->createPath( r2, r3, q1, q2, q3, q4, m_interval );
+        this->createPath( r2, r3, q1, q2, q3, q4, interval );
 
-        m_data_queue.pop();
-        m_path_entropies.push_back( m_max_entropies.front() );
-        m_max_entropies.pop();
-        m_path_positions.push_back( p2[0] );
-        m_path_positions.push_back( p2[1] );
-        m_path_positions.push_back( p2[2] );
+        this->dataQueue().pop();
+        this->pushPathEntropies( this->maxEntropies().front() );
+        this->maxEntropies().pop();
+        this->pushPathPositions( p2 );
 
-        for ( size_t i = 0; i < m_interval - 1; i++ )
+        for ( size_t i = 0; i < interval - 1; i++ )
         {
-            const auto data_front = m_data_queue.front();
-            const auto [ rad, rot ] = m_path.front();
-            const float radius = rad;
-            const kvs::Quat rotation = rot;
+            const auto data_front = this->dataQueue().front();
+            const auto [ radius, rotation ] = this->path().front();
             this->process( data_front, radius, rotation );
-            m_data_queue.pop();
-            m_path.pop();
+            this->dataQueue().pop();
+            this->path().pop();
 
-            m_path_entropies.push_back( m_max_entropy );
-            m_path_positions.push_back( m_max_position[0] );
-            m_path_positions.push_back( m_max_position[1] );
-            m_path_positions.push_back( m_max_position[2] );
+            this->pushPathEntropies( this->maxEntropy() );
+            this->pushPathPositions( this->maxPosition() );
         }
 
-        while( m_data_queue.size() > 0 )
+        while ( this->dataQueue().size() > 0 )
         {
             std::queue<std::tuple<float, kvs::Quat>> empty;
-            m_path.swap( empty );
+            this->path().swap( empty );
 
-            for( size_t i = 0; i < m_interval - 1; i++ )
+            for ( size_t i = 0; i < interval - 1; i++ )
             {
-                m_path.push( { r3, q3 } );
+                this->path().push( { r3, q3 } );
             }
 
-            m_data_queue.pop();
-            m_path_entropies.push_back( m_max_entropies.front() );
-            m_max_entropies.pop();
-            m_path_positions.push_back( p3[0] );
-            m_path_positions.push_back( p3[1] );
-            m_path_positions.push_back( p3[2] );
+            this->dataQueue().pop();
+            this->pushPathEntropies( this->maxEntropies().front() );
+            this->maxEntropies().pop();
+            this->pushPathPositions( p3 );
 
             for ( size_t i = 0; i < m_interval - 1; i++ )
             {
-                const auto data_front = m_data_queue.front();
-                const auto [ rad, rot ] = m_path.front();
-                const float radius = rad;
-                const kvs::Quat rotation = rot;
+                const auto data_front = this->dataQueue().front();
+                const auto [ radius, rotation ] = this->path().front();
                 this->process( data_front, radius, rotation );
-                m_data_queue.pop();
-                m_path.pop();
+                this->dataQueue().pop();
+                this->path().pop();
 
-                m_path_entropies.push_back( m_max_entropy );
-                m_path_positions.push_back( m_max_position[0] );
-                m_path_positions.push_back( m_max_position[1] );
-                m_path_positions.push_back( m_max_position[2] );
+                this->pushPathEntropies( this->maxEntropy() );
+                this->pushPathPositions( this->maxPosition() );
             }
         }
     }
 }
 
-float EntropyBasedCameraPathController::entropy( const FrameBuffer& frame_buffer )
+inline float EntropyBasedCameraPathController::entropy( const FrameBuffer& frame_buffer )
 {
     return m_entropy_function( frame_buffer );
 }
 
-float EntropyBasedCameraPathController::radiusInterpolation( const float r1, const float r2, const float t )
+inline float EntropyBasedCameraPathController::radiusInterpolation( const float r1, const float r2, const float t )
 {
     return ( r2 -r1 ) * t * t * ( 3.0f - 2.0f * t ) + r1;
+}
+
+inline kvs::Quat EntropyBasedCameraPathController::pathInterpolation(
+    const kvs::Quat& q1,
+    const kvs::Quat& q2,
+    const kvs::Quat& q3,
+    const kvs::Quat& q4,
+    const float t )
+{
+    return m_interpolator( q1, q2, q3, q4, t );
 }
 
 inline void EntropyBasedCameraPathController::createPath(
@@ -381,22 +375,21 @@ inline void EntropyBasedCameraPathController::createPath(
     const kvs::Quat& q4,
     const size_t point_interval )
 {
-    //float path_calc_time = 0.0f;
     std::queue<std::tuple<float, kvs::Quat>> empty;
-    m_path.swap( empty );
+    this->path().swap( empty );
 
     kvs::Timer timer( kvs::Timer::Start );
-    for( size_t i = 1; i < point_interval; i++ )
+    for ( size_t i = 1; i < point_interval; i++ )
     {
-        const float t = static_cast<float>( i ) / static_cast<float>( point_interval );
-        const auto r = radiusInterpolation( r2, r3, t );
-        const auto q = m_interpolator( q1, q2, q3, q4, t );
-        m_path.push( { r, q } );
+        const auto t = static_cast<float>( i ) / static_cast<float>( point_interval );
+        const auto r = this->radiusInterpolation( r2, r3, t );
+        const auto q = this->pathInterpolation( q1, q2, q3, q4, t );
+        this->path().push( { r, q } );
     }
     timer.stop();
-    //path_calc_time += timer.sec();
-    float path_calc_time = timer.sec();
-    m_path_calc_times.push_back( path_calc_time );
+
+    const auto path_calc_time = timer.sec();
+    this->pathCalcTimes().push_back( path_calc_time );
 }
 
 } // end of namespace InSituVis

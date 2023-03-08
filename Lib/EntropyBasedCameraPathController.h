@@ -42,26 +42,25 @@ public:
 
 private:
     size_t m_interval = 1; ///< time interval of entropy calculation
-
     bool m_cache_enabled = true; ///< flag for data caching
-    bool m_final_step = false;
-    size_t m_max_index = 0;
-    float m_max_entropy = 0.0f;
-    kvs::Vec3 m_max_position{ 0.0f, 12.0f, 0.0f };
-    kvs::Quat m_max_rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
-    float m_erp_radius = 12.0f;
-    kvs::Quat m_erp_rotation{ 0.0f, 0.0f, 0.0f, 1.0f };
-    std::queue<float> m_max_entropies{};
-    std::queue<kvs::Vec3> m_max_positions{};
-    std::queue<kvs::Quat> m_max_rotations{};
-    std::queue<std::tuple<float, kvs::Quat>> m_path{};
-    std::vector<float> m_path_positions{};
-    std::vector<float> m_path_entropies{};
-    std::vector<float> m_path_calc_times{};
+    bool m_final_step = false; ///< flag for checking whether the current step is final step
+    size_t m_max_index = 0; ///< index of the estimated camera at the evaluation step
+    float m_max_entropy = 0.0f; ///< entropy at the estimated camera
+    kvs::Vec3 m_max_position{ 0.0f, 12.0f, 0.0f }; ///< position of the estimated camera
+    kvs::Quat m_max_rotation{ 0.0f, 0.0f, 0.0f, 1.0f }; ///< rotation of the estimated camera
+    float m_erp_radius = 12.0f; ///< distance between the intepolated camera position and the orign
+    kvs::Quat m_erp_rotation{ 0.0f, 0.0f, 0.0f, 1.0f }; ///< rotation at the interpolated camera position
+    std::queue<float> m_max_entropies{}; ///< data queue for m_max_entropy
+    std::queue<kvs::Vec3> m_max_positions{}; ///< data queue for m_max_position
+    std::queue<kvs::Quat> m_max_rotations{}; ///< data queue for m_max_rotation
+    std::queue<std::tuple<float, kvs::Quat>> m_path{}; ///< {radius,rotation} on the interpolated path
+    std::vector<float> m_path_positions{}; ///< positions on the interpolated path
+    std::vector<float> m_path_entropies{}; ///< entropies on the interpolated path
+    std::vector<float> m_path_calc_times{}; ///< path calculation times
     DataQueue m_data_queue{}; ///< data queue
     Data m_previous_data{}; ///< dataset at previous time-step
-    EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f );
-    Interpolator m_interpolator = Squad();
+    EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f ); ///< entropy function
+    Interpolator m_interpolator = Squad(); ///< path interpolator
 
 public:
     EntropyBasedCameraPathController() = default;
@@ -107,19 +106,42 @@ public:
     void setFinalStep( const bool final_step = true ) { m_final_step = final_step; }
 
 protected:
-    void push( const Data& data );
+    void setPreviousData( const Data& data ) { m_previous_data = data; }
+    DataQueue& dataQueue() { return m_data_queue; }
+    std::queue<float>& maxEntropies() { return m_max_entropies; }
+    std::queue<kvs::Vec3>& maxPositions() { return m_max_positions; }
+    std::queue<kvs::Quat>& maxRotations() { return m_max_rotations; }
+    std::queue<std::tuple<float, kvs::Quat>>& path() { return m_path; }
+    std::vector<float>& pathEntropies() { return m_path_entropies; }
+    std::vector<float>& pathPositions() { return m_path_positions; }
+    std::vector<float>& pathCalcTimes() { return m_path_calc_times; }
+
+    void pushMaxEntropies( const float entropy ) { m_max_entropies.push( entropy ); }
+    void pushMaxPositions( const kvs::Vec3& position ) { m_max_positions.push( position ); }
+    void pushMaxRotations( const kvs::Quat& rotation ) { m_max_rotations.push( rotation ); }
+
+    void pushPathEntropies( const float entropy ) { m_path_entropies.push_back( entropy ); }
+    void pushPathPositions( const kvs::Vec3& position )
+    {
+        m_path_positions.push_back( position.x() );
+        m_path_positions.push_back( position.y() );
+        m_path_positions.push_back( position.z() );
+    }
+
     virtual void process( const Data& data ) {}
-    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation ) {}
+    virtual void process( const Data& data, const float radius, const kvs::Quat& rotation ) {}
     virtual float entropy( const FrameBuffer& frame_buffer );
     float radiusInterpolation( const float r1, const float r2, const float t );
+    kvs::Quat pathInterpolation( const kvs::Quat& q1, const kvs::Quat& q2, const kvs::Quat& q3, const kvs::Quat& q4, const float t );
 
+    void push( const Data& data );
     void createPath(
         const float r2,
         const float r3,
-        const kvs::Quaternion& q1,
-        const kvs::Quaternion& q2,
-        const kvs::Quaternion& q3,
-        const kvs::Quaternion& q4,
+        const kvs::Quat& q1,
+        const kvs::Quat& q2,
+        const kvs::Quat& q3,
+        const kvs::Quat& q4,
         const size_t point_interval
     );
 };
