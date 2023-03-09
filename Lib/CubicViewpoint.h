@@ -18,6 +18,13 @@ private:
 
 public:
     CubicViewpoint() = default;
+    CubicViewpoint(
+        const kvs::Vec3ui& dims,
+        const Direction dir = Direction::Uni ):
+        m_dims( dims )
+    {
+        this->create( dir );
+    }
     virtual ~CubicViewpoint() = default;
 
     const kvs::Vec3ui& dims() const { return m_dims; }

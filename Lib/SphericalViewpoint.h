@@ -18,6 +18,13 @@ private:
 
 public:
     SphericalViewpoint() = default;
+    SphericalViewpoint(
+        const kvs::Vec3ui& dims,
+        const Direction dir = Direction::Uni ):
+        m_dims( dims )
+    {
+        this->create( dir );
+    }
     virtual ~SphericalViewpoint() = default;
 
     const kvs::Vec3ui& dims() const { return m_dims; }
