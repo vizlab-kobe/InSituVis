@@ -29,6 +29,7 @@ private:
     bool m_enable_output_image_depth = false;
     bool m_enable_output_evaluation_image = false; ///< if true, all of evaluation images will be output
     bool m_enable_output_evaluation_image_depth = false; ///< if true, all of evaluation depth images will be output
+    bool m_enable_output_entropies = false; ///< if true, calculted entropies for all viewpoints will be output
     kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
 
@@ -39,6 +40,8 @@ public:
     void setOutputEvaluationImageEnabled(
         const bool enable = true,
         const bool enable_depth = false );
+
+    void setOutputEntropiesEnabled( const bool enable = true ) { m_enable_output_entropies = enable; }
 
     kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
 

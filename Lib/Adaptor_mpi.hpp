@@ -146,7 +146,7 @@ inline void Adaptor::execRendering()
 
             // Output framebuffer to image file at the root node
             kvs::Timer timer( kvs::Timer::Start );
-            if ( m_world.rank() == m_world.root() )
+            if ( m_world.isRoot() )
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {

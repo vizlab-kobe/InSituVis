@@ -116,15 +116,18 @@ inline void CameraPathControlledAdaptor::execRendering()
 
         // Output the rendering images and the heatmap of entropies.
         kvs::Timer timer( kvs::Timer::Start );
-        if ( BaseClass::isOutputImageEnabled() )
+        if ( BaseClass::world().isRoot() )
         {
-            if ( BaseClass::world().isRoot() )
+            if ( BaseClass::isOutputImageEnabled() )
             {
                 const auto index = Controller::maxIndex();
                 const auto& location = BaseClass::viewpoint().at( index );
                 const auto& frame_buffer = frame_buffers[ index ];
                 this->outputColorImage( location, frame_buffer );
                 //this->outputDepthImage( location, frame_buffer );
+            }
+            if ( m_enable_output_entropies )
+            {
                 this->outputEntropies( entropies );
             }
         }
@@ -146,8 +149,9 @@ inline void CameraPathControlledAdaptor::execRendering()
         Controller::setMaxEntropy( path_entropy );
         Controller::setMaxPosition( p );
 
+        // Output the rendering images.
         kvs::Timer timer( kvs::Timer::Start );
-        if ( BaseClass::world().rank() == BaseClass::world().root() )
+        if ( BaseClass::world().isRoot() )
         {
             if ( BaseClass::isOutputImageEnabled() )
             {
