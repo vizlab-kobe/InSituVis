@@ -116,9 +116,9 @@ inline void CameraPathControlledAdaptor::execRendering()
 
         // Output the rendering images and the heatmap of entropies.
         kvs::Timer timer( kvs::Timer::Start );
-        if ( BaseClass::world().isRoot() )
+        if ( BaseClass::isOutputImageEnabled() )
         {
-            if ( BaseClass::isOutputImageEnabled() )
+            if ( BaseClass::world().isRoot() )
             {
                 const auto index = Controller::maxIndex();
                 const auto& location = BaseClass::viewpoint().at( index );
