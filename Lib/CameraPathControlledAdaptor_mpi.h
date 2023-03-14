@@ -52,6 +52,9 @@ public:
 protected:
     bool isEntropyStep();
     bool isFinalTimeStep();
+    InSituVis::Viewpoint::Location erpLocation(
+        const size_t index = 999999,
+        const InSituVis::Viewpoint::Direction dir = InSituVis::Viewpoint::Uni );
 
     virtual void execRendering();
     virtual void process( const Data& data );

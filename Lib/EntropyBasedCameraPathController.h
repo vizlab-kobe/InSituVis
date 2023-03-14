@@ -19,7 +19,6 @@ namespace InSituVis
 class EntropyBasedCameraPathController
 {
 public:
-    using BaseClass = InSituVis::mpi::Adaptor;
     using Data = InSituVis::Adaptor::ObjectList;
     using DataQueue = std::queue<Data>;
 

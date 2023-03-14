@@ -26,6 +26,18 @@ inline bool CameraPathControlledAdaptor::isFinalTimeStep()
     return BaseClass::timeStep() == m_final_time_step;
 }
 
+inline InSituVis::Viewpoint::Location CameraPathControlledAdaptor::erpLocation(
+    const size_t index,
+    const InSituVis::Viewpoint::Direction dir )
+{
+    const auto rad = Controller::erpRadius();
+    const auto rot = Controller::erpRotation();
+    const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad,   0.0f } ), rot );
+    const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rot );
+    const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
+    return { index, dir, p, u, rot, l };
+}
+
 inline bool CameraPathControlledAdaptor::dump()
 {
     bool ret = true;
@@ -97,8 +109,15 @@ inline void CameraPathControlledAdaptor::execRendering()
                     max_index = location.index;
                 }
 
-                //this->outputColorImage( location, frame_buffer );
-                //this->outputDepthImage( location, frame_buffer );
+                if ( m_enable_output_evaluation_image )
+                {
+                    this->outputColorImage( location, frame_buffer );
+                }
+
+                if ( m_enable_output_evaluation_image_depth )
+                {
+                    this->outputDepthImage( location, frame_buffer );
+                }
             }
             timer.stop();
             entr_time += BaseClass::saveTimer().time( timer );
@@ -136,18 +155,11 @@ inline void CameraPathControlledAdaptor::execRendering()
     }
     else
     {
-        auto radius = Controller::erpRadius();
-        auto rotation = Controller::erpRotation();
-        const size_t i = 999999;
-        const auto d = InSituVis::Viewpoint::Direction::Uni;
-        const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, radius, 0.0f } ), rotation );
-        const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rotation );
-        const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
-        const auto location = InSituVis::Viewpoint::Location( i, d, p, u, rotation, l );
+        const auto location = this->erpLocation();
         auto frame_buffer = BaseClass::readback( location );
         const auto path_entropy = Controller::entropy( frame_buffer );
         Controller::setMaxEntropy( path_entropy );
-        Controller::setMaxPosition( p );
+        Controller::setMaxPosition( location.position );
 
         // Output the rendering images.
         kvs::Timer timer( kvs::Timer::Start );
