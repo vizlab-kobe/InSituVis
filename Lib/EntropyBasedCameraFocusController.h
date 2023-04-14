@@ -19,9 +19,9 @@ public:
 private:
     kvs::Vec3 m_max_focus_point{ 0.0f, 0.0f, 0.0f }; ///< focus point estimated at the evaluation step
     std::queue<kvs::Vec3> m_max_focus_points{}; ///< data queue for m_max_focus_point
-    std::queue<kvs::Vec3> m_focus_path{}; ///<
-    std::vector<float> m_focus_path_positions{}; ///<
-    kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///<
+    std::queue<kvs::Vec3> m_focus_path{}; ///< 
+    std::vector<float> m_focus_path_positions{}; ///< focus points on the interpolated path
+    kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
 
 public:
     EntropyBasedCameraFocusController() = default;

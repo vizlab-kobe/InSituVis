@@ -26,9 +26,10 @@ inline bool CameraPathControlledAdaptor::isFinalTimeStep()
     return BaseClass::timeStep() == m_final_time_step;
 }
 
-inline InSituVis::Viewpoint::Location CameraPathControlledAdaptor::erpLocation(
+inline CameraPathControlledAdaptor::Location
+CameraPathControlledAdaptor::erpLocation(
     const size_t index,
-    const InSituVis::Viewpoint::Direction dir )
+    const Viewpoint::Direction dir )
 {
     const auto rad = Controller::erpRadius();
     const auto rot = Controller::erpRotation();
@@ -253,14 +254,15 @@ inline void CameraPathControlledAdaptor::outputEntropies(
     const auto output_time = kvs::String::From( time, 6, '0' );
     const auto output_filename =  "output_entropies_" + output_time;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream file( filename );
-    file << "Index,Entropy" << std::endl;
-    
-    for( size_t i = 0; i < entropies.size(); i++ )
-    {
-        file << i << "," << entropies[i] << std::endl;
-    }
 
+    std::ofstream file( filename );
+    {
+        file << "Index,Entropy" << std::endl;
+        for ( size_t i = 0; i < entropies.size(); i++ )
+        {
+            file << i << "," << entropies[i] << std::endl;
+        }
+    }
     file.close();
 }
 
@@ -269,15 +271,16 @@ inline void CameraPathControlledAdaptor::outputPathEntropies(
 {
     const auto output_filename =  "output_path_entropies";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream file( filename );
-    const auto interval = BaseClass::analysisInterval();
-    file << "Time,Entropy" << std::endl;
-    
-    for( size_t i = 0; i < path_entropies.size(); i++ )
-    {
-        file << interval * i << "," << path_entropies[i] << std::endl;
-    }
 
+    std::ofstream file( filename );
+    {
+        file << "Time,Entropy" << std::endl;
+        const auto interval = BaseClass::analysisInterval();
+        for ( size_t i = 0; i < path_entropies.size(); i++ )
+        {
+            file << interval * i << "," << path_entropies[i] << std::endl;
+        }
+    }
     file.close();
 }
 
@@ -286,18 +289,19 @@ inline void CameraPathControlledAdaptor::outputPathPositions(
 {
     const auto output_filename =  "output_path_positions";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream file( filename );
-    const auto interval = BaseClass::analysisInterval();
-    file << "Time,X,Y,Z" << std::endl;
-    
-    for( size_t i = 0; i < path_positions.size() / 3; i++ )
-    {
-        const auto x = path_positions[ 3 * i ];
-        const auto y = path_positions[ 3 * i + 1 ];
-        const auto z = path_positions[ 3 * i + 2 ];
-        file << interval * i << "," << x << "," << y << "," << z << std::endl;
-    }
 
+    std::ofstream file( filename );
+    {
+        file << "Time,X,Y,Z" << std::endl;
+        const auto interval = BaseClass::analysisInterval();
+        for ( size_t i = 0; i < path_positions.size() / 3; i++ )
+        {
+            const auto x = path_positions[ 3 * i ];
+            const auto y = path_positions[ 3 * i + 1 ];
+            const auto z = path_positions[ 3 * i + 2 ];
+            file << interval * i << "," << x << "," << y << "," << z << std::endl;
+        }
+    }
     file.close();
 }
 
@@ -306,14 +310,15 @@ inline void CameraPathControlledAdaptor::outputPathCalcTimes(
 {
     const auto output_filename =  "output_path_calc_times";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream file( filename );
-    file << "Calculation time" << std::endl;
-    
-    for( size_t i = 0; i < path_calc_times.size(); i++ )
-    {
-        file << path_calc_times[i] << std::endl;
-    }
 
+    std::ofstream file( filename );
+    {
+        file << "Calculation time" << std::endl;
+        for ( size_t i = 0; i < path_calc_times.size(); i++ )
+        {
+            file << path_calc_times[i] << std::endl;
+        }
+    }
     file.close();
 }
 
@@ -321,15 +326,16 @@ inline void CameraPathControlledAdaptor::outputViewpointCoords()
 {
     const auto output_filename =  "output_viewpoint_coords";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream file( filename );
-    file << "Index,X,Y,Z" << std::endl;
-    
-    for( size_t i = 0; i < BaseClass::viewpoint().numberOfLocations(); i++ )
-    {
-        const auto l = BaseClass::viewpoint().at( i );
-        file << i << "," << l.position.x() << "," << l.position.y() << "," << l.position.z() << std::endl;
-    }
 
+    std::ofstream file( filename );
+    {
+        file << "Index,X,Y,Z" << std::endl;
+        for ( size_t i = 0; i < BaseClass::viewpoint().numberOfLocations(); i++ )
+        {
+            const auto l = BaseClass::viewpoint().at( i );
+            file << i << "," << l.position.x() << "," << l.position.y() << "," << l.position.z() << std::endl;
+        }
+    }
     file.close();
 }
 

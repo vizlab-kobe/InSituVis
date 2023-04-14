@@ -26,6 +26,40 @@ inline bool CameraFocusControlledAdaptor::isFinalTimeStep()
     return BaseClass::timeStep() == m_final_time_step;
 }
 
+inline CameraFocusControlledAdaptor::Location
+CameraFocusControlledAdaptor::erpLocation(
+    const kvs::Vec3 focus,
+    const size_t index,
+    const Viewpoint::Direction dir )
+{
+    const auto rad = Controller::erpRadius();
+    const auto rot = Controller::erpRotation();
+    const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad,   0.0f } ), rot );
+    const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rot );
+    const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
+    return this->focusedLocation( { index, dir, p, u, rot, l }, focus );
+}
+
+// add
+inline CameraFocusControlledAdaptor::Location
+CameraFocusControlledAdaptor::focusedLocation(
+    const Location& location,
+    const kvs::Vec3 focus )
+{
+    const auto p0 = location.look_at - location.position;
+    const auto p1 = focus - location.position;
+    const auto R = kvs::Quat::RotationQuaternion( p0, p1 );
+
+    auto l = InSituVis::Viewpoint::Location(
+        location.direction,
+        location.position,
+        kvs::Quat::Rotate( location.up_vector, R ), focus );
+    l.index = location.index;
+    l.look_at = focus;
+
+    return l;
+}
+
 inline bool CameraFocusControlledAdaptor::dump()
 {
     bool ret = true;
@@ -99,8 +133,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 frame_buffers.push_back( frame_buffer );
 
                 // mod
-                //if ( entropy > max_entropy )
-                if ( entropy > max_entropy && std::abs( entropy - max_entropy ) > 1.e-3 )
+                if ( entropy > max_entropy )
+//                if ( entropy > max_entropy && std::abs( entropy - max_entropy ) > 1.e-3 )
                 {
                     max_entropy = entropy;
                     max_index = location.index;
@@ -108,6 +142,17 @@ inline void CameraFocusControlledAdaptor::execRendering()
 
                 //this->outputColorImage( location, frame_buffer );
                 //this->outputDepthImage( location, frame_buffer );
+                /*
+                if ( m_enable_output_evaluation_image )
+                {
+                    this->outputColorImage( location, frame_buffer );
+                }
+
+                if ( m_enable_output_evaluation_image_depth )
+                {
+                    this->outputDepthImage( location, frame_buffer );
+                }
+                */
             }
             timer.stop();
             entr_time += BaseClass::saveTimer().time( timer );
@@ -147,14 +192,14 @@ inline void CameraFocusControlledAdaptor::execRendering()
         BaseClass::world().broadcast( at.data(), sizeof(float) * 3 );
         Controller::setMaxFocusPoint( at );
 
-        auto location = this->update_location( max_location, at );
+        auto location = this->focusedLocation( max_location, at );
         Controller::setMaxPosition( max_position );
 
         // add
         // Zooming
-        for ( int space = 0; space < m_zoom_divid; space++ )
+        for ( size_t level = 0; level < m_zoom_level; level++ )
         {
-            auto t = static_cast<float>( space ) / static_cast<float>( m_zoom_divid );
+            auto t = static_cast<float>( level ) / static_cast<float>( m_zoom_level );
             location.position = ( 1 - t ) * max_position + t * at;
             auto frame_buffer = BaseClass::readback( location );
 
@@ -168,9 +213,13 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     //const auto index = Controller::maxIndex();
                     //const auto& location = BaseClass::viewpoint().at( index );
                     //const auto& frame_buffer = frame_buffers[ index ];
-                    this->outputColorImage( location, frame_buffer, space );
+                    this->outputColorImage( location, frame_buffer, level );
                     //BaseClass::outputDepthImage( location, frame_buffer );
-                    this->outputEntropyTable( entropies );
+                }
+
+                if ( m_enable_output_entropies )
+                {
+                    this->outputEntropies( entropies );
                 }
             }
             timer.stop();
@@ -179,42 +228,33 @@ inline void CameraFocusControlledAdaptor::execRendering()
     }
     else
     {
-        auto radius = Controller::erpRadius();
-        auto rotation = Controller::erpRotation();
-        auto focus = Controller::erpFocus(); // add
-        const size_t i = 999999;
-        const auto d = InSituVis::Viewpoint::Direction::Uni;
-        const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, radius, 0.0f } ), rotation );
-        const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rotation );
-        const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
-        auto location = InSituVis::Viewpoint::Location( i, d, p, u, rotation, l );
-        //auto frame_buffer = BaseClass::readback( location );           // mod
-        //const auto path_entropy = Controller::entropy( frame_buffer ); // mod
-        //Controller::setMaxEntropy( path_entropy );                     // mod
-        location = this->update_location( location, focus );             // add
-        Controller::setMaxFocusPoint( focus );                           // add
-        Controller::setMaxPosition( p );
+        const auto focus = Controller::erpFocus();  // add
+        Controller::setMaxFocusPoint( focus );      // add
+
+        auto location = this->erpLocation( focus );
+        Controller::setMaxPosition( location.position );
 
         // add
         // Zooming
-        for ( int space = 0; space < m_zoom_divid; space++ )
+        const auto p = location.position;
+        for ( size_t level = 0; level < m_zoom_level; level++ )
         {
-            auto t = static_cast<float>( space ) / static_cast<float>( m_zoom_divid );
+            auto t = static_cast<float>( level ) / static_cast<float>( m_zoom_level );
             location.position = ( 1 - t ) * p + t * focus;
             auto frame_buffer = BaseClass::readback( location );
 
-            if ( space == 0 )
+            if ( level == 0 )
             {
                 const auto path_entropy = Controller::entropy( frame_buffer );
                 Controller::setMaxEntropy( path_entropy );
             }
 
             kvs::Timer timer( kvs::Timer::Start );
-            if ( BaseClass::world().rank() == BaseClass::world().root() )
+            if ( BaseClass::world().isRoot() )
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    this->outputColorImage( location, frame_buffer, space );
+                    this->outputColorImage( location, frame_buffer, level );
                     //this->outputDepthImage( location, frame_buffer );
                 }
             }
@@ -269,13 +309,13 @@ inline void CameraFocusControlledAdaptor::process(
 }
 
 // add
-inline std::string CameraFocusControlledAdaptor::outputFinalImageName( const int space )
+inline std::string CameraFocusControlledAdaptor::outputFinalImageName( const size_t level )
 {
     const auto time = BaseClass::timeStep();
     const auto output_time = kvs::String::From( time, 6, '0' );
     const auto output_basename = BaseClass::outputFilename();
-    const auto output_space = kvs::String::From( space, 6, '0' );
-    const auto output_filename = output_basename + "_" + output_time + "_" + output_space;
+    const auto output_zoom_level = kvs::String::From( level, 6, '0' );
+    const auto output_filename = output_basename + "_" + output_time + "_" + output_zoom_level;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
     return filename;
 }
@@ -283,12 +323,12 @@ inline std::string CameraFocusControlledAdaptor::outputFinalImageName( const int
 inline void CameraFocusControlledAdaptor::outputColorImage(
     const InSituVis::Viewpoint::Location& location,
     const FrameBuffer& frame_buffer,
-    const int space ) // add
+    const size_t level ) // add
 {
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.color_buffer;
     kvs::ColorImage image( size.x(), size.y(), buffer );
-    image.write( this->outputFinalImageName( space ) );
+    image.write( this->outputFinalImageName( level ) );
 }
 
 inline void CameraFocusControlledAdaptor::outputDepthImage(
@@ -301,100 +341,81 @@ inline void CameraFocusControlledAdaptor::outputDepthImage(
     image.write( BaseClass::outputFinalImageName( location ) );
 }
 
-inline void CameraFocusControlledAdaptor::outputEntropyTable(
+inline void CameraFocusControlledAdaptor::outputEntropies(
     const std::vector<float> entropies )
 {
     const auto time = BaseClass::timeStep();
     const auto output_time = kvs::String::From( time, 6, '0' );
-    const auto output_filename =  "output_entropy_table_" + output_time;
+    const auto output_filename = "output_entropies_" + output_time;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream table( filename );
 
-    const size_t dim = BaseClass::viewpoint().numberOfLocations();
-    size_t dim_long = 1;
-    auto y0 = BaseClass::viewpoint().at( 0 ).position[1];
-    for( size_t i = 1; i < dim; i++ )
+    std::ofstream file( filename );
     {
-        auto y = BaseClass::viewpoint().at( i ).position[1];
-        if( y != y0 )
+        file << "Index,Entropy" << std::endl;
+        for ( size_t i = 0; i < entropies.size(); i++ )
         {
-            dim_long = i;
-            break;
+            file << i << "," << entropies[i] << std::endl;
         }
     }
-
-    for( size_t i = 0; i < dim; i++ )
-    {
-        table << entropies[i];
-        table << ",";
-        if( ( i + 1 ) % dim_long == 0 )
-        {
-            table << std::endl;
-        }
-    }
-
-    table.close();
+    file.close();
 }
 
 inline void CameraFocusControlledAdaptor::outputPathEntropies(
     const std::vector<float> path_entropies )
 {
-    const auto output_filename =  "output_path_entropies";
+    const auto output_filename = "output_path_entropies";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream path_entropy( filename );
-    const auto interval = BaseClass::analysisInterval();
 
-    path_entropy << "Time,Entropy" << std::endl;
-    for( size_t i = 0; i < path_entropies.size(); i++ )
+    std::ofstream file( filename );
     {
-        path_entropy << interval * i << "," << path_entropies[i] << std::endl;
+        file << "Time,Entropy" << std::endl;
+        const auto interval = BaseClass::analysisInterval();
+        for ( size_t i = 0; i < path_entropies.size(); i++ )
+        {
+            file << interval * i << "," << path_entropies[i] << std::endl;
+        }
     }
-
-    path_entropy.close();
+    file.close();
 }
 
 inline void CameraFocusControlledAdaptor::outputPathPositions(
     const std::vector<float> path_positions )
 {
-    const auto output_filename =  "output_path_positions";
+    const auto output_filename = "output_path_positions";
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream position( filename );
-    const auto interval = BaseClass::analysisInterval();
 
-    position << "Time,X,Y,Z" << std::endl;
-    for( size_t i = 0; i < path_positions.size() / 3; i++ )
+    std::ofstream file( filename );
     {
-        const auto x = path_positions[ 3 * i ];
-        const auto y = path_positions[ 3 * i + 1 ];
-        const auto z = path_positions[ 3 * i + 2 ];
-        position << interval * i << "," << x << "," << y << "," << z << std::endl;
+        file << "Time,X,Y,Z" << std::endl;
+        const auto interval = BaseClass::analysisInterval();
+        for ( size_t i = 0; i < path_positions.size() / 3; i++ )
+        {
+            const auto x = path_positions[ 3 * i ];
+            const auto y = path_positions[ 3 * i + 1 ];
+            const auto z = path_positions[ 3 * i + 2 ];
+            file << interval * i << "," << x << "," << y << "," << z << std::endl;
+        }
     }
-
-    position.close();
+    file.close();
 }
 
-inline void CameraFocusControlledAdaptor::outputFocusEntropyTable(
+inline void CameraFocusControlledAdaptor::outputFrameEntropies(
     const std::vector<float> entropies )
 {
     const auto time = BaseClass::timeStep();
     const auto output_time = kvs::String::From( time, 6, '0' );
-    const auto output_filename =  "output_focus_entropy_table_" + output_time;
+    const auto output_filename =  "output_frame_entropies_" + output_time;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-    std::ofstream table( filename );
 
-    const size_t width = m_ndivs.x();
-    const size_t height = m_ndivs.y();
-
-    for( size_t i = 0; i < height; i++ )
+    std::ofstream file( filename );
     {
-        for(size_t j = 0; j < width; j++){
-            table << entropies[width*i+j];
-            if(j==width-1) break;
-            table << ",";
+        file << "Index,Entropy" << std::endl;
+        for ( size_t i = 0; i < entropies.size(); i++ )
+        {
+            file << i << "," << entropies[i] << std::endl;
         }
-            table << std::endl;
     }
-    table.close();
+    file.close();
 }
 
 // add
@@ -402,8 +423,8 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
 {
     const auto w = BaseClass::imageWidth(); // frame buffer width
     const auto h = BaseClass::imageHeight(); // frame buffer height
-    const auto cw = w / m_ndivs.x(); // cropped frame buffer width
-    const auto ch = h / m_ndivs.y(); // cropped frame buffer height
+    const auto cw = w / m_frame_divs.x(); // cropped frame buffer width
+    const auto ch = h / m_frame_divs.y(); // cropped frame buffer height
     std::vector<float> focus_entropies;
 
     auto get_center = [&] ( int i, int j ) -> kvs::Vec2i
@@ -443,15 +464,16 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
     float max_entropy = -1.0f;
     kvs::Vec2i center{ 0, 0 };
     kvs::Real32 depth{ 0.0f };
-    for ( int j = 0; j < m_ndivs.y(); j++ )
+    for ( size_t j = 0; j < m_frame_divs.y(); j++ )
     {
-        for ( int i = 0; i < m_ndivs.x(); i++ )
+        for ( size_t i = 0; i < m_frame_divs.x(); i++ )
         {
             this->crop_frame_buffer( frame_buffer, { i, j }, &cropped_buffer );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
-            if ( e > max_entropy &&
-                 std::abs( e - max_entropy ) > 1.e-3 )
+//            if ( e > max_entropy &&
+//                 std::abs( e - max_entropy ) > 1.e-3 )
+            if ( e > max_entropy )
             {
                 max_entropy = e;
                 center = get_center( i, j );
@@ -459,7 +481,11 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
             }
         }
     }
-    this->outputFocusEntropyTable( focus_entropies );
+
+    if ( m_enable_output_frame_entropies )
+    {
+        this->outputFrameEntropies( focus_entropies );
+    }
 
     return { static_cast<float>( center.x() ), static_cast<float>( center.y() ), depth };
 }
@@ -513,36 +539,18 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::window_to_object(
 }
 
 // add
-inline CameraFocusControlledAdaptor::Location
-CameraFocusControlledAdaptor::update_location( const Location& location, const kvs::Vec3 at )
-{
-    const auto p0 = location.look_at - location.position;
-    const auto p1 = at - location.position;
-    const auto R = kvs::Quat::RotationQuaternion( p0, p1 );
-
-    auto l = InSituVis::Viewpoint::Location(
-        location.direction,
-        location.position,
-        kvs::Quat::Rotate( location.up_vector, R ), at );
-    l.index = location.index;
-    l.look_at = at;
-
-    return l;
-}
-
-// add
 inline void CameraFocusControlledAdaptor::crop_frame_buffer(
     const FrameBuffer& frame_buffer,
     const kvs::Vec2i& indices,
     FrameBuffer* cropped_frame_buffer )
 {
-    KVS_ASSERT( indices[0] < static_cast<int>( m_ndivs[0] ) );
-    KVS_ASSERT( indices[1] < static_cast<int>( m_ndivs[1] ) );
+    KVS_ASSERT( indices[0] < static_cast<int>( m_frame_divs[0] ) );
+    KVS_ASSERT( indices[1] < static_cast<int>( m_frame_divs[1] ) );
 
     const auto w = BaseClass::imageWidth(); // frame buffer width
     const auto h = BaseClass::imageHeight(); // frame buffer height
-    const auto cw = w / m_ndivs.x(); // cropped frame buffer width
-    const auto ch = h / m_ndivs.y(); // cropped frame buffer height
+    const auto cw = w / m_frame_divs.x(); // cropped frame buffer width
+    const auto ch = h / m_frame_divs.y(); // cropped frame buffer height
     const auto ow = cw * indices[0]; // offset width for frame buffer
     const auto oh = ch * indices[1]; // offset height for frame buffer
 

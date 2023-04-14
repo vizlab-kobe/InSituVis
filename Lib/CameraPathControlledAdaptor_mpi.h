@@ -24,6 +24,8 @@ public:
     using BaseClass = InSituVis::mpi::Adaptor;
     using FrameBuffer = BaseClass::FrameBuffer;
     using Controller = InSituVis::EntropyBasedCameraPathController;
+    using Viewpoint = InSituVis::Viewpoint;
+    using Location = Viewpoint::Location;
 
 private:
     bool m_enable_output_image_depth = false;
@@ -37,10 +39,7 @@ public:
     CameraPathControlledAdaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
     virtual ~CameraPathControlledAdaptor() = default;
 
-    void setOutputEvaluationImageEnabled(
-        const bool enable = true,
-        const bool enable_depth = false );
-
+    void setOutputEvaluationImageEnabled( const bool enable = true, const bool enable_depth = false );
     void setOutputEntropiesEnabled( const bool enable = true ) { m_enable_output_entropies = enable; }
 
     kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
@@ -52,9 +51,9 @@ public:
 protected:
     bool isEntropyStep();
     bool isFinalTimeStep();
-    InSituVis::Viewpoint::Location erpLocation(
+    Location erpLocation(
         const size_t index = 999999,
-        const InSituVis::Viewpoint::Direction dir = InSituVis::Viewpoint::Uni );
+        const Viewpoint::Direction dir = Viewpoint::Uni );
 
     virtual void execRendering();
     virtual void process( const Data& data );
