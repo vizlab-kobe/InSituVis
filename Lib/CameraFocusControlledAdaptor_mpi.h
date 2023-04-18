@@ -12,14 +12,15 @@
 #include <queue>
 
 
-
 namespace InSituVis
 {
 
 namespace mpi
 {
 
-class CameraFocusControlledAdaptor : public InSituVis::mpi::Adaptor, public InSituVis::EntropyBasedCameraFocusController
+class CameraFocusControlledAdaptor :
+        public InSituVis::mpi::Adaptor,
+        public InSituVis::EntropyBasedCameraFocusController
 {
 public:
     using BaseClass = InSituVis::mpi::Adaptor;
@@ -38,8 +39,9 @@ private:
     kvs::mpi::StampTimer m_focus_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
 
-    size_t m_zoom_level = 1;           // add
-    kvs::Vec2ui m_frame_divs{ 20, 20 }; // add ///< number of frame divisions
+    // add
+    size_t m_zoom_level = 1; ///< zoom level
+    kvs::Vec2ui m_frame_divs{ 20, 20 }; ///< number of frame divisions
 
 public:
     CameraFocusControlledAdaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
@@ -79,30 +81,15 @@ protected:
 
     std::string outputFinalImageName( const size_t level );
 
-    void outputColorImage(
-        const InSituVis::Viewpoint::Location& location,
-        const FrameBuffer& frame_buffer,
-        const size_t level ); // add
+    void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level ); // add
+    void outputDepthImage( const InSituVis::Viewpoint::Location& location, const FrameBuffer& frame_buffer );
+    void outputEntropies( const std::vector<float> entropies );
+    void outputPathEntropies( const std::vector<float> path_entropies );
+    void outputPathPositions( const std::vector<float> path_positions );
+    void outputFrameEntropies( const std::vector<float> entropies ); // add
 
-    void outputDepthImage(
-        const InSituVis::Viewpoint::Location& location,
-        const FrameBuffer& frame_buffer );
-
-    void outputEntropies(
-        const std::vector<float> entropies );
-
-    void outputPathEntropies(
-        const std::vector<float> path_entropies );
-
-    void outputPathPositions(
-        const std::vector<float> path_positions );
-
-    // add
-    void outputFrameEntropies(
-        const std::vector<float> entropies );
-
-// add
 private:
+    // add
     kvs::Vec3 look_at_in_window( const FrameBuffer& frame_buffer );
     kvs::Vec3 window_to_object( const kvs::Vec3 win, const Location& location );
     void crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices, FrameBuffer* cropped_frame_buffer );

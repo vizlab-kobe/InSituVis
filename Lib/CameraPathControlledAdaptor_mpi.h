@@ -18,7 +18,9 @@ namespace InSituVis
 namespace mpi
 {
 
-class CameraPathControlledAdaptor : public InSituVis::mpi::Adaptor, public InSituVis::EntropyBasedCameraPathController
+class CameraPathControlledAdaptor :
+        public InSituVis::mpi::Adaptor,
+        public InSituVis::EntropyBasedCameraPathController
 {
 public:
     using BaseClass = InSituVis::mpi::Adaptor;
@@ -61,26 +63,12 @@ protected:
 
     std::string outputDepthImageName( const Viewpoint::Location& location );
 
-    void outputColorImage(
-        const InSituVis::Viewpoint::Location& location,
-        const FrameBuffer& frame_buffer );
-
-    void outputDepthImage(
-        const InSituVis::Viewpoint::Location& location,
-        const FrameBuffer& frame_buffer );
-
-    void outputEntropies(
-        const std::vector<float> entropies );
-
-    void outputPathEntropies(
-        const std::vector<float> path_entropies );
-
-    void outputPathPositions(
-        const std::vector<float> path_positions );
-
-    void outputPathCalcTimes(
-        const std::vector<float> path_calc_times );
-
+    void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer );
+    void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer );
+    void outputEntropies( const std::vector<float> entropies );
+    void outputPathEntropies( const std::vector<float> path_entropies );
+    void outputPathPositions( const std::vector<float> path_positions );
+    void outputPathCalcTimes( const std::vector<float> path_calc_times );
     void outputViewpointCoords();
 };
 
