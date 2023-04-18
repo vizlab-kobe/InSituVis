@@ -211,6 +211,14 @@ EntropyBasedCameraPathController::Squad()
     };
 }
 
+inline void EntropyBasedCameraPathController::setOutputEvaluationImageEnabled(
+    const bool enable,
+    const bool enable_depth )
+{
+    m_enable_output_evaluation_image = enable;
+    m_enable_output_evaluation_image_depth = enable_depth;
+}
+
 inline void EntropyBasedCameraPathController::push( const Data& data )
 {
     const auto interval = this->entropyInterval();
@@ -390,6 +398,103 @@ inline void EntropyBasedCameraPathController::createPath(
 
     const auto path_calc_time = timer.sec();
     this->pathCalcTimes().push_back( path_calc_time );
+}
+
+inline std::string EntropyBasedCameraPathController::logDataFilename(
+    const std::string& basename,
+    const InSituVis::OutputDirectory& directory )
+{
+    return directory.baseDirectoryName() + "/" + basename + ".csv";
+}
+
+inline std::string EntropyBasedCameraPathController::logDataFilename(
+    const std::string& basename,
+    const kvs::UInt32 timestep,
+    const InSituVis::OutputDirectory& directory )
+{
+    const auto output_timestep = kvs::String::From( timestep, 6, '0' );
+    const auto output_basename = basename + output_timestep;
+    return directory.baseDirectoryName() + "/" + output_basename + ".csv";
+}
+
+inline void EntropyBasedCameraPathController::outputEntropies(
+    const std::string& filename,
+    const std::vector<float>& entropies )
+{
+    std::ofstream file( filename );
+    {
+        file << "Index,Entropy" << std::endl;
+        for ( size_t i = 0; i < entropies.size(); i++ )
+        {
+            file << i << "," << entropies[i] << std::endl;
+        }
+    }
+    file.close();
+}
+
+inline void EntropyBasedCameraPathController::outputPathEntropies(
+    const std::string& filename,
+    const size_t analysis_interval )
+{
+    std::ofstream file( filename );
+    {
+        file << "Time,Entropy" << std::endl;
+        const auto interval = analysis_interval;
+        for ( size_t i = 0; i < m_path_entropies.size(); i++ )
+        {
+            file << interval * i << "," << m_path_entropies[i] << std::endl;
+        }
+    }
+    file.close();
+}
+
+inline void EntropyBasedCameraPathController::outputPathPositions(
+    const std::string& filename,
+    const size_t analysis_interval )
+{
+    std::ofstream file( filename );
+    {
+        file << "Time,X,Y,Z" << std::endl;
+        const auto interval = analysis_interval;
+        for ( size_t i = 0; i < m_path_positions.size() / 3; i++ )
+        {
+            const auto x = m_path_positions[ 3 * i ];
+            const auto y = m_path_positions[ 3 * i + 1 ];
+            const auto z = m_path_positions[ 3 * i + 2 ];
+            file << interval * i << "," << x << "," << y << "," << z << std::endl;
+        }
+    }
+    file.close();
+}
+
+inline void EntropyBasedCameraPathController::outputPathCalcTimes(
+    const std::string& filename )
+{
+    std::ofstream file( filename );
+    {
+        file << "Calculation time" << std::endl;
+        for ( size_t i = 0; i < m_path_calc_times.size(); i++ )
+        {
+            file << m_path_calc_times[i] << std::endl;
+        }
+    }
+    file.close();
+}
+
+inline void EntropyBasedCameraPathController::outputViewpointCoords(
+    const std::string& filename,
+    const InSituVis::Viewpoint& viewpoint )
+{
+    std::ofstream file( filename );
+    {
+        file << "Index,X,Y,Z" << std::endl;
+        for ( size_t i = 0; i < viewpoint.numberOfLocations(); i++ )
+        {
+            const auto l = viewpoint.at( i );
+            file << i << "," << l.position.x() << "," << l.position.y() << "," << l.position.z() << std::endl;
+        }
+    }
+    file.close();
 }
 
 } // end of namespace InSituVis

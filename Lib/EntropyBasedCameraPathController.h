@@ -11,6 +11,7 @@
 #include <kvs/VolumeObjectBase>
 #include <InSituVis/Lib/Adaptor_mpi.h>
 #include <InSituVis/Lib/Viewpoint.h>
+#include <InSituVis/Lib/OutputDirectory.h>
 
 
 namespace InSituVis
@@ -60,6 +61,9 @@ private:
     Data m_previous_data{}; ///< dataset at previous time-step
     EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f ); ///< entropy function
     Interpolator m_interpolator = Squad(); ///< path interpolator
+    bool m_enable_output_evaluation_image = false; ///< if true, all of evaluation images will be output
+    bool m_enable_output_evaluation_image_depth = false; ///< if true, all of evaluation depth images will be output
+    bool m_enable_output_entropies = false; ///< if true, calculted entropies for all viewpoints will be output
 
 public:
     EntropyBasedCameraPathController() = default;
@@ -104,6 +108,13 @@ public:
     bool isFinalStep() const { return m_final_step; }
     void setFinalStep( const bool final_step = true ) { m_final_step = final_step; }
 
+    void setOutputEvaluationImageEnabled( const bool enable = true, const bool enable_depth = false );
+    void setOutputEntropiesEnabled( const bool enable = true ) { m_enable_output_entropies = enable; }
+
+    bool isOutputEvaluationImageEnabled() const { return m_enable_output_evaluation_image; }
+    bool isOutputEvaluationDepathImageEnabled() const { return m_enable_output_evaluation_image_depth; }
+    bool isOutputEntropiesEnabled() const { return m_enable_output_entropies; }
+
 protected:
     void setPreviousData( const Data& data ) { m_previous_data = data; }
     DataQueue& dataQueue() { return m_data_queue; }
@@ -143,6 +154,34 @@ protected:
         const kvs::Quat& q4,
         const size_t point_interval
     );
+
+    std::string logDataFilename(
+        const std::string& basename,
+        const InSituVis::OutputDirectory& directory );
+
+    std::string logDataFilename(
+        const std::string& basename,
+        const kvs::UInt32 timestep,
+        const InSituVis::OutputDirectory& directory );
+
+    void outputEntropies(
+        const std::string& filename,
+        const std::vector<float>& entropies );
+
+    void outputPathEntropies(
+        const std::string& filename,
+        const size_t analysis_interval );
+
+    void outputPathPositions(
+        const std::string& filename,
+        const size_t analysis_interval );
+
+    void outputPathCalcTimes(
+        const std::string& filename );
+
+    void outputViewpointCoords(
+        const std::string& filename,
+        const InSituVis::Viewpoint& viewpoint );
 };
 
 } // end of namespace InSituVis

@@ -8,14 +8,6 @@ namespace InSituVis
 namespace mpi
 {
 
-inline void CameraFocusControlledAdaptor::setOutputEvaluationImageEnabled(
-    const bool enable,
-    const bool enable_depth )
-{
-    m_enable_output_evaluation_image = enable;
-    m_enable_output_evaluation_image_depth = enable_depth;
-}
-
 inline bool CameraFocusControlledAdaptor::isEntropyStep()
 {
     return BaseClass::timeStep() % ( BaseClass::analysisInterval() * Controller::entropyInterval() ) == 0;
@@ -78,8 +70,11 @@ inline bool CameraFocusControlledAdaptor::dump()
         f_timer_list.push( m_focus_timer );                                              // add
         ret_f = f_timer_list.write( basedir + "focus_proc_time.csv" );                   // add
 
-        this->outputPathEntropies( Controller::pathEntropies() );
-        this->outputPathPositions( Controller::pathPositions() );
+        const auto interval = BaseClass::analysisInterval();
+        const auto directory = BaseClass::outputDirectory();
+        const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
+        Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
+        Controller::outputPathPositions( File( "output_path_positions"), interval );
         //this->outputPathCalcTimes( Controller::pathCalcTimes() );
         //this->outputViewpointCoords();
     }
@@ -134,7 +129,6 @@ inline void CameraFocusControlledAdaptor::execRendering()
 
                 // mod
                 if ( entropy > max_entropy )
-//                if ( entropy > max_entropy && std::abs( entropy - max_entropy ) > 1.e-3 )
                 {
                     max_entropy = entropy;
                     max_index = location.index;
@@ -217,9 +211,13 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     //BaseClass::outputDepthImage( location, frame_buffer );
                 }
 
-                if ( m_enable_output_entropies )
+                if ( Controller::isOutputEntropiesEnabled() )
                 {
-                    this->outputEntropies( entropies );
+                    const auto basename = "output_entropies_";
+                    const auto timestep = BaseClass::timeStep();
+                    const auto directory = BaseClass::outputDirectory();
+                    const auto filename = Controller::logDataFilename( basename, timestep, directory );
+                    Controller::outputEntropies( filename, entropies );
                 }
             }
             timer.stop();
@@ -341,83 +339,6 @@ inline void CameraFocusControlledAdaptor::outputDepthImage(
     image.write( BaseClass::outputFinalImageName( location ) );
 }
 
-inline void CameraFocusControlledAdaptor::outputEntropies(
-    const std::vector<float> entropies )
-{
-    const auto time = BaseClass::timeStep();
-    const auto output_time = kvs::String::From( time, 6, '0' );
-    const auto output_filename = "output_entropies_" + output_time;
-    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-
-    std::ofstream file( filename );
-    {
-        file << "Index,Entropy" << std::endl;
-        for ( size_t i = 0; i < entropies.size(); i++ )
-        {
-            file << i << "," << entropies[i] << std::endl;
-        }
-    }
-    file.close();
-}
-
-inline void CameraFocusControlledAdaptor::outputPathEntropies(
-    const std::vector<float> path_entropies )
-{
-    const auto output_filename = "output_path_entropies";
-    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-
-    std::ofstream file( filename );
-    {
-        file << "Time,Entropy" << std::endl;
-        const auto interval = BaseClass::analysisInterval();
-        for ( size_t i = 0; i < path_entropies.size(); i++ )
-        {
-            file << interval * i << "," << path_entropies[i] << std::endl;
-        }
-    }
-    file.close();
-}
-
-inline void CameraFocusControlledAdaptor::outputPathPositions(
-    const std::vector<float> path_positions )
-{
-    const auto output_filename = "output_path_positions";
-    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-
-    std::ofstream file( filename );
-    {
-        file << "Time,X,Y,Z" << std::endl;
-        const auto interval = BaseClass::analysisInterval();
-        for ( size_t i = 0; i < path_positions.size() / 3; i++ )
-        {
-            const auto x = path_positions[ 3 * i ];
-            const auto y = path_positions[ 3 * i + 1 ];
-            const auto z = path_positions[ 3 * i + 2 ];
-            file << interval * i << "," << x << "," << y << "," << z << std::endl;
-        }
-    }
-    file.close();
-}
-
-inline void CameraFocusControlledAdaptor::outputFrameEntropies(
-    const std::vector<float> entropies )
-{
-    const auto time = BaseClass::timeStep();
-    const auto output_time = kvs::String::From( time, 6, '0' );
-    const auto output_filename =  "output_frame_entropies_" + output_time;
-    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".csv";
-
-    std::ofstream file( filename );
-    {
-        file << "Index,Entropy" << std::endl;
-        for ( size_t i = 0; i < entropies.size(); i++ )
-        {
-            file << i << "," << entropies[i] << std::endl;
-        }
-    }
-    file.close();
-}
-
 // add
 inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuffer& frame_buffer )
 {
@@ -471,8 +392,6 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
             this->crop_frame_buffer( frame_buffer, { i, j }, &cropped_buffer );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
-//            if ( e > max_entropy &&
-//                 std::abs( e - max_entropy ) > 1.e-3 )
             if ( e > max_entropy )
             {
                 max_entropy = e;
@@ -482,9 +401,13 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
         }
     }
 
-    if ( m_enable_output_frame_entropies )
+    if ( Controller::isOutputFrameEntropiesEnabled() )
     {
-        this->outputFrameEntropies( focus_entropies );
+        const auto basename = "output_frame_entropies_";
+        const auto timestep = BaseClass::timeStep();
+        const auto directory = BaseClass::outputDirectory();
+        const auto filename = Controller::logDataFilename( basename, timestep, directory );
+        Controller::outputEntropies( filename, focus_entropies );
     }
 
     return { static_cast<float>( center.x() ), static_cast<float>( center.y() ), depth };

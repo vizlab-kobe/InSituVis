@@ -22,6 +22,7 @@ private:
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
     std::vector<float> m_focus_path_positions{}; ///< focus points on the interpolated path
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
+    bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
 
 public:
     EntropyBasedCameraFocusController() = default;
@@ -31,6 +32,9 @@ public:
     kvs::Vec3 maxFocusPoint() const { return m_max_focus_point; }
     void setErpFocus( const kvs::Vec3& erp_focus ) { m_erp_focus = erp_focus; }
     kvs::Vec3 erpFocus() const { return m_erp_focus; }
+
+    void setOutputFrameEntropiesEnabled( const bool enable = true ) { m_enable_output_frame_entropies = enable; }
+    bool isOutputFrameEntropiesEnabled() const { return m_enable_output_frame_entropies; }
 
 protected:
     std::queue<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
