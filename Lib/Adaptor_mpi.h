@@ -47,6 +47,7 @@ private:
     kvs::mpi::Communicator m_world{}; ///< MPI communicator
     kvs::mpi::LogStream m_log{ m_world }; ///< MPI log stream
     kvs::mpi::ImageCompositor m_image_compositor{ m_world }; ///< image compositor
+    bool m_enable_alpha_blending = false; ///< flag for image composition with alpha blending
     bool m_enable_output_subimage = false; ///< flag for writing sub-object rendering image
     bool m_enable_output_subimage_depth = false; ///< flag for writing sub-object rendering image (depth image)
     bool m_enable_output_subimage_alpha = false; ///< flag for writing sub-object rendering image (alpha image)
@@ -67,6 +68,9 @@ public:
         const bool enable = true,
         const bool enable_depth = false,
         const bool enable_alpha = false );
+
+    void setAlphaBlendingEnabled( const bool enable = true ) { m_enable_alpha_blending = enable; }
+    bool isAlphaBlendingEnabled() const { return m_enable_alpha_blending; }
 
     virtual bool initialize();
     virtual bool finalize();

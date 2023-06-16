@@ -22,7 +22,7 @@ inline bool Adaptor::initialize()
         return false;
     }
 
-    const bool depth_testing = true;
+    const bool depth_testing = !m_enable_alpha_blending;
     const auto width = BaseClass::imageWidth();
     const auto height = BaseClass::imageHeight();
     if ( !m_image_compositor.initialize( width, height, depth_testing ) )
@@ -175,14 +175,41 @@ inline Adaptor::FrameBuffer Adaptor::drawScreen( std::function<void(const FrameB
     timer_rend.stop();
     m_rend_time += BaseClass::rendTimer().time( timer_rend );
 
+    auto ObjectDepth = [&]()
+    {
+        const bool has_object = BaseClass::objects().size() > 0;
+        float depth = 0.0f;
+        if ( has_object )
+        {
+            const auto id = BaseClass::objects().size() + 1;
+            const auto* object = BaseClass::screen().scene()->object( id );
+            const auto origin = kvs::Vec3( 0, 0, 0 );
+            const auto offset = object->objectCenter();
+            const auto Oa = kvs::ObjectCoordinate( origin, object ).toWorldCoordinate().position();
+            const auto Ob = kvs::ObjectCoordinate( offset, object ).toWorldCoordinate().position();
+            const auto O = Ob - Oa;
+            const auto C = BaseClass::screen().scene()->camera()->position();
+            depth = ( O - C ).length();
+        }
+
+        const auto width = BaseClass::imageWidth();
+        const auto height = BaseClass::imageHeight();
+        kvs::ValueArray<float> depth_buffer( width * height );
+        depth_buffer.fill( depth );
+        return depth_buffer;
+    };
+
     // Apply the func for partial rendering buffers before image composition.
     auto color_buffer = BaseClass::screen().readbackColorBuffer();
-    auto depth_buffer = BaseClass::screen().readbackDepthBuffer();
+    auto depth_buffer = m_enable_alpha_blending ? ObjectDepth() : BaseClass::screen().readbackDepthBuffer();
     func( { color_buffer, depth_buffer } );
 
     // Image composition
     kvs::Timer timer_comp( kvs::Timer::Start );
-    if ( !m_image_compositor.run( color_buffer, depth_buffer ) )
+    const auto success = m_enable_alpha_blending ?
+        m_image_compositor.run( color_buffer, depth_buffer[0] ):
+        m_image_compositor.run( color_buffer, depth_buffer );
+    if ( !success )
     {
         this->log() << "ERROR: " << "Cannot compose images." << std::endl;
     }
