@@ -3,7 +3,7 @@ InSituVis provides an in-situ visualization framework that enables easy and effe
 
 ## Pre-requisities
 
-The follwoing packages needs to be installed before compiling SmokeRingVis.
+The follwoing packages needs to be installed in order to use parallel visualization functionalities.
 - [KVS](https://github.com/naohisas/KVS)
 - OSMesa
 - MPI
@@ -49,3 +49,15 @@ KVS supports OSMesa and MPI needs to be installed.
     $ make
     $ make install
     ```
+
+## Framework
+InSituVis provides several "Adaptor" classes to connect simulation and visualization codes. A simple example of integration using ```InSituVis::Adaptor``` class is shown bellow.
+
+1. Include some header files.
+    ```cpp
+    #include <InSituVis/Lib/Adaptor.h>
+    #include <InSituVis/Lib/Viewpoint.h>
+    ```
+    Note: Set the include path to the directory where the InSituVis repository is cloned (downloaded). Also, the InSituVis is a header-only library and does not need to be compiled in advance.
+
+2. 
