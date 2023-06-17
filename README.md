@@ -54,10 +54,94 @@ KVS supports OSMesa and MPI needs to be installed.
 InSituVis provides several "Adaptor" classes to connect simulation and visualization codes. A simple example of integration using ```InSituVis::Adaptor``` class is shown bellow.
 
 1. Include some header files.
-    ```cpp
-    #include <InSituVis/Lib/Adaptor.h>
-    #include <InSituVis/Lib/Viewpoint.h>
-    ```
-    Note: Set the include path to the directory where the InSituVis repository is cloned (downloaded). Also, the InSituVis is a header-only library and does not need to be compiled in advance.
+   ```cpp
+   #include <InSituVis/Lib/Adaptor.h>   // for InSituVis::Adaptor class
+   #include <InSituVis/Lib/Viewpoint.h> // for InSituVis::Viewpoint class
+   ```
+    - Set the include path to the directory where the InSituVis repository is cloned (downloaded). Also, the InSituVis is a header-only library and does not need to be compiled in advance.
 
-2. 
+2. Set input visualization parameters.
+   ```cpp
+   namespace Params
+   {
+   const auto ImageSize = kvs::Vec2ui{ 512, 512 }; // width x height
+   const auto AnalysisInterval = 100; // analysis (visuaization) time interval
+   const auto ViewPos = kvs::Vec3{ 7, 5, 6 }; // viewpoint position in world coordinate system
+   const auto ViewDir = InSituVis::Viewpoint::Direction::Uni; // Uni or Omni
+   const auto Viewpoint = InSituVis::Viewpoint{ { ViewDir, ViewPos } }; // viewpoint
+   }
+   ```
+3. Set in-situ visualization adaptor.
+   ```cpp
+   InSituVis::Adaptor adaptor;
+   adaptor.setImageSize( Params::ImageSize().x(), Params::ImageSize().y() );
+   adaptor.setViewpoint( Params::Viewpoint );
+   adaptor.setAnalysisInterval( Params::AnalysisInterval );
+   ```
+
+4. Create visualization pipeline using KVS modules. The following is an example of isosurface extraction.
+    ```cpp
+    // Isosurface extraction
+    //    Scree:  using Screen = kvs::Screen
+    //    Object: using Object = kvs::ObjectBase
+    //    Volume: using Volume = kvs::StructuredVolumeObject
+    auto isosurface = [] ( Screen& screen, const Object& object )
+    {
+        Volume volume; volume.shallowCopy( Volume::DownCast( object ) );
+
+        // Setup a transfer function.
+        const auto min_value = volume.minValue();
+        const auto max_value = volume.maxValue();
+        auto t = kvs::TransferFunction( cmap );
+        t.setRange( min_value, max_value );
+
+        // Create new object
+        auto n = kvs::Isosurface::VertexNormal;
+        auto d = true;
+        auto i = kvs::Math::Mix( min_value, max_value, 0.5 );
+        auto* o = new kvs::Isosurface( &volume, i, n, d, t );
+        o->setName( "Isosurface" );
+
+        // Register object and renderer to screen
+        kvs::Light::SetModelTwoSide( true );
+        if ( screen.scene()->hasObject( "Isosurface" ) )
+        {
+            // Update the objects.
+            screen.scene()->replaceObject( "Isosurface", o );
+        }
+        else
+        {
+            // Bounding box.
+            screen.registerObject( o, new kvs::Bounds() );
+
+            // Register the objects with renderer.
+            auto* r = new kvs::glsl::PolygonRenderer();
+            r->setTwoSideLightingEnabled( true );
+            screen.registerObject( o, r );
+        }
+   };
+   ```
+   
+5. Set visualization data, which is called as volume object in KVS.
+   ```cpp
+   // Get simulation data, a grid resolution {dimx, dimy, dimz} and a value array {values},
+   // from the solver by using get functions; GET_XXX().
+   int dimx = GET_DIMX();
+   int dimy = GET_DIMY();
+   int dimz = GET_DIMZ();
+   double* values = GET_VALUES();
+
+   // Create visualization data (kvs::StructuredVolumeObject).
+   Volume volume;
+   volume.setVeclen( 1 );
+   volume.setResolution( kvs::Vec3ui( dimx, dimy, dimz ) );
+   volume.setValues( kvs::ValueArray<double>{ values, size_t( dimx * dimy * dimz ) } );
+   volume.setGridTypeToUniform();
+   volume.updateMinMaxValues();
+   ```
+
+6. Put the visualization data and execute the visualization pipeline.
+   ```cpp
+   adaptor.put( volume );
+   adaptor.exec( {time_value, time_index} );
+   ```
