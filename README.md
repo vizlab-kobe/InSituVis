@@ -50,7 +50,7 @@ KVS supports OSMesa and MPI needs to be installed.
     $ make install
     ```
 
-## Framework
+## Adaptor framework
 InSituVis provides several "Adaptor" classes to connect simulation and visualization codes. A simple example of integration using ```InSituVis::Adaptor``` class is shown bellow.
 
 1. Include some header files.
