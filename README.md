@@ -85,7 +85,7 @@ InSituVis provides several "Adaptor" classes to connect simulation and visualiza
     //    Scree:  using Screen = kvs::Screen
     //    Object: using Object = kvs::ObjectBase
     //    Volume: using Volume = kvs::StructuredVolumeObject
-    auto isosurface = [] ( Screen& screen, const Object& object )
+    auto Isosurface = [] ( Screen& screen, const Object& object )
     {
         Volume volume; volume.shallowCopy( Volume::DownCast( object ) );
 
@@ -121,8 +121,12 @@ InSituVis provides several "Adaptor" classes to connect simulation and visualiza
         }
    };
    ```
+5. Set the visualization pipeline to the adaptor.
+   ```cpp
+   adaptor.setPipeline( Isosurface );
+   ```
    
-5. Set visualization data, which is called as volume object in KVS.
+6. Set visualization data, which is called as volume object in KVS.
    ```cpp
    // Get simulation data, a grid resolution {dimx, dimy, dimz} and a value array {values},
    // from the solver by using get functions; GET_XXX().
@@ -140,7 +144,7 @@ InSituVis provides several "Adaptor" classes to connect simulation and visualiza
    volume.updateMinMaxValues();
    ```
 
-6. Put the visualization data and execute the visualization pipeline.
+7. Put the visualization data and execute the visualization pipeline.
    ```cpp
    adaptor.put( volume );
    adaptor.exec( {time_value, time_index} );
