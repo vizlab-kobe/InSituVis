@@ -148,7 +148,7 @@ inline void CameraPathControlledAdaptor::execRendering()
                 const auto timestep = BaseClass::timeStep();
                 const auto directory = BaseClass::outputDirectory();
                 const auto filename = Controller::logDataFilename( basename, timestep, directory );
-                Controller::outputEntropies( filename, entrpoies );
+                Controller::outputEntropies( filename, entropies );
             }
         }
         timer.stop();

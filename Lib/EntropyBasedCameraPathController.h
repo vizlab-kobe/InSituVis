@@ -6,7 +6,7 @@
 /*****************************************************************************/
 #pragma once
 #include <queue>
-#include <tuple>
+#include <utility>
 #include <functional>
 #include <kvs/VolumeObjectBase>
 #include <InSituVis/Lib/Adaptor_mpi.h>
@@ -53,7 +53,7 @@ private:
     std::queue<float> m_max_entropies{}; ///< data queue for m_max_entropy
     std::queue<kvs::Vec3> m_max_positions{}; ///< data queue for m_max_position
     std::queue<kvs::Quat> m_max_rotations{}; ///< data queue for m_max_rotation
-    std::queue<std::tuple<float, kvs::Quat>> m_path{}; ///< {radius,rotation} on the interpolated path
+    std::queue<std::pair<float, kvs::Quat>> m_path{}; ///< {radius,rotation} on the interpolated path
     std::vector<float> m_path_positions{}; ///< positions on the interpolated path
     std::vector<float> m_path_entropies{}; ///< entropies on the interpolated path
     std::vector<float> m_path_calc_times{}; ///< path calculation times
@@ -121,7 +121,7 @@ protected:
     std::queue<float>& maxEntropies() { return m_max_entropies; }
     std::queue<kvs::Vec3>& maxPositions() { return m_max_positions; }
     std::queue<kvs::Quat>& maxRotations() { return m_max_rotations; }
-    std::queue<std::tuple<float, kvs::Quat>>& path() { return m_path; }
+    std::queue<std::pair<float, kvs::Quat>>& path() { return m_path; }
     std::vector<float>& pathEntropies() { return m_path_entropies; }
     std::vector<float>& pathPositions() { return m_path_positions; }
     std::vector<float>& pathCalcTimes() { return m_path_calc_times; }

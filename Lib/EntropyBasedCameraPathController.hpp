@@ -270,8 +270,8 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
                         for ( size_t i = 0; i < interval - 1; i++ )
                         {
                             const auto data_front = this->dataQueue().front();
-                            const auto [ radius, rotation ] = this->path().front();
-                            this->process( data_front, radius, rotation );
+                            const std::pair<float, kvs::Quat> path_front = this->path().front();
+                            this->process( data_front, path_front.first, path_front.second );
                             this->dataQueue().pop();
                             this->path().pop();
 
@@ -315,8 +315,8 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
         for ( size_t i = 0; i < interval - 1; i++ )
         {
             const auto data_front = this->dataQueue().front();
-            const auto [ radius, rotation ] = this->path().front();
-            this->process( data_front, radius, rotation );
+            const std::pair<float, kvs::Quat> path_front = this->path().front();
+            this->process( data_front, path_front.first, path_front.second );
             this->dataQueue().pop();
             this->path().pop();
 
@@ -326,12 +326,13 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
 
         while ( this->dataQueue().size() > 0 )
         {
-            std::queue<std::tuple<float, kvs::Quat>> empty;
+            std::queue<std::pair<float, kvs::Quat>> empty;
             this->path().swap( empty );
 
             for ( size_t i = 0; i < interval - 1; i++ )
             {
-                this->path().push( { r3, q3 } );
+                std::pair<float, kvs::Quat> elem( r3, q3 );
+                this->path().push( elem );
             }
 
             this->dataQueue().pop();
@@ -342,8 +343,8 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
             for ( size_t i = 0; i < m_interval - 1; i++ )
             {
                 const auto data_front = this->dataQueue().front();
-                const auto [ radius, rotation ] = this->path().front();
-                this->process( data_front, radius, rotation );
+                const std::pair<float, kvs::Quat> path_front = this->path().front();
+                this->process( data_front, path_front.first, path_front.second );
                 this->dataQueue().pop();
                 this->path().pop();
 
@@ -383,7 +384,7 @@ inline void EntropyBasedCameraPathController::createPath(
     const kvs::Quat& q4,
     const size_t point_interval )
 {
-    std::queue<std::tuple<float, kvs::Quat>> empty;
+    std::queue<std::pair<float, kvs::Quat>> empty;
     this->path().swap( empty );
 
     kvs::Timer timer( kvs::Timer::Start );
@@ -392,7 +393,8 @@ inline void EntropyBasedCameraPathController::createPath(
         const auto t = static_cast<float>( i ) / static_cast<float>( point_interval );
         const auto r = this->radiusInterpolation( r2, r3, t );
         const auto q = this->pathInterpolation( q1, q2, q3, q4, t );
-        this->path().push( { r, q } );
+        const std::pair<float, kvs::Quat> elem( r, q );
+        this->path().push( elem );
     }
     timer.stop();
 
