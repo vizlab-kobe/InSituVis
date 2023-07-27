@@ -75,25 +75,15 @@ public:
         };
 
         auto calc_up_vector = [&] ( const kvs::Vec3& rtp ) -> kvs::Vec3 {
-            kvs::Vec3 p;
-            if( rtp[1] > kvs::Math::pi / 2 ){
-                p = rtp - kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
-            }
-            else{
-                p = rtp + kvs::Vec3( { 0, kvs::Math::pi / 2, 0 } );
-            }
-            const float p_x = p[0] * std::sin( p[1] ) * std::sin( p[2] );
-            const float p_y = p[0] * std::cos( p[1] );
-            const float p_z = p[0] * std::sin( p[1] ) * std::cos( p[2] );
-            kvs::Vec3 u;
-            if( rtp[1] > kvs::Math::pi / 2 ){
-                u = kvs::Vec3( { p_x, p_y, p_z } );
-            }
-            else{
-                u = -1 * kvs::Vec3( { p_x, p_y, p_z } );
-            }
-
-            return u;
+            const auto pi_half = static_cast<float>( kvs::Math::pi / 2.0 );
+            const auto p = rtp[1] > pi_half ?
+                rtp - kvs::Vec3( 0.0f, pi_half, 0.0f ):
+                rtp + kvs::Vec3( 0.0f, pi_half, 0.0f );
+            const auto q = kvs::Vec3(
+                static_cast<float>( p[0] * std::sin( p[1] ) * std::sin( p[2] ) ),
+                static_cast<float>( p[0] * std::cos( p[1] ) ),
+                static_cast<float>( p[0] * std::sin( p[1] ) * std::cos( p[2] ) ) );
+            return rtp[1] > pi_half ? q : -1.0f * q;
         };
 
         auto calc_rotation = [&] ( const size_t index ) -> kvs::Quaternion {

@@ -75,6 +75,7 @@ public:
             return kvs::Vec3( { x, y, z } );
         };
 
+        /*
         auto output_coords_connections = [&] (
             const std::vector<kvs::Vec3>& coords,
             const std::vector<kvs::Vec3ui>& connections )
@@ -95,6 +96,7 @@ public:
             coord.close();
             connection.close();
         };
+        */
 
         std::vector<kvs::Vec3> vertices;
         std::vector<kvs::Vec3ui> faces;
@@ -407,7 +409,7 @@ public:
                 const auto index = vertices.size() * i + j;
                 const auto xyz = kvs::Vec3( { vertices[j].x() * r, vertices[j].y() * r, vertices[j].z() * r } );
                 const auto p = kvs::Quaternion::Rotate( xyz, rq );
-                const auto rtp = xyz_to_rtp( p );
+                //const auto rtp = xyz_to_rtp( p );
                 const auto q = calc_rotation( p );
                 const auto u = kvs::Quaternion::Rotate( m_base_up_vector, q );
                 coords.push_back( p );
