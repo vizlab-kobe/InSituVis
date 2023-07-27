@@ -110,6 +110,7 @@ protected:
     virtual void execPipeline();
     virtual void execRendering();
     virtual ColorBuffer drawScreen();
+//    virtual ColorBuffer drawColorBuffer();
 
     kvs::UInt32 timeStep() const { return m_time_step; }
     void setTimeStep( const size_t step ) { m_time_step = step; }

@@ -38,6 +38,7 @@ public:
 
 private:
     virtual ColorBuffer drawScreen();
+//    virtual ColorBuffer drawColorBuffer();
 };
 
 } // end of namespace InSituVis

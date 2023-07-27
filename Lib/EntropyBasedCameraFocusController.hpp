@@ -108,7 +108,9 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
         for ( size_t i = 0; i < interval - 1; i++ )
         {
             const auto data_front = BaseClass::dataQueue().front();
-            const auto [ radius, rotation ] = BaseClass::path().front();
+//            const auto [ radius, rotation ] = BaseClass::path().front();
+            const auto radius = BaseClass::path().front().first;
+            const auto rotation = BaseClass::path().front().second;
             const auto focus = this->focusPath().front();         // add
             this->process( data_front, radius, focus, rotation ); // mod
             BaseClass::dataQueue().pop();
@@ -143,7 +145,9 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             for ( size_t i = 0; i < interval - 1; i++ )
             {
                 const auto data_front = BaseClass::dataQueue().front();
-                const auto [ radius, rotation ] = BaseClass::path().front();
+                //const auto [ radius, rotation ] = BaseClass::path().front();
+                const auto radius = BaseClass::path().front().first;
+                const auto rotation = BaseClass::path().front().second;
                 const auto focus = m_focus_path.front();              // add
                 this->process( data_front, radius, focus, rotation ); // mod
                 BaseClass::dataQueue().pop();
