@@ -326,7 +326,6 @@ inline Adaptor::ColorBuffer Adaptor::readback_uni_buffer( const Viewpoint::Locat
         camera->setPosition( p, a, u );
         light->setPosition( p );
         const auto buffer = this->drawScreen();
-//        const auto buffer = this->drawColorBuffer();
 
         // Restore camera and light info.
         camera->setPosition( p0, a0, u0 );
@@ -365,8 +364,6 @@ inline Adaptor::ColorBuffer Adaptor::readback_omn_buffer( const Viewpoint::Locat
         const auto up = SphericalColorBuffer::UpVector(d);
         camera->setPosition( p, p + dir, up );
         const auto buffer = this->drawScreen();
-//        const auto buffer = this->drawColorBuffer();
-
         color_buffer.setBuffer( d, buffer );
     }
 

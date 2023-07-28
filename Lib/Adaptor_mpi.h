@@ -80,7 +80,6 @@ public:
 protected:
     using BaseClass::drawScreen;
     virtual void execRendering();
-//    virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func = [] ( const FrameBuffer& ) {} );
     virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func );
 
     float rendTime() const { return m_rend_time; }
