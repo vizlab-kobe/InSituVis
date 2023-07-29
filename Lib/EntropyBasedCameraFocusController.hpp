@@ -125,7 +125,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
 
         while ( BaseClass::dataQueue().size() > 0 )
         {
-            std::queue<std::tuple<float, kvs::Quat>> empty;
+            std::queue<std::pair<float, kvs::Quat>> empty;
             BaseClass::path().swap( empty );
 
             std::queue<kvs::Vec3> empty_focus;     // add
@@ -174,7 +174,7 @@ inline void EntropyBasedCameraFocusController::createPath(
     const kvs::Quat& q4,
     const size_t point_interval )
 {
-    std::queue<std::tuple<float, kvs::Quat>> empty;
+    std::queue<std::pair<float, kvs::Quat>> empty;
     BaseClass::path().swap( empty );
 
     std::queue<kvs::Vec3> empty_focus;     // add
