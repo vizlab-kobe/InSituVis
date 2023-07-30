@@ -56,6 +56,7 @@ inline bool CameraFocusControlledAdaptor::dump()
 {
     bool ret = true;
     bool ret_f = true; // add
+    bool ret_z = true;
     if ( BaseClass::world().isRoot() )
     {
         if ( m_entr_timer.title().empty() ) { m_entr_timer.setTitle( "Ent time" ); }
@@ -70,6 +71,11 @@ inline bool CameraFocusControlledAdaptor::dump()
         f_timer_list.push( m_focus_timer );                                              // add
         ret_f = f_timer_list.write( basedir + "focus_proc_time.csv" );                   // add
 
+        if ( m_zoom_timer.title().empty() ) { m_zoom_timer.setTitle( "zoom time" ); }
+        kvs::StampTimerList z_timer_list;
+        z_timer_list.push( m_zoom_timer );
+        ret_z = z_timer_list.write( basedir + "zoom_proc_time.csv" );
+
         const auto interval = BaseClass::analysisInterval();
         const auto directory = BaseClass::outputDirectory();
         const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
@@ -79,7 +85,7 @@ inline bool CameraFocusControlledAdaptor::dump()
         //this->outputViewpointCoords();
     }
 
-    return BaseClass::dump() && ret && ret_f;
+    return BaseClass::dump() && ret && ret_f && ret_z;
 }
 
 inline void CameraFocusControlledAdaptor::exec( const BaseClass::SimTime sim_time )
@@ -104,6 +110,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
     float save_time = 0.0f;
     float entr_time = 0.0f;
     float focus_time = 0.0f; // add
+    float zoom_time = 0.0f;
 
     float max_entropy = -1.0f;
     int max_index = 0;
@@ -262,6 +269,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
     }
     m_entr_timer.stamp( entr_time );
     m_focus_timer.stamp( focus_time ); // add
+    m_zoom_timer.stamp( zoom_time );
     BaseClass::saveTimer().stamp( save_time );
     BaseClass::rendTimer().stamp( BaseClass::rendTime() );
     BaseClass::compTimer().stamp( BaseClass::compTime() );
@@ -389,8 +397,7 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
     {
         for ( size_t i = 0; i < m_frame_divs.x(); i++ )
         {
-            const auto indices = kvs::Vec2i( static_cast<int>(i), static_cast<int>(j) );
-            this->crop_frame_buffer( frame_buffer, indices, &cropped_buffer );
+            this->crop_frame_buffer( frame_buffer, { i, j }, &cropped_buffer );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
             if ( e > max_entropy )
