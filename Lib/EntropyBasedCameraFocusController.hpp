@@ -133,7 +133,9 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
 
             for ( size_t i = 0; i < interval - 1; i++ )
             {
-                BaseClass::path().push( { r3, q3 } );
+                //BaseClass::path().push( { r3, q3 } );
+                std::pair<float, kvs::Quat> elem( r3, q3 );
+                this->path().push( elem );
                 this->focusPath().push( f3 ); // add
             }
 
@@ -186,7 +188,9 @@ inline void EntropyBasedCameraFocusController::createPath(
         const auto t = static_cast<float>( i ) / static_cast<float>( point_interval );
         const auto r = BaseClass::radiusInterpolation( r2, r3, t );
         const auto q = BaseClass::pathInterpolation( q1, q2, q3, q4, t );
-        BaseClass::path().push( { r, q } );
+        const std::pair<float, kvs::Quat> elem( r, q );
+        this->path().push( elem );
+        //BaseClass::path().push( { r, q } );
 
         const auto f = ( 1.0 - t ) * f2 + t * f3; // add
         this->focusPath().push( f );              // add

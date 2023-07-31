@@ -397,7 +397,8 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
     {
         for ( size_t i = 0; i < m_frame_divs.x(); i++ )
         {
-            this->crop_frame_buffer( frame_buffer, { i, j }, &cropped_buffer );
+            const auto indices = kvs::Vec2i( static_cast<int>(i), static_cast<int>(j) );
+            this->crop_frame_buffer( frame_buffer, indices, &cropped_buffer );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
             if ( e > max_entropy )
