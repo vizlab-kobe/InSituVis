@@ -29,11 +29,11 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-    bool m_enable_output_image_depth = false;
+    /*bool m_enable_output_image_depth = false;
     bool m_enable_output_evaluation_image = false; ///< if true, all of evaluation images will be output
     bool m_enable_output_evaluation_image_depth = false; ///< if true, all of evaluation depth images will be output
     bool m_enable_output_entropies = false; ///< if true, calculted entropies for all viewpoints will be output
-    bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
+    bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output*/
     kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_focus_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_zoom_timer{ BaseClass::world() }; ///< timer for entropy evaluation
@@ -47,9 +47,9 @@ public:
     CFCA( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
     virtual ~CFCA() = default;
 
-    void setOutputEvaluationImageEnabled( const bool enable = true, const bool enable_depth = false );
+    /*void setOutputEvaluationImageEnabled( const bool enable = true, const bool enable_depth = false );
     void setOutputEntropiesEnabled( const bool enable = true ) { m_enable_output_entropies = enable; }
-    void setOutputFrameEntropiesEnabled( const bool enable = true ) { m_enable_output_frame_entropies = enable; }
+    void setOutputFrameEntropiesEnabled( const bool enable = true ) { m_enable_output_frame_entropies = enable; }*/
 
     kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
     kvs::mpi::StampTimer& focusTimer() { return m_focus_timer; }
@@ -92,7 +92,7 @@ protected:
         const FrameBuffer& frame_buffer,
         const size_t level );
 
-    void outputEntropies(
+    /*void outputEntropies(
         const std::vector<float> entropies );
 
     void outputPathEntropies(
@@ -103,7 +103,7 @@ protected:
 
     // add
     void outputFrameEntropies(
-        const std::vector<float> entropies );
+        const std::vector<float> entropies );*/
     void outputZoomEntropies(
         const std::vector<float> entropies );
 

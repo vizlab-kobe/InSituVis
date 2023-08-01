@@ -8,13 +8,13 @@ namespace InSituVis
 namespace mpi
 {
 
-inline void CFCA::setOutputEvaluationImageEnabled(
+/*inline void CFCA::setOutputEvaluationImageEnabled(
     const bool enable,
     const bool enable_depth )
 {
     m_enable_output_evaluation_image = enable;
     m_enable_output_evaluation_image_depth = enable_depth;
-}
+}*/
 
 inline bool CFCA::isEntropyStep()
 {
@@ -84,10 +84,15 @@ inline bool CFCA::dump()
         z_timer_list.push( m_zoom_timer );
         ret_z = z_timer_list.write( basedir + "zoom_proc_time.csv" );
 
-        this->outputPathEntropies( Controller::pathEntropies() );
-        this->outputPathPositions( Controller::pathPositions() );
+        /*this->outputPathEntropies( Controller::pathEntropies() );
+        this->outputPathPositions( Controller::pathPositions() );*/
         //this->outputPathCalcTimes( Controller::pathCalcTimes() );
         //this->outputViewpointCoords();
+        const auto interval = BaseClass::analysisInterval();
+        const auto directory = BaseClass::outputDirectory();
+        const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
+        Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
+        Controller::outputPathPositions( File( "output_path_positions"), interval );
     }
 
     return BaseClass::dump() && ret && ret_f && ret_z;
@@ -142,8 +147,8 @@ inline void CFCA::execRendering()
                 entropies.push_back( entropy );
                 frame_buffers.push_back( frame_buffer );
                 // mod
-                //if ( entropy > max_entropy )
-                if ( entropy > max_entropy && std::abs( entropy - max_entropy ) > 1.e-3 )
+                if ( entropy > max_entropy )
+                //if ( entropy > max_entropy && std::abs( entropy - max_entropy ) > 1.e-3 )
                 {
                     max_entropy = entropy;
                     max_index = location.index;
@@ -273,9 +278,13 @@ inline void CFCA::execRendering()
                 //BaseClass::outputDepthImage( location, frame_buffer );
             }*/
 
-            if ( m_enable_output_entropies )
+            if ( Controller::isOutputEntropiesEnabled() )
             {
-                this->outputEntropies( entropies );
+                const auto basename = "output_entropies_";
+                    const auto timestep = BaseClass::timeStep();
+                    const auto directory = BaseClass::outputDirectory();
+                    const auto filename = Controller::logDataFilename( basename, timestep, directory );
+                    Controller::outputEntropies( filename, entropies );
             }
             this->outputZoomEntropies(zoom_entropies);
         }
@@ -419,7 +428,7 @@ inline void CFCA::outputDepthImage(
     image.write( this->outputFinalImageName( level ) );
 }
 
-inline void CFCA::outputEntropies(
+/*inline void CFCA::outputEntropies(
     const std::vector<float> entropies )
 {
     const auto time = BaseClass::timeStep();
@@ -494,7 +503,7 @@ inline void CFCA::outputFrameEntropies(
         }
     }
     file.close();
-}
+}*/
 
 // add
 inline kvs::Vec3 CFCA::look_at_in_window( const FrameBuffer& frame_buffer )
@@ -546,7 +555,8 @@ inline kvs::Vec3 CFCA::look_at_in_window( const FrameBuffer& frame_buffer )
     {
         for ( size_t i = 0; i < m_frame_divs.x(); i++ )
         {
-            this->crop_frame_buffer( frame_buffer, { i, j }, &cropped_buffer );
+            const auto indices = kvs::Vec2i( static_cast<int>(i), static_cast<int>(j) );
+            this->crop_frame_buffer( frame_buffer, indices, &cropped_buffer );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
 //            if ( e > max_entropy &&
@@ -560,9 +570,13 @@ inline kvs::Vec3 CFCA::look_at_in_window( const FrameBuffer& frame_buffer )
         }
     }
 
-    if ( m_enable_output_frame_entropies )
+    if ( Controller::isOutputFrameEntropiesEnabled() )
     {
-        this->outputFrameEntropies( focus_entropies );
+        const auto basename = "output_frame_entropies_";
+        const auto timestep = BaseClass::timeStep();
+        const auto directory = BaseClass::outputDirectory();
+        const auto filename = Controller::logDataFilename( basename, timestep, directory );
+        Controller::outputEntropies( filename, focus_entropies );
     }
 
     return { static_cast<float>( center.x() ), static_cast<float>( center.y() ), depth };
@@ -618,7 +632,8 @@ inline kvs::Vec3 CFCA::look_at_in_window_slide( const FrameBuffer& frame_buffer 
     {
         for ( size_t i = 0; i < m_frame_divs.x(); i++ )
         {
-            this->crop_frame_buffer( frame_buffer, { i, j }, &cropped_buffer );
+            const auto indices = kvs::Vec2i( static_cast<int>(i), static_cast<int>(j) );
+            this->crop_frame_buffer( frame_buffer, indices, &cropped_buffer );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
 //            if ( e > max_entropy &&
@@ -632,9 +647,13 @@ inline kvs::Vec3 CFCA::look_at_in_window_slide( const FrameBuffer& frame_buffer 
         }
     }
 
-    if ( m_enable_output_frame_entropies )
+    if ( Controller::isOutputFrameEntropiesEnabled() )
     {
-        this->outputFrameEntropies( focus_entropies );
+        const auto basename = "output_frame_entropies_";
+        const auto timestep = BaseClass::timeStep();
+        const auto directory = BaseClass::outputDirectory();
+        const auto filename = Controller::logDataFilename( basename, timestep, directory );
+        Controller::outputEntropies( filename, focus_entropies );
     }
 
     return { static_cast<float>( center.x() ), static_cast<float>( center.y() ), depth };

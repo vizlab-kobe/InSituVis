@@ -24,6 +24,7 @@ private:
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
     std::vector<float> m_focus_path_positions{}; ///< focus points on the interpolated path
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
+    bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
 
 public:
 
@@ -35,6 +36,8 @@ public:
     void setErpFocus( const kvs::Vec3& erp_focus ) { m_erp_focus = erp_focus; }
     kvs::Vec3 erpFocus() const { return m_erp_focus; }
     //add
+    void setOutputFrameEntropiesEnabled( const bool enable = true ) { m_enable_output_frame_entropies = enable; }
+    bool isOutputFrameEntropiesEnabled() const { return m_enable_output_frame_entropies; }
     void setBestLocationPosition( const kvs::Vec3& best_location_position ) { m_best_location_position = best_location_position; }
     kvs::Vec3 bestLocationPosition() const { return m_best_location_position; }
     void setBestZoomLevel( const size_t best_zoomlevel ) { m_best_zoomlevel = best_zoomlevel; }

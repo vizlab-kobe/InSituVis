@@ -1,7 +1,7 @@
 namespace InSituVis
 {
 
-inline void EntropyBasedCameraFocusController::push( const Data& data )
+inline void EBCFC::push( const Data& data )
 {
     const auto interval = BaseClass::entropyInterval();
 
@@ -13,7 +13,8 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             this->process( data );
             BaseClass::setPreviousData( data );
             BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
-            BaseClass::pushMaxPositions( BaseClass::maxPosition() );
+            //BaseClass::pushMaxPositions( BaseClass::maxPosition() );
+            BaseClass::pushMaxPositions( bestLocationPosition() );
             BaseClass::pushMaxRotations( BaseClass::maxRotation() );
             BaseClass::pushMaxRotations( BaseClass::maxRotation() );
             BaseClass::dataQueue().push( data );
@@ -27,7 +28,8 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                 {
                     this->process( data );
                     BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
-                    BaseClass::pushMaxPositions( BaseClass::maxPosition() );
+                    //BaseClass::pushMaxPositions( BaseClass::maxPosition() );
+                    BaseClass::pushMaxPositions( bestLocationPosition() );
                     BaseClass::pushMaxRotations( BaseClass::maxRotation() );
                     this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
 
@@ -57,7 +59,8 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                         for ( size_t i = 0; i < interval - 1; i++ )
                         {
                             const auto data_front = BaseClass::dataQueue().front();
-                            const auto [ radius, rotation ] = BaseClass::path().front();
+                            const auto radius = BaseClass::path().front().first;
+                            const auto rotation = BaseClass::path().front().second;
                             const auto focus = this->focusPath().front();         // add
                             this->process( data_front, radius, focus, rotation ); // mod
                             BaseClass::dataQueue().pop();
@@ -65,7 +68,8 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                             this->focusPath().pop(); // add
 
                             BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-                            BaseClass::pushPathPositions( BaseClass::maxPosition() );
+                            //BaseClass::pushPathPositions( BaseClass::maxPosition() );
+                            BaseClass::pushPathPositions( bestLocationPosition() );
                             this->pushFocusPathPositions( this->maxFocusPoint() ); // add
                         }
 
@@ -108,7 +112,8 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
         for ( size_t i = 0; i < interval - 1; i++ )
         {
             const auto data_front = BaseClass::dataQueue().front();
-            const auto [ radius, rotation ] = BaseClass::path().front();
+            const auto radius = BaseClass::path().front().first;
+            const auto rotation = BaseClass::path().front().second;
             const auto focus = this->focusPath().front();         // add
             this->process( data_front, radius, focus, rotation ); // mod
             BaseClass::dataQueue().pop();
@@ -116,13 +121,14 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             this->focusPath().pop(); // add
 
             BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-            BaseClass::pushPathPositions( BaseClass::maxPosition() );
+            //BaseClass::pushPathPositions( BaseClass::maxPosition() );
+            BaseClass::pushPathPositions( bestLocationPosition() );
             this->pushFocusPathPositions( this->maxFocusPoint() ); // add
         }
 
         while ( BaseClass::dataQueue().size() > 0 )
         {
-            std::queue<std::tuple<float, kvs::Quat>> empty;
+            std::queue<std::pair<float, kvs::Quat>> empty;
             BaseClass::path().swap( empty );
 
             std::queue<kvs::Vec3> empty_focus;     // add
@@ -143,7 +149,8 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             for ( size_t i = 0; i < interval - 1; i++ )
             {
                 const auto data_front = BaseClass::dataQueue().front();
-                const auto [ radius, rotation ] = BaseClass::path().front();
+                const auto radius = BaseClass::path().front().first;
+                const auto rotation = BaseClass::path().front().second;
                 const auto focus = m_focus_path.front();              // add
                 this->process( data_front, radius, focus, rotation ); // mod
                 BaseClass::dataQueue().pop();
@@ -151,14 +158,15 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                 this->focusPath().pop(); // add
 
                 BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-                BaseClass::pushPathPositions( BaseClass::maxPosition() );
+                //BaseClass::pushPathPositions( BaseClass::maxPosition() );
+                BaseClass::pushPathPositions( bestLocationPosition() );
                 this->pushFocusPathPositions( this->maxFocusPoint() ); // add
             }
         }
     }
 }
 
-inline void EntropyBasedCameraFocusController::createPath(
+inline void EBCFC::createPath(
     const float r2,
     const float r3,
     const kvs::Vec3& f2,
@@ -169,8 +177,8 @@ inline void EntropyBasedCameraFocusController::createPath(
     const kvs::Quat& q4,
     const size_t point_interval )
 {
-    std::queue<std::tuple<float, kvs::Quat>> empty;
-    BaseClass::path().swap( empty );
+    std::queue<std::pair<float, kvs::Quat>> empty;
+    this->path().swap( empty );
 
     std::queue<kvs::Vec3> empty_focus;     // add
     this->focusPath().swap( empty_focus ); // add
@@ -193,3 +201,5 @@ inline void EntropyBasedCameraFocusController::createPath(
 }
 
 } // end of namespace InSituVis
+
+
