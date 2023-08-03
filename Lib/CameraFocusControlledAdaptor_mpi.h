@@ -77,11 +77,15 @@ protected:
     void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level ); // add
     void outputDepthImage( const InSituVis::Viewpoint::Location& location, const FrameBuffer& frame_buffer );
 
+    void outputZoomEntropies(
+        const std::vector<float> entropies );
+
 private:
     // add
     kvs::Vec3 look_at_in_window( const FrameBuffer& frame_buffer );
     kvs::Vec3 window_to_object( const kvs::Vec3 win, const Location& location );
     void crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices, FrameBuffer* cropped_frame_buffer );
+    kvs::Quat rotation( const kvs::Vec3& p );
 };
 
 } // end of namespace mpi

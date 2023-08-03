@@ -4,6 +4,10 @@ namespace InSituVis
 inline void EntropyBasedCameraFocusController::push( const Data& data )
 {
     const auto interval = BaseClass::entropyInterval();
+    auto estimated_position = [&]()
+    {
+        return this->isAutoZoomingEnabled() ? this->estimatedZoomPosition() : BaseClass::maxPosition();
+    };
 
     if ( !( BaseClass::isFinalStep() ) )
     {
@@ -13,7 +17,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             this->process( data );
             BaseClass::setPreviousData( data );
             BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
-            BaseClass::pushMaxPositions( BaseClass::maxPosition() );
+            BaseClass::pushMaxPositions( estimated_position() );
             BaseClass::pushMaxRotations( BaseClass::maxRotation() );
             BaseClass::pushMaxRotations( BaseClass::maxRotation() );
             BaseClass::dataQueue().push( data );
@@ -27,7 +31,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                 {
                     this->process( data );
                     BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
-                    BaseClass::pushMaxPositions( BaseClass::maxPosition() );
+                    BaseClass::pushMaxPositions( estimated_position() );
                     BaseClass::pushMaxRotations( BaseClass::maxRotation() );
                     this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
 
@@ -66,7 +70,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                             this->focusPath().pop(); // add
 
                             BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-                            BaseClass::pushPathPositions( BaseClass::maxPosition() );
+                            BaseClass::pushPathPositions( estimated_position() );
                             this->pushFocusPathPositions( this->maxFocusPoint() ); // add
                         }
 
@@ -109,7 +113,6 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
         for ( size_t i = 0; i < interval - 1; i++ )
         {
             const auto data_front = BaseClass::dataQueue().front();
-//            const auto [ radius, rotation ] = BaseClass::path().front();
             const auto radius = BaseClass::path().front().first;
             const auto rotation = BaseClass::path().front().second;
             const auto focus = this->focusPath().front();         // add
@@ -119,7 +122,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             this->focusPath().pop(); // add
 
             BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-            BaseClass::pushPathPositions( BaseClass::maxPosition() );
+            BaseClass::pushPathPositions( estimated_position() );
             this->pushFocusPathPositions( this->maxFocusPoint() ); // add
         }
 
@@ -158,7 +161,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                 this->focusPath().pop(); // add
 
                 BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-                BaseClass::pushPathPositions( BaseClass::maxPosition() );
+                BaseClass::pushPathPositions( estimated_position() );
                 this->pushFocusPathPositions( this->maxFocusPoint() ); // add
             }
         }
