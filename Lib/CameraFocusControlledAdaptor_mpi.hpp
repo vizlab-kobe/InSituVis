@@ -109,7 +109,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
     BaseClass::setCompTime( 0.0f );
     float save_time = 0.0f;
     float entr_time = 0.0f;
-    float focus_time = 0.0f; // add
+    float focus_time = 0.0f;
     float zoom_time = 0.0f;
 
     float max_entropy = -1.0f;
@@ -141,8 +141,6 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     max_index = location.index;
                 }
 
-                //this->outputColorImage( location, frame_buffer );
-                //this->outputDepthImage( location, frame_buffer );
                 /*
                 if ( m_enable_output_evaluation_image )
                 {
@@ -156,29 +154,34 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 */
             }
             timer.stop();
-            entr_time += BaseClass::saveTimer().time( timer );
+            entr_time += m_entr_timer.time( timer );
+        }
+
+        // Output entropies (entropy heatmap)
+        if ( BaseClass::world().isRoot() )
+        {
+            if ( Controller::isOutputEntropiesEnabled() )
+            {
+                const auto basename = "output_entropies_";
+                const auto timestep = BaseClass::timeStep();
+                const auto directory = BaseClass::outputDirectory();
+                const auto filename = Controller::logDataFilename( basename, timestep, directory );
+                Controller::outputEntropies( filename, entropies );
+            }
         }
 
         // Distribute the index indicates the max entropy image
         BaseClass::world().broadcast( max_index );
         BaseClass::world().broadcast( max_entropy );
-
-        // mod
-        //const auto max_position = BaseClass::viewpoint().at( max_index ).position;
-        //const auto max_rotation = BaseClass::viewpoint().at( max_index ).rotation;
         const auto& max_location = BaseClass::viewpoint().at( max_index );
         const auto max_position = max_location.position;
         const auto max_rotation = max_location.rotation;
-
-        // mod
         Controller::setMaxIndex( max_index );
-        //Controller::setMaxPosition( max_position );
         Controller::setMaxRotation( max_rotation );
         Controller::setMaxEntropy( max_entropy );
 
-        // add
         // Calculate camera focus point.
-        auto at = BaseClass::viewpoint().at( max_index ).look_at;
+        auto at = max_location.look_at;
         kvs::Timer timer( kvs::Timer::Start );
         if ( BaseClass::world().isRoot() )
         {
@@ -187,7 +190,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
             at = this->window_to_object( at_w, max_location );
         }
         timer.stop();
-        focus_time += BaseClass::saveTimer().time( timer );
+        focus_time += m_focus_timer.time( timer );
 
         // Readback frame buffer rendererd from updated location.
         BaseClass::world().broadcast( at.data(), sizeof(float) * 3 );
@@ -196,35 +199,26 @@ inline void CameraFocusControlledAdaptor::execRendering()
         auto location = this->focusedLocation( max_location, at );
         Controller::setMaxPosition( max_position );
 
-        // add
         // Zooming
         for ( size_t level = 0; level < m_zoom_level; level++ )
         {
+            // Update camera position.
+            timer.start();
             auto t = static_cast<float>( level ) / static_cast<float>( m_zoom_level );
             location.position = ( 1 - t ) * max_position + t * at;
-            auto frame_buffer = BaseClass::readback( location );
+            timer.stop();
+            zoom_time += m_zoom_timer.time( timer );
+
+            // Rendering at the updated camera position.
+            auto frame_buffer =  BaseClass::readback( location );
 
             // Output the rendering images and the heatmap of entropies.
-            kvs::Timer timer( kvs::Timer::Start );
+            timer.start();
             if ( BaseClass::world().isRoot() )
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    // mod
-                    //const auto index = Controller::maxIndex();
-                    //const auto& location = BaseClass::viewpoint().at( index );
-                    //const auto& frame_buffer = frame_buffers[ index ];
                     this->outputColorImage( location, frame_buffer, level );
-                    //BaseClass::outputDepthImage( location, frame_buffer );
-                }
-
-                if ( Controller::isOutputEntropiesEnabled() )
-                {
-                    const auto basename = "output_entropies_";
-                    const auto timestep = BaseClass::timeStep();
-                    const auto directory = BaseClass::outputDirectory();
-                    const auto filename = Controller::logDataFilename( basename, timestep, directory );
-                    Controller::outputEntropies( filename, entropies );
                 }
             }
             timer.stop();
@@ -239,13 +233,19 @@ inline void CameraFocusControlledAdaptor::execRendering()
         auto location = this->erpLocation( focus );
         Controller::setMaxPosition( location.position );
 
-        // add
         // Zooming
+        kvs::Timer timer;
         const auto p = location.position;
         for ( size_t level = 0; level < m_zoom_level; level++ )
         {
+            // Update camera position.
+            timer.start();
             auto t = static_cast<float>( level ) / static_cast<float>( m_zoom_level );
             location.position = ( 1 - t ) * p + t * focus;
+            timer.stop();
+            zoom_time += m_zoom_timer.time( timer );
+
+            // Rendering at the updated camera position.
             auto frame_buffer = BaseClass::readback( location );
 
             if ( level == 0 )
@@ -254,21 +254,21 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 Controller::setMaxEntropy( path_entropy );
             }
 
-            kvs::Timer timer( kvs::Timer::Start );
+            timer.start();
             if ( BaseClass::world().isRoot() )
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
                     this->outputColorImage( location, frame_buffer, level );
-                    //this->outputDepthImage( location, frame_buffer );
                 }
             }
             timer.stop();
             save_time += BaseClass::saveTimer().time( timer );
         }
     }
+
     m_entr_timer.stamp( entr_time );
-    m_focus_timer.stamp( focus_time ); // add
+    m_focus_timer.stamp( focus_time );
     m_zoom_timer.stamp( zoom_time );
     BaseClass::saveTimer().stamp( save_time );
     BaseClass::rendTimer().stamp( BaseClass::rendTime() );
@@ -360,7 +360,7 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
     {
         return {
             static_cast<int>( i * cw + cw * 0.5 ),
-            static_cast<int>( h - ( j * ch + ch * 0.5 ) ) };
+            static_cast<int>( h - static_cast<int>( j * ch + ch * 0.5 ) ) };
     };
 
     auto get_depth = [&] ( const FrameBuffer& buffer ) -> float
@@ -416,7 +416,7 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
         const auto timestep = BaseClass::timeStep();
         const auto directory = BaseClass::outputDirectory();
         const auto filename = Controller::logDataFilename( basename, timestep, directory );
-        Controller::outputEntropies( filename, focus_entropies );
+        Controller::outputFrameEntropies( filename, focus_entropies );
     }
 
     return { static_cast<float>( center.x() ), static_cast<float>( center.y() ), depth };

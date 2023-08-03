@@ -23,6 +23,7 @@ private:
     std::vector<float> m_focus_path_positions{}; ///< focus points on the interpolated path
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
     bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
+    bool m_enable_output_zoom_entropies = false; ///< if true, calculted entropies along the viewing ray will be output
 
 public:
     EntropyBasedCameraFocusController() = default;
@@ -34,7 +35,9 @@ public:
     kvs::Vec3 erpFocus() const { return m_erp_focus; }
 
     void setOutputFrameEntropiesEnabled( const bool enable = true ) { m_enable_output_frame_entropies = enable; }
+    void setOutputZoomEntropiesEnabled( const bool enable = true ) { m_enable_output_zoom_entropies = enable; }
     bool isOutputFrameEntropiesEnabled() const { return m_enable_output_frame_entropies; }
+    bool isOutputZoomEntropiesEnabled() const { return m_enable_output_zoom_entropies; }
 
 protected:
     std::queue<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
@@ -64,6 +67,20 @@ protected:
         const kvs::Quat& q4,
         const size_t point_interval
     );
+
+    void outputFrameEntropies(
+        const std::string& filename,
+        const std::vector<float>& entropies )
+    {
+        BaseClass::outputEntropies( filename, entropies );
+    }
+
+    void outputZoomEntropies(
+        const std::string& filename,
+        const std::vector<float>& entropies )
+    {
+        BaseClass::outputEntropies( filename, entropies );
+    }
 };
 
 } // end of namespace InSituVis
