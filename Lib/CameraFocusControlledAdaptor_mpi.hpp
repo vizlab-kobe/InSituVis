@@ -424,15 +424,19 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
 {
     const auto w = BaseClass::imageWidth(); // frame buffer width
     const auto h = BaseClass::imageHeight(); // frame buffer height
-    const auto cw = ( w + 1 ) / m_frame_divs.x(); // cropped frame buffer width
-    const auto ch = ( h + 1 ) / m_frame_divs.y(); // cropped frame buffer height
-    std::vector<float> focus_entropies;
+//    const auto cw = w / m_frame_divs.x(); // cropped frame buffer width
+//    const auto ch = h / m_frame_divs.y(); // cropped frame buffer height
+//    const auto cw = ( w + 1 ) / m_frame_divs.x(); // cropped frame buffer width
+//    const auto ch = ( h + 1 ) / m_frame_divs.y(); // cropped frame buffer height
+    const auto cw = w / m_frame_divs.x() + 1; // cropped frame buffer width
+    const auto ch = h / m_frame_divs.y() + 1; // cropped frame buffer height
 
     auto get_center = [&] ( int i, int j ) -> kvs::Vec2i
     {
         return {
             static_cast<int>( i * cw + cw * 0.5 ),
-            static_cast<int>( h - static_cast<int>( j * ch + ch * 0.5 ) ) };
+//            static_cast<int>( ( h - 1 ) - ( j * ch + ch * 0.5 ) ) };
+            static_cast<int>( j * ch + ch * 0.5 ) };
     };
 
     auto get_depth = [&] ( const FrameBuffer& buffer ) -> float
@@ -458,19 +462,21 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
         }
     };
 
-    FrameBuffer cropped_buffer;
-    cropped_buffer.color_buffer.allocate( cw * ch * 4 );
-    cropped_buffer.depth_buffer.allocate( cw * ch );
+//    FrameBuffer cropped_buffer;
+//    cropped_buffer.color_buffer.allocate( cw * ch * 4 );
+//    cropped_buffer.depth_buffer.allocate( cw * ch );
 
     float max_entropy = -1.0f;
     kvs::Vec2i center{ 0, 0 };
     kvs::Real32 depth{ 0.0f };
+    std::vector<float> focus_entropies;
     for ( size_t j = 0; j < m_frame_divs.y(); j++ )
     {
         for ( size_t i = 0; i < m_frame_divs.x(); i++ )
         {
             const auto indices = kvs::Vec2i( static_cast<int>(i), static_cast<int>(j) );
-            this->crop_frame_buffer( frame_buffer, indices, &cropped_buffer );
+//            this->crop_frame_buffer( frame_buffer, indices, &cropped_buffer );
+            const auto cropped_buffer = this->crop_frame_buffer( frame_buffer, indices );
             const auto e = Controller::entropy( cropped_buffer );
             focus_entropies.push_back(e);
             if ( e > max_entropy )
@@ -543,10 +549,10 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::window_to_object(
 }
 
 // add
-inline void CameraFocusControlledAdaptor::crop_frame_buffer(
+inline CameraFocusControlledAdaptor::FrameBuffer
+CameraFocusControlledAdaptor::crop_frame_buffer(
     const FrameBuffer& frame_buffer,
-    const kvs::Vec2i& indices,
-    FrameBuffer* cropped_frame_buffer )
+    const kvs::Vec2i& indices )
 {
     KVS_ASSERT( indices[0] < static_cast<int>( m_frame_divs[0] ) );
     KVS_ASSERT( indices[1] < static_cast<int>( m_frame_divs[1] ) );
@@ -555,30 +561,44 @@ inline void CameraFocusControlledAdaptor::crop_frame_buffer(
     const auto h = BaseClass::imageHeight(); // frame buffer height
 //    const auto cw = w / m_frame_divs.x(); // cropped frame buffer width
 //    const auto ch = h / m_frame_divs.y(); // cropped frame buffer height
-    const auto cw = ( w + 1 ) / m_frame_divs.x(); // cropped frame buffer width
-    const auto ch = ( h + 1 ) / m_frame_divs.y(); // cropped frame buffer height
+    const auto cw = w / m_frame_divs.x() + 1; // cropped frame buffer width
+    const auto ch = h / m_frame_divs.y() + 1; // cropped frame buffer height
     const auto ow = cw * indices[0]; // offset width for frame buffer
     const auto oh = ch * indices[1]; // offset height for frame buffer
 
-    // Initialize frame buffer.
-    cropped_frame_buffer->color_buffer.fill(0);
-    cropped_frame_buffer->depth_buffer.fill(0);
+    // Adjust cropped width and height (aw,ah).
+    const auto ww = ow + cw;
+    const auto hh = oh + ch;
+    const auto aw = ( w >= ww ) ? cw : cw - ( ww - w );
+    const auto ah = ( h >= hh ) ? ch : ch - ( hh - h );
 
-    auto* dst_color_buffer = cropped_frame_buffer->color_buffer.data();
-    auto* dst_depth_buffer = cropped_frame_buffer->depth_buffer.data();
+    // Cropped frame buffer.
+    FrameBuffer cropped_buffer;
+    cropped_buffer.color_buffer.allocate( aw * ah * 4 );
+    cropped_buffer.depth_buffer.allocate( aw * ah );
+
+    auto* dst_color_buffer = cropped_buffer.color_buffer.data();
+    auto* dst_depth_buffer = cropped_buffer.depth_buffer.data();
     const auto offset = ow + oh * w;
     const auto* src_color_buffer = frame_buffer.color_buffer.data() + offset * 4;
     const auto* src_depth_buffer = frame_buffer.depth_buffer.data() + offset;
-    for ( size_t j = 0; j < ch; j++ )
+//    for ( size_t j = 0; j < ch; j++ )
+    for ( size_t j = 0; j < ah; j++ )
     {
-        std::memcpy( dst_color_buffer, src_color_buffer, cw * 4 * sizeof( kvs::UInt8 ) );
-        dst_color_buffer += cw * 4;
+//        std::memcpy( dst_color_buffer, src_color_buffer, cw * 4 * sizeof( kvs::UInt8 ) );
+        std::memcpy( dst_color_buffer, src_color_buffer, aw * 4 * sizeof( kvs::UInt8 ) );
+//        dst_color_buffer += cw * 4;
+        dst_color_buffer += aw * 4;
         src_color_buffer += w * 4;
 
-        std::memcpy( dst_depth_buffer, src_depth_buffer, cw * sizeof( kvs::Real32 ) );
-        dst_depth_buffer += cw;
+//        std::memcpy( dst_depth_buffer, src_depth_buffer, cw * sizeof( kvs::Real32 ) );
+        std::memcpy( dst_depth_buffer, src_depth_buffer, aw * sizeof( kvs::Real32 ) );
+//        dst_depth_buffer += cw;
+        dst_depth_buffer += aw;
         src_depth_buffer += w;
     }
+
+    return cropped_buffer;
 }
 
 inline kvs::Quat CameraFocusControlledAdaptor::rotation( const kvs::Vec3& position )

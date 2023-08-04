@@ -84,7 +84,7 @@ private:
     // add
     kvs::Vec3 look_at_in_window( const FrameBuffer& frame_buffer );
     kvs::Vec3 window_to_object( const kvs::Vec3 win, const Location& location );
-    void crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices, FrameBuffer* cropped_frame_buffer );
+    FrameBuffer crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices );
     kvs::Quat rotation( const kvs::Vec3& p );
 };
 
