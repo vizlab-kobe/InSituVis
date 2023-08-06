@@ -433,10 +433,10 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
 
     auto get_center = [&] ( int i, int j ) -> kvs::Vec2i
     {
-        return {
-            static_cast<int>( i * cw + cw * 0.5 ),
+        return { static_cast<int>( i * cw + cw * 0.5 ) ,static_cast<int>( ( h - 1 ) - static_cast<int>( j * ch + ch * 0.5 ) )};
+            //static_cast<int>( i * cw + cw * 0.5 ),
 //            static_cast<int>( ( h - 1 ) - ( j * ch + ch * 0.5 ) ) };
-            static_cast<int>( j * ch + ch * 0.5 ) };
+            //static_cast<int>( j * ch + ch * 0.5 ) };
     };
 
     auto get_depth = [&] ( const FrameBuffer& buffer ) -> float
@@ -452,13 +452,12 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
         }
         else
         {
-            int counter = 0;
-            float depth = 0.0f;
+            float min_depth = 1.0f;
             for ( const auto d : depth_buffer )
             {
-                if ( d < 1.0f ) { depth += d; counter++; }
+                if ( d < 1.0f ) { min_depth = kvs::Math::Min( d, min_depth ); }
             }
-            return counter > 0 ? depth / counter : 1.0f;
+            return min_depth;
         }
     };
 
@@ -569,6 +568,7 @@ CameraFocusControlledAdaptor::crop_frame_buffer(
     // Adjust cropped width and height (aw,ah).
     const auto ww = ow + cw;
     const auto hh = oh + ch;
+
     const auto aw = ( w >= ww ) ? cw : cw - ( ww - w );
     const auto ah = ( h >= hh ) ? ch : ch - ( hh - h );
 
