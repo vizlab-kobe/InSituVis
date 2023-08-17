@@ -299,7 +299,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 }
             }
             timer.stop();
-            save_time += BaseClass::saveTimer().time( timer );        }
+            save_time += BaseClass::saveTimer().time( timer );        
+        }
         else
         {
             auto location = this->erpLocation( focus );
