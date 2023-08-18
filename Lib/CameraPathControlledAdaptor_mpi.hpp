@@ -50,6 +50,10 @@ inline bool CameraPathControlledAdaptor::dump()
         Controller::outputPathPositions( File( "output_path_positions"), interval );
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
         Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
+        if( Controller::isSlomoEnabled() )
+        {
+            Controller::outputNumberOfImages( File( "output_number_of_images" ), interval );
+        }
     }
 
     return BaseClass::dump() && ret;
@@ -83,7 +87,7 @@ inline void CameraPathControlledAdaptor::execRendering()
     std::vector<float> entropies;
     std::vector<FrameBuffer> frame_buffers;
 
-    if ( this->isEntropyStep() )
+    if ( this->isEntropyStep() && !Controller::isErpStep() )
     {
         // Entropy evaluation
         for ( const auto& location : BaseClass::viewpoint().locations() )
@@ -214,6 +218,21 @@ inline void CameraPathControlledAdaptor::process( const Data& data, const float 
     BaseClass::setTimeStep( current_step );
 }
 
+inline std::string CameraPathControlledAdaptor::outputColorImageName( const Viewpoint::Location& location )
+{
+    const auto time = BaseClass::timeStep();
+    const auto space = location.index;
+    const auto number_of_image = Controller::numberOfImage();
+    const auto output_time = kvs::String::From( time, 6, '0' );
+    const auto output_space = kvs::String::From( space, 6, '0' );
+    const auto output_number_of_image = kvs::String::From( number_of_image, 6, '0' );
+
+    const auto output_basename = BaseClass::outputFilename();
+    const auto output_filename = output_basename + "_" + output_time + "_" + output_space + "_" + output_number_of_image;
+    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
+    return filename;
+}
+
 inline std::string CameraPathControlledAdaptor::outputDepthImageName( const Viewpoint::Location& location )
 {
     const auto time = BaseClass::timeStep();
@@ -234,7 +253,7 @@ inline void CameraPathControlledAdaptor::outputColorImage(
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.color_buffer;
     kvs::ColorImage image( size.x(), size.y(), buffer );
-    image.write( BaseClass::outputFinalImageName( location ) );
+    image.write( this->outputColorImageName( location ) );
 }
 
 inline void CameraPathControlledAdaptor::outputDepthImage(

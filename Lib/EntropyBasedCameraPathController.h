@@ -41,8 +41,11 @@ public:
     static Interpolator Squad();
 
 private:
-    size_t m_interval = 1; ///< time interval of entropy calculation
+    size_t m_entropy_interval = 1; ///< time interval of entropy calculation
+    float m_viewpoint_interval = 1.0f; ///< interpolated viewpoint interval for slow-motion
     bool m_cache_enabled = true; ///< flag for data caching
+    bool m_is_erp_step = false;
+    bool m_slomo_enabled = true; ///< flag for slow-motion
     bool m_final_step = false; ///< flag for checking whether the current step is final step
     size_t m_max_index = 0; ///< index of the estimated camera at the evaluation step
     float m_max_entropy = 0.0f; ///< entropy at the estimated camera
@@ -64,20 +67,24 @@ private:
     bool m_enable_output_evaluation_image = false; ///< if true, all of evaluation images will be output
     bool m_enable_output_evaluation_image_depth = false; ///< if true, all of evaluation depth images will be output
     bool m_enable_output_entropies = false; ///< if true, calculted entropies for all viewpoints will be output
+    size_t m_number_of_image = 0;
+    std::vector<size_t> m_number_of_images{};
 
 public:
     EntropyBasedCameraPathController() = default;
     virtual ~EntropyBasedCameraPathController() = default;
 
-    size_t entropyInterval() const { return m_interval; }
+    size_t entropyInterval() const { return m_entropy_interval; }
+    float viewpointInterval() const { return m_viewpoint_interval; }
     size_t maxIndex() const { return m_max_index; }
     float maxEntropy() const { return m_max_entropy; }
     kvs::Vec3 maxPosition() const { return m_max_position; }
     kvs::Quaternion maxRotation() const { return m_max_rotation; }
     float erpRadius() const { return m_erp_radius; }
     kvs::Quaternion erpRotation() const { return m_erp_rotation; }
+    size_t numberOfImage() const { return m_number_of_image; }
 
-    void setEntropyInterval( const size_t interval ) { m_interval = interval; }
+    void setEntropyInterval( const size_t interval ) { m_entropy_interval = interval; }
     void setEntropyFunction( EntropyFunction func ) { m_entropy_function = func; }
     void setEntropyFunctionToLightness() { m_entropy_function = LightnessEntropy(); }
     void setEntropyFunctionToColor() { m_entropy_function = ColorEntropy(); }
@@ -90,6 +97,7 @@ public:
     void setInterpolator( Interpolator interpolator ) { m_interpolator = interpolator; }
     void setInterpolatorToSlerp() { m_interpolator = Slerp(); }
     void setInterpolatorToSquad() { m_interpolator = Squad(); }
+    void setViewpointInterval( const float interval ) { m_viewpoint_interval = interval; }
 
     void setMaxIndex( const size_t index ) { m_max_index = index; }
     void setMaxEntropy( const float entropy ) { m_max_entropy = entropy; }
@@ -97,16 +105,22 @@ public:
     void setMaxRotation( const kvs::Quaternion& rotation ) { m_max_rotation = rotation; }
     void setErpRadius( const float radius ) { m_erp_radius = radius; }
     void setErpRotation( const kvs::Quaternion& rotation ) { m_erp_rotation = rotation; }
+    void setNumberOfImage( const size_t number_of_image ) { m_number_of_image = number_of_image; }
 
     const DataQueue& dataQueue() const { return m_data_queue; }
     const Data& previousData() const { return m_previous_data; }
     const std::vector<float>& pathPositions() const { return m_path_positions; }
     const std::vector<float>& pathEntropies() const { return m_path_entropies; }
     const std::vector<float>& pathCalcTimes() const { return m_path_calc_times; }
+    const std::vector<size_t>& numberOfImages() const { return m_number_of_images; }
     bool isCacheEnabled() const { return m_cache_enabled; }
     void setCacheEnabled( const bool enabled = true ) { m_cache_enabled = enabled; }
+    bool isSlomoEnabled() const { return m_slomo_enabled; }
+    void setSlomoEnabled( const bool enabled = true ) { m_slomo_enabled = enabled; }
     bool isFinalStep() const { return m_final_step; }
     void setFinalStep( const bool final_step = true ) { m_final_step = final_step; }
+    bool isErpStep() const { return m_is_erp_step; }
+    void setIsErpStep( const bool enabled = true ) { m_is_erp_step = enabled; }
 
     void setOutputEvaluationImageEnabled( const bool enable = true, const bool enable_depth = false );
     void setOutputEntropiesEnabled( const bool enable = true ) { m_enable_output_entropies = enable; }
@@ -125,6 +139,7 @@ protected:
     std::vector<float>& pathEntropies() { return m_path_entropies; }
     std::vector<float>& pathPositions() { return m_path_positions; }
     std::vector<float>& pathCalcTimes() { return m_path_calc_times; }
+    std::vector<size_t>& numberOfImages() { return m_number_of_images; }
 
     void pushMaxEntropies( const float entropy ) { m_max_entropies.push( entropy ); }
     void pushMaxPositions( const kvs::Vec3& position ) { m_max_positions.push( position ); }
@@ -182,6 +197,10 @@ protected:
     void outputViewpointCoords(
         const std::string& filename,
         const InSituVis::Viewpoint& viewpoint );
+
+    void outputNumberOfImages(
+        const std::string& filename,
+        const size_t analysis_interval );
 };
 
 } // end of namespace InSituVis

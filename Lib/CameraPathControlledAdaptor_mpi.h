@@ -57,6 +57,7 @@ protected:
     virtual void process( const Data& data );
     virtual void process( const Data& data , const float radius, const kvs::Quaternion& rotation );
 
+    std::string outputColorImageName( const Viewpoint::Location& location );
     std::string outputDepthImageName( const Viewpoint::Location& location );
 
     void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer );
