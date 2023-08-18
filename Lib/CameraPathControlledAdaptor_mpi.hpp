@@ -123,11 +123,25 @@ inline void CameraPathControlledAdaptor::execRendering()
             entr_time += BaseClass::saveTimer().time( timer );
         }
 
+        // Output entropies (entropy heatmap)
+        if ( BaseClass::world().isRoot() )
+        {
+            if ( Controller::isOutputEntropiesEnabled() )
+            {
+                const auto basename = "output_entropies_";
+                const auto timestep = BaseClass::timeStep();
+                const auto directory = BaseClass::outputDirectory();
+                const auto filename = Controller::logDataFilename( basename, timestep, directory );
+                Controller::outputEntropies( filename, entropies );
+            }
+        }
+
         // Distribute the index indicates the max entropy image
         BaseClass::world().broadcast( max_index );
         BaseClass::world().broadcast( max_entropy );
-        const auto max_position = BaseClass::viewpoint().at( max_index ).position;
-        const auto max_rotation = BaseClass::viewpoint().at( max_index ).rotation;
+        const auto& max_location = BaseClass::viewpoint().at( max_index );
+        const auto max_position = max_location.position;
+        const auto max_rotation = max_location.rotation;
         Controller::setMaxIndex( max_index );
         Controller::setMaxPosition( max_position );
         Controller::setMaxRotation( max_rotation );
@@ -144,15 +158,6 @@ inline void CameraPathControlledAdaptor::execRendering()
                 const auto& frame_buffer = frame_buffers[ index ];
                 this->outputColorImage( location, frame_buffer );
                 //this->outputDepthImage( location, frame_buffer );
-            }
-
-            if ( Controller::isOutputEntropiesEnabled() )
-            {
-                const auto basename = "output_entropies_";
-                const auto timestep = BaseClass::timeStep();
-                const auto directory = BaseClass::outputDirectory();
-                const auto filename = Controller::logDataFilename( basename, timestep, directory );
-                Controller::outputEntropies( filename, entropies );
             }
         }
         timer.stop();
@@ -179,6 +184,7 @@ inline void CameraPathControlledAdaptor::execRendering()
         timer.stop();
         save_time += BaseClass::saveTimer().time( timer );
     }
+
     m_entr_timer.stamp( entr_time );
     BaseClass::saveTimer().stamp( save_time );
     BaseClass::rendTimer().stamp( BaseClass::rendTime() );
