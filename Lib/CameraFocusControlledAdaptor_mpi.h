@@ -38,7 +38,7 @@ private:
 
     // add
     size_t m_zoom_level = 1; ///< zoom level
-    kvs::Vec2ui m_frame_divs{ 20, 20 }; ///< number of frame divisions
+    kvs::Vec2ui m_frame_divs{ 1, 1 }; ///< number of frame divisions
 
 public:
     CameraFocusControlledAdaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
