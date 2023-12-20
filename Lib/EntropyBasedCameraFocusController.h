@@ -26,6 +26,7 @@ private:
     bool m_enable_output_zoom_entropies = false; ///< if true, calculted entropies along the viewing ray will be output
 
     bool m_enable_auto_zooming = false; ///< if true, auto-zooming fuctionality will be available
+    bool m_image_typ = true;
     kvs::Vec3 m_estimated_zoom_position{ 0.0f, 0.0f, 0.0f }; ///< estimated zoom position along the viewing ray
     size_t m_estimated_zoom_level = 0; ///< estimated zoom level
 
@@ -44,9 +45,11 @@ public:
     bool isOutputZoomEntropiesEnabled() const { return m_enable_output_zoom_entropies; }
 
     void setAutoZoomingEnabled( const bool enable = true ) { m_enable_auto_zooming = enable; }
+    void setOutpuColorImage( const bool color = true ) { m_enable_auto_zooming = color; }
     void setEstimatedZoomPosition( const kvs::Vec3& position ) { m_estimated_zoom_position = position; }
     void setEstimatedZoomLevel( const size_t level ) { m_estimated_zoom_level = level; }
     bool isAutoZoomingEnabled() { return m_enable_auto_zooming; }
+    bool isOutpuColorImage() { return m_image_type; }
     kvs::Vec3 estimatedZoomPosition() const { return m_estimated_zoom_position; }
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
 
