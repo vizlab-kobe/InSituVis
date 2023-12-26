@@ -267,8 +267,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     const auto level = estimated_zoom_level;
                     const auto frame_buffer = zoom_frame_buffers[ level ];
                     timer.start();
-                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( maxlocation, frame_buffer, level );
-                    else {this->outputDepthImage( maxlocation, frame_buffer, level );}
+                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( max_location, frame_buffer, level );
+                    else {this->outputDepthImage( max_location, frame_buffer, level );}
                     timer.stop();
                     save_time += BaseClass::saveTimer().time( timer );
                 }

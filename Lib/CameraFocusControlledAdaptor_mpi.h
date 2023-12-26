@@ -75,7 +75,7 @@ protected:
     std::string outputFinalImageName( const size_t level );
 
     void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level ); // add
-    void outputDepthImage( const InSituVis::Viewpoint::Location& location, const FrameBuffer& frame_buffer );
+    void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level);
 
     void outputZoomEntropies(
         const std::vector<float> entropies );
