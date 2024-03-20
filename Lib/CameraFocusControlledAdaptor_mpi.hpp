@@ -242,7 +242,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     if ( BaseClass::isOutputImageEnabled() )
                     {
                         timer.start();
-                        this->outputColorImage( location, frame_buffer, level );
+                        if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, level );
+                        else {this->outputDepthImage( location, frame_buffer, level );}
                         timer.stop();
                         save_time += BaseClass::saveTimer().time( timer );
                     }
@@ -266,7 +267,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     const auto level = estimated_zoom_level;
                     const auto frame_buffer = zoom_frame_buffers[ level ];
                     timer.start();
-                    this->outputColorImage( max_location, frame_buffer, level );
+                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( max_location, frame_buffer, level );
+                    else {this->outputDepthImage( max_location, frame_buffer, level );}
                     timer.stop();
                     save_time += BaseClass::saveTimer().time( timer );
                 }
@@ -295,7 +297,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    this->outputColorImage( location, frame_buffer, 0 );
+                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, 0 );
+                    else {this->outputDepthImage( location, frame_buffer, 0 );}
                 }
             }
             timer.stop();
@@ -331,7 +334,9 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 {
                     if ( BaseClass::isOutputImageEnabled() )
                     {
-                        this->outputColorImage( location, frame_buffer, level );
+                        if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, level );
+                        else {this->outputDepthImage( location, frame_buffer, level );}
+                        
                     }
                 }
                 timer.stop();
@@ -412,12 +417,13 @@ inline void CameraFocusControlledAdaptor::outputColorImage(
 
 inline void CameraFocusControlledAdaptor::outputDepthImage(
     const InSituVis::Viewpoint::Location& location,
-    const FrameBuffer& frame_buffer )
+    const FrameBuffer& frame_buffer,
+    const size_t level )
 {
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.depth_buffer;
     kvs::GrayImage image( size.x(), size.y(), buffer );
-    image.write( BaseClass::outputFinalImageName( location ) );
+    image.write( this->outputFinalImageName( level ) );
 }
 
 // add

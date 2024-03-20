@@ -38,7 +38,7 @@ private:
 
     // add
     size_t m_zoom_level = 1; ///< zoom level
-    kvs::Vec2ui m_frame_divs{ 20, 20 }; ///< number of frame divisions
+    kvs::Vec2ui m_frame_divs{ 1, 1 }; ///< number of frame divisions
 
 public:
     CameraFocusControlledAdaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
@@ -75,7 +75,7 @@ protected:
     std::string outputFinalImageName( const size_t level );
 
     void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level ); // add
-    void outputDepthImage( const InSituVis::Viewpoint::Location& location, const FrameBuffer& frame_buffer );
+    void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level);
 
     void outputZoomEntropies(
         const std::vector<float> entropies );
