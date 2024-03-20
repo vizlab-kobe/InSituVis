@@ -43,17 +43,11 @@ inline bool CameraPathControlledAdaptor::dump()
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
         ret = entr_timer_list.write( basedir + "ent_proc_time.csv" );
 
-        const auto interval = BaseClass::analysisInterval();
         const auto directory = BaseClass::outputDirectory();
         const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
-        Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
-        Controller::outputPathPositions( File( "output_path_positions"), interval );
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
         Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
-        if( Controller::isSlomoEnabled() )
-        {
-            Controller::outputNumberOfImages( File( "output_number_of_images" ), interval );
-        }
+        Controller::outputNumImages( File( "output_num_images" ), BaseClass::analysisInterval() );
     }
 
     return BaseClass::dump() && ret;
@@ -62,12 +56,13 @@ inline bool CameraPathControlledAdaptor::dump()
 inline void CameraPathControlledAdaptor::exec( const BaseClass::SimTime sim_time )
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
+    Controller::setIsEntStep( this->isEntropyStep() );
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
     if( this->isFinalTimeStep())
     {
-        Controller::setFinalStep( true );
+        Controller::setIsFinalStep( true );
         const auto dummy = Data();
         Controller::push( dummy );
     }
@@ -87,7 +82,7 @@ inline void CameraPathControlledAdaptor::execRendering()
     std::vector<float> entropies;
     std::vector<FrameBuffer> frame_buffers;
 
-    if ( this->isEntropyStep() && !Controller::isErpStep() )
+    if ( Controller::isEntStep() && !Controller::isErpStep() )
     {
         // Entropy evaluation
         for ( const auto& location : BaseClass::viewpoint().locations() )
@@ -162,14 +157,12 @@ inline void CameraPathControlledAdaptor::execRendering()
         }
         timer.stop();
         save_time += BaseClass::saveTimer().time( timer );
+        m_entr_timer.stamp( entr_time );
     }
     else
     {
         const auto location = this->erpLocation();
         auto frame_buffer = BaseClass::readback( location );
-        const auto path_entropy = Controller::entropy( frame_buffer );
-        Controller::setMaxEntropy( path_entropy );
-        Controller::setMaxPosition( location.position );
 
         // Output the rendering images.
         kvs::Timer timer( kvs::Timer::Start );
@@ -185,7 +178,6 @@ inline void CameraPathControlledAdaptor::execRendering()
         save_time += BaseClass::saveTimer().time( timer );
     }
 
-    m_entr_timer.stamp( entr_time );
     BaseClass::saveTimer().stamp( save_time );
     BaseClass::rendTimer().stamp( BaseClass::rendTime() );
     BaseClass::compTimer().stamp( BaseClass::compTime() );
@@ -200,42 +192,38 @@ inline void CameraPathControlledAdaptor::process( const Data& data )
 inline void CameraPathControlledAdaptor::process( const Data& data, const float radius, const kvs::Quaternion& rotation )
 {
     const auto current_step = BaseClass::timeStep();
-    {
-        // Reset time step, which is used for output filename,
-        // for visualizing the stacked dataset.
-        const auto L_crr = Controller::dataQueue().size();
-        if ( L_crr > 0 )
-        {
-            const auto l = BaseClass::analysisInterval();
-            const auto step = current_step - L_crr * l;
-            BaseClass::setTimeStep( step );
-        }
 
-        // Stack current time step.
-        const auto step = static_cast<float>( BaseClass::timeStep() );
-        BaseClass::tstepList().stamp( step );
+    // Reset time step, which is used for output filename,
+    // for visualizing the stacked dataset.
+    const auto l = Controller::dataQueue().size();
+    const auto interval = BaseClass::analysisInterval();
+    const auto step = current_step - l * interval;
+    BaseClass::setTimeStep( step );
+    BaseClass::tstepList().stamp( static_cast<float>( step ) );
 
-        // Execute vis. pipeline and rendering.
-        Controller::setErpRotation( rotation );
-        Controller::setErpRadius( radius );
-        BaseClass::execPipeline( data );
-        this->execRendering();
-    }
+    // Execute vis. pipeline and rendering.
+    Controller::setErpRotation( rotation );
+    Controller::setErpRadius( radius );
+    BaseClass::execPipeline( data );
+    this->execRendering();
+
     BaseClass::setTimeStep( current_step );
 }
 
 inline std::string CameraPathControlledAdaptor::outputColorImageName( const Viewpoint::Location& location )
 {
     const auto time = BaseClass::timeStep();
+    const auto sub_time = Controller::subTimeIndex();
     const auto space = location.index;
-    const auto number_of_image = Controller::numberOfImage();
     const auto output_time = kvs::String::From( time, 6, '0' );
+    const auto output_sub_time = kvs::String::From( sub_time, 6, '0' );
     const auto output_space = kvs::String::From( space, 6, '0' );
-    const auto output_number_of_image = kvs::String::From( number_of_image, 6, '0' );
 
     const auto output_basename = BaseClass::outputFilename();
-    const auto output_filename = output_basename + "_" + output_time + "_" + output_space + "_" + output_number_of_image;
+    const auto output_filename = output_basename + "_" + output_time + "_" + output_sub_time+ "_" + output_space;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
+    // const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".jpg";
+    // const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".png";
     return filename;
 }
 

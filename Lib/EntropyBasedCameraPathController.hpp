@@ -180,13 +180,10 @@ inline EntropyBasedCameraPathController::Interpolator
 EntropyBasedCameraPathController::Slerp()
 {
     return [] (
-        const kvs::Quat& q1,
-        const kvs::Quat& q2,
-        const kvs::Quat& q3,
-        const kvs::Quat& q4,
+        const std::vector<kvs::Quat>& q,
         float t ) -> kvs::Quat
     {
-        return kvs::Quat::SphericalLinearInterpolation( q2, q3, t, true, true );
+        return kvs::Quat::SphericalLinearInterpolation( q[0], q[1], t, true, true );
     };
 }
 
@@ -194,20 +191,10 @@ inline EntropyBasedCameraPathController::Interpolator
 EntropyBasedCameraPathController::Squad()
 {
     return [] (
-        const kvs::Quat& q1,
-        const kvs::Quat& q2,
-        const kvs::Quat& q3,
-        const kvs::Quat& q4,
+        const std::vector<kvs::Quat>& q,
         float t ) -> kvs::Quat
     {
-        kvs::Quat qq1 = q1;
-        kvs::Quat qq2 = q2;
-        kvs::Quat qq3 = q3;
-        kvs::Quat qq4 = q4;
-        if( qq1.dot( qq2 ) < 0 ) qq2 = -qq2;
-        if( qq2.dot( qq3 ) < 0 ) qq3 = -qq3;
-        if( qq3.dot( qq4 ) < 0 ) qq4 = -qq4;
-        return kvs::Quat::SphericalQuadrangleInterpolation( qq1, qq2, qq3, qq4, t, true );
+        return kvs::Quat::SphericalQuadrangleInterpolation( q[0], q[1], q[2], q[3], t, true );
     };
 }
 
@@ -221,186 +208,114 @@ inline void EntropyBasedCameraPathController::setOutputEvaluationImageEnabled(
 
 inline void EntropyBasedCameraPathController::push( const Data& data )
 {
-    const auto interval = this->entropyInterval();
+    m_sub_time_index = 999999;
 
     if ( !( this->isFinalStep() ) )
     {
-        if ( this->previousData().empty() )
+        if ( this->isInitialStep() )
         {
             // Initial step.
             this->process( data );
-            this->setPreviousData( data );
             this->pushMaxEntropies( this->maxEntropy() );
             this->pushMaxPositions( this->maxPosition() );
             this->pushMaxRotations( this->maxRotation() );
-            this->pushMaxRotations( this->maxRotation() );
-            this->dataQueue().push( data );
+            this->pushNumImages( 1 );
+            this->setIsInitialStep( false );
         }
         else
         {
             if ( this->isCacheEnabled() )
             {
-                if ( this->dataQueue().size() % interval == 0 )
+                if ( this->isEntStep() )
                 {
-                    m_number_of_image = 0;
                     this->process( data );
                     this->pushMaxEntropies( this->maxEntropy() );
                     this->pushMaxPositions( this->maxPosition() );
                     this->pushMaxRotations( this->maxRotation() );
 
-                    if ( this->maxRotations().size() == 4 )
+                    if ( this->dataQueue().size() == this->cacheSize() )
                     {
-                        const auto q1 = this->maxRotations().front(); this->maxRotations().pop();
-                        const auto q2 = this->maxRotations().front(); this->maxRotations().pop();
-                        const auto q3 = this->maxRotations().front(); this->maxRotations().pop();
-                        const auto q4 = this->maxRotations().front(); this->maxRotations().pop();
+                        this->setIsErpStep( true );
+                        this->createPath();
+                        Data data_front;
+                        m_sub_time_index = 0;
+                        size_t num_points = this->path().size();
+                        size_t num_images = ( num_points + 1 ) / this->entropyInterval();
 
-                        const auto p2 = this->maxPositions().front(); this->maxPositions().pop();
-                        const auto p3 = this->maxPositions().front();
-
-                        const auto r2 = p2.length();
-                        const auto r3 = p3.length();
-
-                        this->createPath( r2, r3, q1, q2, q3, q4, interval );
-
-                        if( m_slomo_enabled )
+                        for ( size_t i = 0; i < num_points; i++ )
                         {
-                            m_is_erp_step = true;
-                            const auto data_front = this->dataQueue().front();
-                            this->pushPathPositions( p2 );
-
-                            while( this->path().size() > 0 )
+                            if ( this->dataQueue().size() > 0 ) { data_front = this->dataQueue().front(); }
+                            else { data_front = data; }
+                            const std::pair<float, kvs::Quat> path_front = this->path().front();
+                            this->process( data_front, path_front.first, path_front.second );
+                            this->path().pop();
+                            m_sub_time_index += 1;
+                            
+                            if ( m_sub_time_index == num_images )
                             {
-                                m_number_of_image++;
-                                const std::pair<float, kvs::Quat> path_front = this->path().front();
-                                this->process( data_front, path_front.first, path_front.second );
-                                this->path().pop();
-                                this->pushPathPositions( this->maxPosition() );
-                            }
-
-                            this->dataQueue().pop();
-                            m_number_of_images.push_back( m_number_of_image + 1 );
-                            m_number_of_image = 0;
-                            m_is_erp_step = false;
-                        }
-                        else
-                        {
-                            this->dataQueue().pop();
-                            this->pushPathEntropies( this->maxEntropies().front() );
-                            this->maxEntropies().pop();
-                            this->pushPathPositions( p2 );
-
-                            for ( size_t i = 0; i < interval - 1; i++ )
-                            {
-                                const auto data_front = this->dataQueue().front();
-                                const std::pair<float, kvs::Quat> path_front = this->path().front();
-                                this->process( data_front, path_front.first, path_front.second );
                                 this->dataQueue().pop();
-                                this->path().pop();
-
-                                this->pushPathEntropies( this->maxEntropy() );
-                                this->pushPathPositions( this->maxPosition() );
+                                this->pushNumImages( num_images );
+                                m_sub_time_index = 0;
                             }
                         }
 
-                        this->pushMaxRotations( q2 );
-                        this->pushMaxRotations( q3 );
-                        this->pushMaxRotations( q4 );
+                        if ( this->dataQueue().size() > 0 ) this->dataQueue().pop();
+                        m_sub_time_index = 0;
+                        this->pushNumImages( num_images );
+                        this->popMaxPositions();
+                        this->popMaxRotations();
+                        this->setIsErpStep( false );
                     }
                     this->dataQueue().push( data );
                 }
-                else
-                {
-                    this->dataQueue().push( data );
-                }
+                else { this->dataQueue().push( data ); }
             }
         }
     }
     else
     {
-        const auto q1 = this->maxRotations().front(); this->maxRotations().pop();
-        const auto q2 = this->maxRotations().front(); this->maxRotations().pop();
-        const auto q3 = this->maxRotations().front(); this->maxRotations().pop();
-        const auto q4 = q3;
+        const auto final_position = this->maxPositions().back();
+        const auto final_rotation = this->maxRotations().back();
+        this->pushMaxPositions( final_position );
+        this->pushMaxRotations( final_rotation );
 
-        const auto p2 = this->maxPositions().front(); this->maxPositions().pop();
-        const auto p3 = this->maxPositions().front();
+        this->setIsErpStep( true );
+        this->createPath();
+        Data data_front;
+        m_sub_time_index = 0;
+        size_t num_points = this->path().size();
+        size_t num_images = ( num_points + 1 ) / this->entropyInterval();
 
-        const auto r2 = p2.length();
-        const auto r3 = p3.length();
-
-        this->createPath( r2, r3, q1, q2, q3, q4, interval );
-
-        if( m_slomo_enabled )
+        for ( size_t i = 0; i < num_points; i++ )
         {
-            m_is_erp_step = true;
-            const auto data_front = this->dataQueue().front();
-            this->pushPathPositions( p2 );
-
-            while( this->path().size() > 0 )
+            if ( this->dataQueue().size() > 0 ) { data_front = this->dataQueue().front(); }
+            else { data_front = data; }
+            const std::pair<float, kvs::Quat> path_front = this->path().front();
+            this->process( data_front, path_front.first, path_front.second );
+            this->path().pop();
+            m_sub_time_index += 1;
+            
+            if( m_sub_time_index == num_images )
             {
-                m_number_of_image++;
-                const std::pair<float, kvs::Quat> path_front = this->path().front();
-                this->process( data_front, path_front.first, path_front.second );
-                this->path().pop();
-                this->pushPathPositions( this->maxPosition() );
-            }
-
-            this->dataQueue().pop();
-            m_number_of_images.push_back( m_number_of_image + 1 );
-            m_number_of_image = 0;
-            m_is_erp_step = false;
-        }
-        else
-        {
-            this->dataQueue().pop();
-            this->pushPathEntropies( this->maxEntropies().front() );
-            this->maxEntropies().pop();
-            this->pushPathPositions( p2 );
-
-            for ( size_t i = 0; i < interval - 1; i++ )
-            {
-                const auto data_front = this->dataQueue().front();
-                const std::pair<float, kvs::Quat> path_front = this->path().front();
-                this->process( data_front, path_front.first, path_front.second );
                 this->dataQueue().pop();
-                this->path().pop();
-
-                this->pushPathEntropies( this->maxEntropy() );
-                this->pushPathPositions( this->maxPosition() );
+                this->pushNumImages( num_images );
+                m_sub_time_index = 0;
             }
         }
+
+        if ( this->dataQueue().size() > 0 ) this->dataQueue().pop();
+        m_sub_time_index = 0;
+        this->pushNumImages( num_images );
+        this->popMaxPositions();
+        this->popMaxRotations();
 
         while ( this->dataQueue().size() > 0 )
         {
-            std::queue<std::pair<float, kvs::Quat>> empty;
-            this->path().swap( empty );
-
-            for ( size_t i = 0; i < interval - 1; i++ )
-            {
-                std::pair<float, kvs::Quat> elem( r3, q3 );
-                this->path().push( elem );
-            }
-
+            const auto data_front = this->dataQueue().front();
+            this->process( data_front, final_position.length(), final_rotation );
+            this->pushNumImages( 1 );
             this->dataQueue().pop();
-            this->pushPathEntropies( this->maxEntropies().front() );
-            this->maxEntropies().pop();
-            this->pushPathPositions( p3 );
-
-            for ( size_t i = 0; i < m_entropy_interval - 1; i++ )
-            {
-                const auto data_front = this->dataQueue().front();
-                const std::pair<float, kvs::Quat> path_front = this->path().front();
-                this->process( data_front, path_front.first, path_front.second );
-                this->dataQueue().pop();
-                this->path().pop();
-
-                this->pushPathEntropies( this->maxEntropy() );
-                this->pushPathPositions( this->maxPosition() );
-            }
         }
-
-        m_number_of_images.push_back( m_number_of_image + 1 );
     }
 }
 
@@ -415,77 +330,57 @@ inline float EntropyBasedCameraPathController::radiusInterpolation( const float 
 }
 
 inline kvs::Quat EntropyBasedCameraPathController::pathInterpolation(
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const kvs::Quat& q3,
-    const kvs::Quat& q4,
+    const std::vector<kvs::Quat>& q,
     const float t )
 {
-    return m_interpolator( q1, q2, q3, q4, t );
+    return m_interpolator( q, t );
 }
 
-inline void EntropyBasedCameraPathController::createPath(
-    const float r2,
-    const float r3,
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const kvs::Quat& q3,
-    const kvs::Quat& q4,
-    const size_t point_interval )
+inline void EntropyBasedCameraPathController::createPath()
 {
     std::queue<std::pair<float, kvs::Quat>> empty;
     this->path().swap( empty );
     
     kvs::Timer timer( kvs::Timer::Start );
 
-    if( m_slomo_enabled )
+    const auto positions = this->maxPositions();
+    const auto rotations = this->maxRotations();
+
+    const size_t n = 256;
+    float l = 0.0f;
+
+    for ( size_t i = 0; i < n; i++ )
     {
-        const size_t n = 256;
-        float length = 0.0f;
+        const auto t0 = static_cast<float>( i ) / static_cast<float>( n );
+        const auto rad0 = this->radiusInterpolation( positions[0].length(), positions[1].length(), t0 );
+        const auto rot0 = this->pathInterpolation( rotations, t0 );
+        const auto p0 = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad0, 0.0f } ), rot0 );
 
-        for( size_t i = 0; i < n; i++ )
-        {
-            const auto t0 = static_cast<float>( i ) / static_cast<float>( n );
-            const auto rad0 = this->radiusInterpolation( r2, r3, t0 );
-            const auto rot0 = this->pathInterpolation( q1, q2, q3, q4, t0 );
-            const auto p0 = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad0, 0.0f } ), rot0 );
+        const auto t1 = static_cast<float>( i + 1 ) / static_cast<float>( n );
+        const auto rad1 = this->radiusInterpolation( positions[0].length(), positions[1].length(), t1 );
+        const auto rot1 = this->pathInterpolation( rotations, t1 );
+        const auto p1 = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad1, 0.0f } ), rot1 );
 
-            const auto t1 = static_cast<float>( i + 1 ) / static_cast<float>( n );
-            const auto rad1 = this->radiusInterpolation( r2, r3, t1 );
-            const auto rot1 = this->pathInterpolation( q1, q2, q3, q4, t1 );
-            const auto p1 = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad1, 0.0f } ), rot1 );
-
-            const auto u = p1 - p0;
-            length += sqrt( u.dot( u ) );
-        }
-
-        const size_t interval = static_cast<size_t>( length / m_viewpoint_interval );
-
-        for ( size_t i = 1; i < interval; i++ )
-        {
-            const auto t = static_cast<float>( i ) / static_cast<float>( interval );
-            const auto rad = this->radiusInterpolation( r2, r3, t );
-            const auto rot = this->pathInterpolation( q1, q2, q3, q4, t );
-            const std::pair<float, kvs::Quat> elem( rad, rot );
-            this->path().push( elem );
-        }
+        const auto u = p1 - p0;
+        l += u.length();
     }
-    else
+
+    const size_t num_images = static_cast<size_t>( l / ( m_entropy_interval * m_delta ) ) + 1;
+    const size_t num_points = num_images * m_entropy_interval - 1;
+
+    for ( size_t i = 0; i < num_points; i++ )
     {
-        for ( size_t i = 1; i < point_interval; i++ )
-        {
-            const auto t = static_cast<float>( i ) / static_cast<float>( point_interval );
-            const auto rad = this->radiusInterpolation( r2, r3, t );
-            const auto rot = this->pathInterpolation( q1, q2, q3, q4, t );
-            const std::pair<float, kvs::Quat> elem( rad, rot );
-            this->path().push( elem );
-        }
+        const auto t = static_cast<float>( i + 1 ) / static_cast<float>( num_points + 1 );
+        const auto rad = this->radiusInterpolation( positions[0].length(), positions[1].length(), t );
+        const auto rot = this->pathInterpolation( rotations, t );
+        const std::pair<float, kvs::Quat> elem( rad, rot );
+        this->path().push( elem );
     }
-    
+
     timer.stop();
 
     const auto path_calc_time = timer.sec();
-    this->pathCalcTimes().push_back( path_calc_time );
+    this->pushPathCalcTimes( path_calc_time );
 }
 
 inline std::string EntropyBasedCameraPathController::logDataFilename(
@@ -520,36 +415,16 @@ inline void EntropyBasedCameraPathController::outputEntropies(
     file.close();
 }
 
-inline void EntropyBasedCameraPathController::outputPathEntropies(
-    const std::string& filename,
-    const size_t analysis_interval )
+inline void EntropyBasedCameraPathController::outputMaxEntropies(
+    const std::string& filename )
 {
     std::ofstream file( filename );
     {
-        file << "Time,Entropy" << std::endl;
-        const auto interval = analysis_interval;
-        for ( size_t i = 0; i < m_path_entropies.size(); i++ )
+        file << "Entropy" << std::endl;
+        const auto max_entropies = this->maxEntropies();
+        for ( size_t i = 0; i < max_entropies.size(); i++ )
         {
-            file << interval * i << "," << m_path_entropies[i] << std::endl;
-        }
-    }
-    file.close();
-}
-
-inline void EntropyBasedCameraPathController::outputPathPositions(
-    const std::string& filename,
-    const size_t analysis_interval )
-{
-    std::ofstream file( filename );
-    {
-        file << "Time,X,Y,Z" << std::endl;
-        const auto interval = analysis_interval;
-        for ( size_t i = 0; i < m_path_positions.size() / 3; i++ )
-        {
-            const auto x = m_path_positions[ 3 * i ];
-            const auto y = m_path_positions[ 3 * i + 1 ];
-            const auto z = m_path_positions[ 3 * i + 2 ];
-            file << interval * i << "," << x << "," << y << "," << z << std::endl;
+            file << max_entropies[i] << std::endl;
         }
     }
     file.close();
@@ -561,9 +436,10 @@ inline void EntropyBasedCameraPathController::outputPathCalcTimes(
     std::ofstream file( filename );
     {
         file << "Calculation time" << std::endl;
-        for ( size_t i = 0; i < m_path_calc_times.size(); i++ )
+        const auto path_calc_times = this->pathCalcTimes();
+        for ( size_t i = 0; i < path_calc_times.size(); i++ )
         {
-            file << m_path_calc_times[i] << std::endl;
+            file << path_calc_times[i] << std::endl;
         }
     }
     file.close();
@@ -585,17 +461,17 @@ inline void EntropyBasedCameraPathController::outputViewpointCoords(
     file.close();
 }
 
-inline void EntropyBasedCameraPathController::outputNumberOfImages(
+inline void EntropyBasedCameraPathController::outputNumImages(
     const std::string& filename,
-    const size_t analysis_interval )
+    const size_t interval )
 {
     std::ofstream file( filename );
     {
         file << "Time,The number of images" << std::endl;
-        const auto interval = analysis_interval;
-        for ( size_t i = 0; i < m_number_of_images.size(); i++ )
+        const auto num_images = this->numImages();
+        for ( size_t i = 0; i < num_images.size(); i++ )
         {
-            file << interval * i << "," << m_number_of_images[i] << std::endl;
+            file << interval * i << "," << num_images[i] << std::endl;
         }
     }
     file.close();
