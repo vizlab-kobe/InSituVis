@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /**
- *  @file   EntropyBasedCameraPathController.h
+ *  @file   EntropyBasedCameraFocusController.h
  *  @author Taisei Matsushima, Ken Iwata, Naohisa Sakamoto
  */
 /*****************************************************************************/
@@ -17,10 +17,11 @@ public:
     using BaseClass = EntropyBasedCameraPathController;
 
 private:
+
     kvs::Vec3 m_max_focus_point{ 0.0f, 0.0f, 0.0f }; ///< focus point estimated at the evaluation step
-    std::queue<kvs::Vec3> m_max_focus_points{}; ///< data queue for m_max_focus_point
+    std::vector<kvs::Vec3> m_max_focus_points{}; ///< data queue for m_max_focus_point
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
-    std::vector<float> m_focus_path_positions{}; ///< focus points on the interpolated path
+    std::queue<kvs::Vec3> m_focus_path_positions{}; ///< focus points on the interpolated path
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
     bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
     bool m_enable_output_zoom_entropies = false; ///< if true, calculted entropies along the viewing ray will be output
@@ -29,6 +30,7 @@ private:
     bool m_image_type = true;
     kvs::Vec3 m_estimated_zoom_position{ 0.0f, 0.0f, 0.0f }; ///< estimated zoom position along the viewing ray
     size_t m_estimated_zoom_level = 0; ///< estimated zoom level
+
 
 public:
     EntropyBasedCameraFocusController() = default;
@@ -54,33 +56,22 @@ public:
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
 
 protected:
-    std::queue<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
+    std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
     std::queue<kvs::Vec3>& focusPath() { return m_focus_path; }
-    std::vector<float>& focusPathPositions() { return m_focus_path_positions; }
+    std::queue<kvs::Vec3>& focusPathPositions() { return m_focus_path_positions; }
 
-    void pushMaxFocusPoints( const kvs::Vec3& point ) { m_max_focus_points.push( point ); }
+    void pushMaxFocusPoints( const kvs::Vec3& point ) { m_max_focus_points.push_back( point ); }
     void pushFocusPathPositions( const kvs::Vec3& position )
     {
-        m_focus_path_positions.push_back( position.x() );
-        m_focus_path_positions.push_back( position.y() );
-        m_focus_path_positions.push_back( position.z() );
+       m_max_focus_points.push_back( position );
     }
+    void popMaxFocusPoints() { m_max_focus_points.erase( m_max_focus_points.begin() ); }
 
     virtual void process( const Data& data ) {}
-    virtual void process( const Data& data, const float radius, const kvs::Vec3& focus, const kvs::Quat& rotation ) {};
+    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus ) {};
 
-    void push( const Data& data );
-    void createPath(
-        const float r2,
-        const float r3,
-        const kvs::Vec3& f2,
-        const kvs::Vec3& f3,
-        const kvs::Quat& q1,
-        const kvs::Quat& q2,
-        const kvs::Quat& q3,
-        const kvs::Quat& q4,
-        const size_t point_interval
-    );
+    virtual void push( const Data& data );
+    virtual void createPath();
 
     void outputFrameEntropies(
         const std::string& filename,

@@ -52,7 +52,7 @@ CameraFocusControlledAdaptor::focusedLocation(
     return l;
 }
 
-inline bool CameraFocusControlledAdaptor::dump()
+inline bool CameraFocusControlledAdaptor::dump() //mod
 {
     bool ret = true;
     bool ret_f = true; // add
@@ -60,11 +60,11 @@ inline bool CameraFocusControlledAdaptor::dump()
     if ( BaseClass::world().isRoot() )
     {
         if ( m_entr_timer.title().empty() ) { m_entr_timer.setTitle( "Ent time" ); }
-        kvs::StampTimerList timer_list;
-        timer_list.push( m_entr_timer );
+        kvs::StampTimerList entr_timer_list;
+        entr_timer_list.push( m_entr_timer );
 
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
-        ret = timer_list.write( basedir + "ent_proc_time.csv" );
+        ret = entr_timer_list.write( basedir + "ent_proc_time.csv" );
 
         if ( m_focus_timer.title().empty() ) { m_focus_timer.setTitle( "focus time" ); } // add
         kvs::StampTimerList f_timer_list;                                                // add
@@ -75,35 +75,34 @@ inline bool CameraFocusControlledAdaptor::dump()
         kvs::StampTimerList z_timer_list;
         z_timer_list.push( m_zoom_timer );
         ret_z = z_timer_list.write( basedir + "zoom_proc_time.csv" );
-
-        const auto interval = BaseClass::analysisInterval();
+        
         const auto directory = BaseClass::outputDirectory();
         const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
-        Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
-        Controller::outputPathPositions( File( "output_path_positions"), interval );
-        //this->outputPathCalcTimes( Controller::pathCalcTimes() );
-        //this->outputViewpointCoords();
+        Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
+        Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
+        Controller::outputNumImages( File( "output_num_images" ), BaseClass::analysisInterval() );
     }
 
     return BaseClass::dump() && ret && ret_f && ret_z;
 }
 
-inline void CameraFocusControlledAdaptor::exec( const BaseClass::SimTime sim_time )
+inline void CameraFocusControlledAdaptor::exec( const BaseClass::SimTime sim_time ) //mod
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
+    Controller::setIsEntStep( this->isEntropyStep() );
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
     if( this->isFinalTimeStep())
     {
-        Controller::setFinalStep( true );
+        Controller::setIsFinalStep( true );
         const auto dummy = Data();
         Controller::push( dummy );
     }
     BaseClass::clearObjects();
 }
 
-inline void CameraFocusControlledAdaptor::execRendering()
+inline void CameraFocusControlledAdaptor::execRendering() //mod
 {
     BaseClass::setRendTime( 0.0f );
     BaseClass::setCompTime( 0.0f );
@@ -121,8 +120,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
     // Auto zooming
     std::vector<float> zoom_entropies;
     std::vector<FrameBuffer> zoom_frame_buffers;
-
-    if ( this->isEntropyStep() )
+    //if(BaseClass::Controller::isErpStep()) std::cout<<"-------------------KINGDORA---------------------"<<std::endl;
+    if ( Controller::isEntStep() && !Controller::isErpStep())
     {
         // Entropy evaluation
         for ( const auto& location : BaseClass::viewpoint().locations() )
@@ -264,11 +263,12 @@ inline void CameraFocusControlledAdaptor::execRendering()
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
+                    location = max_location;
                     const auto level = estimated_zoom_level;
                     const auto frame_buffer = zoom_frame_buffers[ level ];
                     timer.start();
-                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( max_location, frame_buffer, level );
-                    else {this->outputDepthImage( max_location, frame_buffer, level );}
+                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, level );
+                    else {this->outputDepthImage( location, frame_buffer, level );}
                     timer.stop();
                     save_time += BaseClass::saveTimer().time( timer );
                 }
@@ -276,9 +276,34 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 this->outputZoomEntropies( zoom_entropies );
             }
         }
+        // if( BaseClass::isOutputCdbEnabled() )
+        // {
+        //     if ( BaseClass::world().isRoot() )
+        //     {
+        //         const auto time = BaseClass::timeStep();
+        //         const auto space = location.index;
+        //         const auto output_time = kvs::String::From( time, 6, '0' );
+        //         const auto output_space = kvs::String::From( space, 6, '0' );
+        //         const auto output_basename = BaseClass::outputFilename();
+        //         const auto output_filename = output_basename + "_" + output_time + "_" + output_space + ".png";
+        //         const float x = location.position[0];
+        //         const float y = location.position[1];
+        //         const float z = location.position[2];
+        //         const float r = sqrt( x * x + y * y + z * z );
+        //         const float theta = std::acos( y / r ) * 180 / kvs::Math::pi;
+        //         const float phi = std::atan2( x, z ) * 180 / kvs::Math::pi;
+        //         const float Frame = time;
+        //         std::cout<<"bbbbbbbbbb"<<std::endl;
+        //         std::ofstream ofs_csv_file( m_cdb_dirname + "/data.csv",std::ios::app);
+        //         ofs_csv_file << time << ","<< Frame << "," << "image/"+output_filename << std::endl;
+        //         ofs_csv_file.close();
+        //         std::cout<<"bbbbbbbbbb"<<std::endl;
+        //     }
+        // }
     }
     else
     {
+        std::cout<<"-----------dfdfd--------------"<<std::endl;
         kvs::Timer timer;
 
         const auto focus = Controller::erpFocus();  // add
@@ -302,7 +327,32 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 }
             }
             timer.stop();
-            save_time += BaseClass::saveTimer().time( timer );        
+            save_time += BaseClass::saveTimer().time( timer );       
+        // if( BaseClass::isOutputCdbEnabled() )
+        // {
+        //     if ( BaseClass::world().isRoot() )
+        //     {
+        //     const auto time = BaseClass::timeStep();
+        //     const auto size = BaseClass::outputImageSize( location );
+        //     const auto space = location.index;
+        //     const auto output_time = kvs::String::From( time, 6, '0' );
+        //     const auto output_space = kvs::String::From( space, 6, '0' );
+        //     const auto output_basename = BaseClass::outputFilename();
+        //     const auto output_filename = output_basename + "_" + output_time + "_" + output_space + ".png";
+        //     const float x = location.position[0];
+        //     const float y = location.position[1];
+        //     const float z = location.position[2];
+        //     const float r = sqrt( x * x + y * y + z * z );
+        //     const float theta = std::acos( y / r ) * 180 / kvs::Math::pi;
+        //     const float phi = std::atan2( x, z ) * 180 / kvs::Math::pi;
+        //     const float Frame = time;
+        //     std::cout<<"cccccccccc"<<std::endl;
+        //     std::ofstream ofs_csv_file( m_cdb_dirname + "/data.csv",std::ios::app);
+        //     ofs_csv_file << time << ","<< Frame << "," << "image/"+output_filename << std::endl;
+        //     ofs_csv_file.close();
+        //     std::cout<<"cccccccccc"<<std::endl;
+        //     }
+        // } 
         }
         else
         {
@@ -342,6 +392,30 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 timer.stop();
                 save_time += BaseClass::saveTimer().time( timer );
             }
+        // if( BaseClass::isOutputCdbEnabled() )
+        // {
+        //     if ( BaseClass::world().isRoot() )
+        //     {
+        //     const auto time = BaseClass::timeStep();
+        //     const auto size = BaseClass::outputImageSize( location );
+        //     const auto space = location.index;
+        //     const auto output_time = kvs::String::From( time, 6, '0' );
+        //     const auto output_space = kvs::String::From( space, 6, '0' );
+        //     const auto output_basename = BaseClass::outputFilename();
+        //     const auto output_filename = output_basename + "_" + output_time + "_" + output_space + ".png";
+        //     const float x = location.position[0];
+        //     const float y = location.position[1];
+        //     const float z = location.position[2];
+        //     const float r = sqrt( x * x + y * y + z * z );
+        //     const float theta = std::acos( y / r ) * 180 / kvs::Math::pi;
+        //     const float phi = std::atan2( x, z ) * 180 / kvs::Math::pi;
+        //     const float Frame = time;
+        //     std::ofstream ofs_csv_file( m_cdb_dirname + "/data.csv",std::ios::app);
+        //     ofs_csv_file << time << ","<< Frame << "," << "image/"+output_filename << std::endl;
+        //     ofs_csv_file.close();
+        //     std::cout<<"ddddddddddd"<<std::endl;
+        //     }
+        // }
         }
     }
 
@@ -363,24 +437,18 @@ inline void CameraFocusControlledAdaptor::process( const Data& data )
 inline void CameraFocusControlledAdaptor::process(
     const Data& data,
     const float radius,
-    const kvs::Vec3& focus,
-    const kvs::Quat& rotation )
-{
-    const auto current_step = BaseClass::timeStep();
-    {
+    const kvs::Quaternion& rotation,
+    const kvs::Vec3& focus )
+{ std::cout<<"-------------------KINGDORA"<<Controller::isErpStep()<<"---------------------"<<std::endl;
+        const auto current_step = BaseClass::timeStep();
+
         // Reset time step, which is used for output filename,
         // for visualizing the stacked dataset.
-        const auto L_crr = Controller::dataQueue().size();
-        if ( L_crr > 0 )
-        {
-            const auto l = BaseClass::analysisInterval();
-            const auto step = current_step - L_crr * l;
-            BaseClass::setTimeStep( step );
-        }
-
-        // Stack current time step.
-        const auto step = static_cast<float>( BaseClass::timeStep() );
-        BaseClass::tstepList().stamp( step );
+        const auto l = Controller::dataQueue().size();
+        const auto interval = BaseClass::analysisInterval();
+        const auto step = current_step - l * interval;
+        BaseClass::setTimeStep( step );
+        BaseClass::tstepList().stamp( static_cast<float>( step ) );
 
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
@@ -388,8 +456,9 @@ inline void CameraFocusControlledAdaptor::process(
         Controller::setErpFocus( focus ); // add
         BaseClass::execPipeline( data );
         this->execRendering();
-    }
-    BaseClass::setTimeStep( current_step );
+
+        BaseClass::setTimeStep( current_step );
+
 }
 
 // add

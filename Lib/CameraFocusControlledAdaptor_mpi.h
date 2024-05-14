@@ -1,7 +1,7 @@
 /*****************************************************************************/
 /**
- *  @file   CameraPathControlledAdaptor_mpi.h
- *  @author Ken Iwata, Naohisa Sakamoto
+ *  @file   CameraFocusControlledAdaptor_mpi.h
+ *  @author Taisei Matsushima, Naohisa Sakamoto
  */
 /*****************************************************************************/
 #pragma once
@@ -70,7 +70,7 @@ protected:
 
     virtual void execRendering();
     virtual void process( const Data& data );
-    virtual void process( const Data& data, const float radius, const kvs::Vec3& focus, const kvs::Quat& rotation ); // add
+    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus );
 
     std::string outputFinalImageName( const size_t level );
 

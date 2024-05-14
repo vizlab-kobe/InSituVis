@@ -1,206 +1,193 @@
+#include <kvs/Math>
+#include <kvs/Stat>
+#include <kvs/Quaternion>
+#include <kvs/LabColor>
+#include <time.h>
+#include <chrono>
+
+
 namespace InSituVis
 {
 
 inline void EntropyBasedCameraFocusController::push( const Data& data )
 {
-    const auto interval = BaseClass::entropyInterval();
-    auto estimated_position = [&]()
-    {
-        return this->isAutoZoomingEnabled() ? this->estimatedZoomPosition() : BaseClass::maxPosition();
-    };
+   BaseClass::setSubTimeIndex(999999);
 
     if ( !( BaseClass::isFinalStep() ) )
     {
-        if ( BaseClass::previousData().empty() )
+        if ( BaseClass::isInitialStep() )
         {
             // Initial step.
             this->process( data );
-            BaseClass::setPreviousData( data );
             BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
-            BaseClass::pushMaxPositions( estimated_position() );
+            BaseClass::pushMaxPositions( BaseClass::maxPosition() );
             BaseClass::pushMaxRotations( BaseClass::maxRotation() );
-            BaseClass::pushMaxRotations( BaseClass::maxRotation() );
-            BaseClass::dataQueue().push( data );
+            BaseClass::pushNumImages( 1 );
+            BaseClass::setIsInitialStep( false );
             this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
         }
         else
         {
             if ( BaseClass::isCacheEnabled() )
             {
-                if ( BaseClass::dataQueue().size() % interval == 0 )
+                if ( BaseClass::isEntStep() )
                 {
                     this->process( data );
                     BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
-                    BaseClass::pushMaxPositions( estimated_position() );
+                    BaseClass::pushMaxPositions( BaseClass::maxPosition() );
                     BaseClass::pushMaxRotations( BaseClass::maxRotation() );
                     this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
-
-                    if ( BaseClass::maxRotations().size() == 4 )
+                    std::cout<<BaseClass::dataQueue().size()<<"--------"<<BaseClass::cacheSize()<<std::endl;
+                    if ( BaseClass::dataQueue().size() == BaseClass::cacheSize() )
                     {
-                        const auto q1 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
-                        const auto q2 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
-                        const auto q3 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
-                        const auto q4 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
+                        BaseClass::setIsErpStep( true );
+                        //if(BaseClass::isErpStep() == true) std::cout<<"-------------------KINGDORA---------------------"<<std::endl;
+                        this->createPath();
+                        Data data_front;
+                        BaseClass::setSubTimeIndex( 0 );
+                        size_t num_points = BaseClass::path().size();
+                        std::cout<<"bbbb"<<num_points<<std::endl;
+                        size_t num_images = ( num_points + 1 ) / BaseClass::entropyInterval();
+                       // std::cout<<"-------------------"<<num_images<<"---------------------"<<std::endl;
 
-                        const auto p2 = BaseClass::maxPositions().front(); BaseClass::maxPositions().pop();
-                        const auto p3 = BaseClass::maxPositions().front();
-
-                        const auto r2 = p2.length();
-                        const auto r3 = p3.length();
-
-                        const auto f2 = this->maxFocusPoints().front(); this->maxFocusPoints().pop(); // add
-                        const auto f3 = this->maxFocusPoints().front();                               // add
-                        this->createPath( r2, r3, f2, f3, q1, q2, q3, q4, interval );                 // mod
-
-                        BaseClass::dataQueue().pop();
-                        BaseClass::pushPathEntropies( BaseClass::maxEntropies().front() );
-                        BaseClass::maxEntropies().pop();
-                        BaseClass::pushPathPositions( p2 );
-                        this->pushFocusPathPositions( f2 ); // add
-
-                        for ( size_t i = 0; i < interval - 1; i++ )
+                        for ( size_t i = 0; i < num_points; i++ )
                         {
-                            const auto data_front = BaseClass::dataQueue().front();
-                            const auto radius = BaseClass::path().front().first;
-                            const auto rotation = BaseClass::path().front().second;
-                            const auto focus = this->focusPath().front();         // add
-                            this->process( data_front, radius, focus, rotation ); // mod
-                            BaseClass::dataQueue().pop();
+                            if ( BaseClass::dataQueue().size() > 0 ) { data_front = BaseClass::dataQueue().front(); }
+                            else { data_front = data; }
+                            const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
+                            this->process( data_front, path_front.first, path_front.second, this->focusPath().front() ); //mod
+                            //if(BaseClass::isErpStep() == true) std::cout<<"-------------------KINGDORA---------------------"<<std::endl;
                             BaseClass::path().pop();
                             this->focusPath().pop(); // add
-
-                            BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-                            BaseClass::pushPathPositions( estimated_position() );
-                            this->pushFocusPathPositions( this->maxFocusPoint() ); // add
+                            BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
+                            
+                            if ( BaseClass::subTimeIndex() == num_images )
+                            {
+                                BaseClass::dataQueue().pop();
+                                BaseClass::pushNumImages( num_images );
+                                BaseClass::setSubTimeIndex( 0 );
+                            }
                         }
 
-                        BaseClass::pushMaxRotations( q2 );
-                        BaseClass::pushMaxRotations( q3 );
-                        BaseClass::pushMaxRotations( q4 );
+                        if ( BaseClass::dataQueue().size() > 0 ) BaseClass::dataQueue().pop();
+                        BaseClass::setSubTimeIndex( 0 );
+                        BaseClass::pushNumImages( num_images );
+                        BaseClass::popMaxPositions();
+                        BaseClass::popMaxRotations();
+                        this->popMaxFocusPoints();
+                        BaseClass::setIsErpStep( false );
                     }
                     BaseClass::dataQueue().push( data );
                 }
-                else
-                {
-                    BaseClass::dataQueue().push( data );
-                }
+                else { BaseClass::dataQueue().push( data ); }
             }
         }
     }
     else
     {
-        const auto q1 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
-        const auto q2 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
-        const auto q3 = BaseClass::maxRotations().front(); BaseClass::maxRotations().pop();
-        const auto q4 = q3;
+        const auto final_position = BaseClass::maxPositions().back();
+        const auto final_rotation = BaseClass::maxRotations().back();
+        const auto final_focus_point = this->maxFocusPoints().back();
+        BaseClass::pushMaxPositions( final_position );
+        BaseClass::pushMaxRotations( final_rotation );
+        this->pushMaxFocusPoints( final_focus_point );
 
-        const auto p2 = BaseClass::maxPositions().front(); BaseClass::maxPositions().pop();
-        const auto p3 = BaseClass::maxPositions().front();
+        BaseClass::setIsErpStep( true );
+        this->createPath();
+        Data data_front;
+        BaseClass::setSubTimeIndex( 0 );
+        size_t num_points = BaseClass::path().size();
+        size_t num_images = ( num_points + 1 ) / BaseClass::entropyInterval();
 
-        const auto r2 = p2.length();
-        const auto r3 = p3.length();
-
-        const auto f2 = this->maxFocusPoints().front(); this->maxFocusPoints().pop(); // add
-        const auto f3 = this->maxFocusPoints().front();                               // add
-        this->createPath( r2, r3, f2, f3, q1, q2, q3, q4, interval );                 // mod
-
-        BaseClass::dataQueue().pop();
-        BaseClass::pushPathEntropies( BaseClass::maxEntropies().front() );
-        BaseClass::maxEntropies().pop();
-        BaseClass::pushPathPositions( p2 );
-        this->pushFocusPathPositions( f2 ); // add
-
-        for ( size_t i = 0; i < interval - 1; i++ )
+        for ( size_t i = 0; i < num_points; i++ )
         {
-            const auto data_front = BaseClass::dataQueue().front();
-            const auto radius = BaseClass::path().front().first;
-            const auto rotation = BaseClass::path().front().second;
-            const auto focus = this->focusPath().front();         // add
-            this->process( data_front, radius, focus, rotation ); // mod
-            BaseClass::dataQueue().pop();
+            if ( BaseClass::dataQueue().size() > 0 ) { data_front = BaseClass::dataQueue().front(); }
+            else { data_front = data; }
+            const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
+            this->process( data_front, path_front.first, path_front.second, this->focusPath().front() ); //mod
             BaseClass::path().pop();
             this->focusPath().pop(); // add
-
-            BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-            BaseClass::pushPathPositions( estimated_position() );
-            this->pushFocusPathPositions( this->maxFocusPoint() ); // add
+            BaseClass::setSubTimeIndex( BaseClass::subTimeIndex() + 1 );
+            
+            if( BaseClass::subTimeIndex() == num_images )
+            {
+                BaseClass::dataQueue().pop();
+                BaseClass::pushNumImages( num_images );
+                BaseClass::setSubTimeIndex( 0 );
+            }
         }
+
+        if ( BaseClass::dataQueue().size() > 0 ) BaseClass::dataQueue().pop();
+        BaseClass::setSubTimeIndex( 0 );
+        BaseClass::pushNumImages( num_images );
+        BaseClass::popMaxPositions();
+        BaseClass::popMaxRotations();
+        this->popMaxFocusPoints();
 
         while ( BaseClass::dataQueue().size() > 0 )
         {
-            std::queue<std::pair<float, kvs::Quat>> empty;
-            BaseClass::path().swap( empty );
-
-            std::queue<kvs::Vec3> empty_focus;     // add
-            this->focusPath().swap( empty_focus ); // add
-
-            for ( size_t i = 0; i < interval - 1; i++ )
-            {
-                //BaseClass::path().push( { r3, q3 } );
-                std::pair<float, kvs::Quat> elem( r3, q3 );
-                BaseClass::path().push( elem );
-                this->focusPath().push( f3 ); // add
-            }
-
+            const auto data_front = BaseClass::dataQueue().front();
+            this->process( data_front, final_position.length(), final_rotation, final_focus_point );
+            BaseClass::pushNumImages( 1 );
             BaseClass::dataQueue().pop();
-            BaseClass::pushPathEntropies( BaseClass::maxEntropies().front() );
-            BaseClass::maxEntropies().pop();
-            BaseClass::pushPathPositions( p3 );
-            this->pushFocusPathPositions( f3 ); // add
-
-            for ( size_t i = 0; i < interval - 1; i++ )
-            {
-                const auto data_front = BaseClass::dataQueue().front();
-                //const auto [ radius, rotation ] = BaseClass::path().front();
-                const auto radius = BaseClass::path().front().first;
-                const auto rotation = BaseClass::path().front().second;
-                const auto focus = m_focus_path.front();              // add
-                this->process( data_front, radius, focus, rotation ); // mod
-                BaseClass::dataQueue().pop();
-                BaseClass::path().pop();
-                this->focusPath().pop(); // add
-
-                BaseClass::pushPathEntropies( BaseClass::maxEntropy() );
-                BaseClass::pushPathPositions( estimated_position() );
-                this->pushFocusPathPositions( this->maxFocusPoint() ); // add
-            }
         }
     }
 }
 
-inline void EntropyBasedCameraFocusController::createPath(
-    const float r2,
-    const float r3,
-    const kvs::Vec3& f2,
-    const kvs::Vec3& f3,
-    const kvs::Quat& q1,
-    const kvs::Quat& q2,
-    const kvs::Quat& q3,
-    const kvs::Quat& q4,
-    const size_t point_interval )
-{
-    std::queue<std::pair<float, kvs::Quat>> empty;
-    BaseClass::path().swap( empty );
 
+inline void EntropyBasedCameraFocusController::createPath()
+{
+    std::queue<std::pair<float, kvs::Quaternion>> empty;
+    BaseClass::path().swap( empty );
+    
     std::queue<kvs::Vec3> empty_focus;     // add
     this->focusPath().swap( empty_focus ); // add
-
     kvs::Timer timer( kvs::Timer::Start );
-    for ( size_t i = 1; i < point_interval; i++ )
-    {
-        const auto t = static_cast<float>( i ) / static_cast<float>( point_interval );
-        const auto r = BaseClass::radiusInterpolation( r2, r3, t );
-        const auto q = BaseClass::pathInterpolation( q1, q2, q3, q4, t );
-        const std::pair<float, kvs::Quat> elem( r, q );
-        BaseClass::path().push( elem );
 
-        const auto f = ( 1.0 - t ) * f2 + t * f3; // add
+    const auto positions = BaseClass::maxPositions();
+    const auto rotations = BaseClass::maxRotations();
+    const auto focuspoints = this->maxFocusPoints();
+
+    const size_t n = 256;
+    float l = 0.0f;
+
+    for ( size_t i = 0; i < n; i++ )
+    {
+        const auto t0 = static_cast<float>( i ) / static_cast<float>( n );
+        const auto rad0 = BaseClass::radiusInterpolation( positions[0].length(), positions[1].length(), t0 );
+        const auto rot0 = BaseClass::pathInterpolation( rotations, t0 );
+        const auto p0 = kvs::Quaternion::Rotate( kvs::Vec3( { 0.0f, rad0, 0.0f } ), rot0 );
+
+        const auto t1 = static_cast<float>( i + 1 ) / static_cast<float>( n );
+        const auto rad1 = BaseClass::radiusInterpolation( positions[0].length(), positions[1].length(), t1 );
+        const auto rot1 = BaseClass::pathInterpolation( rotations, t1 );
+        const auto p1 = kvs::Quaternion::Rotate( kvs::Vec3( { 0.0f, rad1, 0.0f } ), rot1 );
+        const auto u = p1 - p0;
+        l += u.length();
+    }
+
+    const size_t num_images = static_cast<size_t>( l / ( BaseClass::entropyInterval() * BaseClass::delta() ) ) + 1;
+    const size_t num_points = num_images * BaseClass::entropyInterval() - 1;
+    std::cout<<num_images<<"num_image"<<std::endl;
+    std::cout<<num_points<<"num_points"<<std::endl;
+    std::cout<<l<<"l"<<std::endl;
+    
+    
+    for ( size_t i = 0; i < num_points; i++ )
+    {
+        const auto t = static_cast<float>( i + 1 ) / static_cast<float>( num_points + 1 );
+        const auto rad = BaseClass::radiusInterpolation( positions[0].length(), positions[1].length(), t );
+        const auto rot = BaseClass::pathInterpolation( rotations, t );
+        const std::pair<float, kvs::Quaternion> elem( rad, rot );
+        BaseClass::path().push( elem );
+        const auto f = ( 1.0 - t ) * focuspoints[0] + t * focuspoints[1]; // add
         this->focusPath().push( f );              // add
     }
+
     timer.stop();
 
     const auto path_calc_time = timer.sec();
-    BaseClass::pathCalcTimes().push_back( path_calc_time );
+    BaseClass::pushPathCalcTimes( path_calc_time );
 }
 
 } // end of namespace InSituVis
