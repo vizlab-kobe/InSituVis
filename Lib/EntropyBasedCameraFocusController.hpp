@@ -37,18 +37,17 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                     BaseClass::pushMaxPositions( BaseClass::maxPosition() );
                     BaseClass::pushMaxRotations( BaseClass::maxRotation() );
                     this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
-                    std::cout<<BaseClass::dataQueue().size()<<"--------"<<BaseClass::cacheSize()<<std::endl;
+
                     if ( BaseClass::dataQueue().size() == BaseClass::cacheSize() )
                     {
                         BaseClass::setIsErpStep( true );
-                        //if(BaseClass::isErpStep() == true) std::cout<<"-------------------KINGDORA---------------------"<<std::endl;
+                        
                         this->createPath();
                         Data data_front;
                         BaseClass::setSubTimeIndex( 0 );
                         size_t num_points = BaseClass::path().size();
-                        std::cout<<"bbbb"<<num_points<<std::endl;
                         size_t num_images = ( num_points + 1 ) / BaseClass::entropyInterval();
-                       // std::cout<<"-------------------"<<num_images<<"---------------------"<<std::endl;
+                    
 
                         for ( size_t i = 0; i < num_points; i++ )
                         {
@@ -56,7 +55,6 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                             else { data_front = data; }
                             const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
                             this->process( data_front, path_front.first, path_front.second, this->focusPath().front() ); //mod
-                            //if(BaseClass::isErpStep() == true) std::cout<<"-------------------KINGDORA---------------------"<<std::endl;
                             BaseClass::path().pop();
                             this->focusPath().pop(); // add
                             BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
@@ -168,9 +166,6 @@ inline void EntropyBasedCameraFocusController::createPath()
 
     const size_t num_images = static_cast<size_t>( l / ( BaseClass::entropyInterval() * BaseClass::delta() ) ) + 1;
     const size_t num_points = num_images * BaseClass::entropyInterval() - 1;
-    std::cout<<num_images<<"num_image"<<std::endl;
-    std::cout<<num_points<<"num_points"<<std::endl;
-    std::cout<<l<<"l"<<std::endl;
     
     
     for ( size_t i = 0; i < num_points; i++ )

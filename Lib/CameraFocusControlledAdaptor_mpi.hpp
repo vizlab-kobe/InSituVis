@@ -120,7 +120,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
     // Auto zooming
     std::vector<float> zoom_entropies;
     std::vector<FrameBuffer> zoom_frame_buffers;
-    //if(BaseClass::Controller::isErpStep()) std::cout<<"-------------------KINGDORA---------------------"<<std::endl;
+    
     if ( Controller::isEntStep() && !Controller::isErpStep())
     {
         // Entropy evaluation
@@ -303,7 +303,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
     }
     else
     {
-        std::cout<<"-----------dfdfd--------------"<<std::endl;
+
         kvs::Timer timer;
 
         const auto focus = Controller::erpFocus();  // add
@@ -439,7 +439,7 @@ inline void CameraFocusControlledAdaptor::process(
     const float radius,
     const kvs::Quaternion& rotation,
     const kvs::Vec3& focus )
-{ std::cout<<"-------------------KINGDORA"<<Controller::isErpStep()<<"---------------------"<<std::endl;
+{ 
         const auto current_step = BaseClass::timeStep();
 
         // Reset time step, which is used for output filename,
