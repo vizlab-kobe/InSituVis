@@ -254,7 +254,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         {
             BaseClass::world().broadcast( estimated_zoom_level );
             BaseClass::world().broadcast( estimated_zoom_position.data(), sizeof(float) * 3 );
-
+            Controller::setMaxPosition( estimated_zoom_position );
             Controller::setEstimatedZoomLevel( estimated_zoom_level );
             Controller::setEstimatedZoomPosition( estimated_zoom_position );
             Controller::setMaxRotation( this->rotation( estimated_zoom_position ) );
@@ -263,8 +263,9 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
             {
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    location = max_location;
-                    const auto level = estimated_zoom_level;
+                    location = Controller::estimatedZoomPosition();
+                    //std::cout<<"IN Adaptor nohokan"<<location.position<<std::endl;
+                    const auto level = Controller::estimatedZoomLevel();
                     const auto frame_buffer = zoom_frame_buffers[ level ];
                     timer.start();
                     if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, level );
@@ -276,30 +277,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
                 this->outputZoomEntropies( zoom_entropies );
             }
         }
-        // if( BaseClass::isOutputCdbEnabled() )
-        // {
-        //     if ( BaseClass::world().isRoot() )
-        //     {
-        //         const auto time = BaseClass::timeStep();
-        //         const auto space = location.index;
-        //         const auto output_time = kvs::String::From( time, 6, '0' );
-        //         const auto output_space = kvs::String::From( space, 6, '0' );
-        //         const auto output_basename = BaseClass::outputFilename();
-        //         const auto output_filename = output_basename + "_" + output_time + "_" + output_space + ".png";
-        //         const float x = location.position[0];
-        //         const float y = location.position[1];
-        //         const float z = location.position[2];
-        //         const float r = sqrt( x * x + y * y + z * z );
-        //         const float theta = std::acos( y / r ) * 180 / kvs::Math::pi;
-        //         const float phi = std::atan2( x, z ) * 180 / kvs::Math::pi;
-        //         const float Frame = time;
-        //         std::cout<<"bbbbbbbbbb"<<std::endl;
-        //         std::ofstream ofs_csv_file( m_cdb_dirname + "/data.csv",std::ios::app);
-        //         ofs_csv_file << time << ","<< Frame << "," << "image/"+output_filename << std::endl;
-        //         ofs_csv_file.close();
-        //         std::cout<<"bbbbbbbbbb"<<std::endl;
-        //     }
-        // }
+
     }
     else
     {
@@ -312,11 +290,12 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         if ( Controller::isAutoZoomingEnabled() )
         {
             auto location = this->erpLocation( focus );
+            std::cout<<"adsfgh"<<location.position<<std::endl;
             auto frame_buffer = BaseClass::readback( location );
 
             Controller::setEstimatedZoomLevel( 0 );
             Controller::setEstimatedZoomPosition( location.position );
-
+            //std::cout<<"IN Adaptor "<<location.position<<std::endl;
             timer.start();
             if ( BaseClass::world().isRoot() )
             {
@@ -357,7 +336,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         else
         {
             auto location = this->erpLocation( focus );
-            Controller::setMaxPosition( location.position );
+            //Controller::setMaxPosition( location.position );
 
             // Zooming
             const auto p = location.position;
@@ -453,6 +432,8 @@ inline void CameraFocusControlledAdaptor::process(
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
         Controller::setErpRadius( radius );
+std::cout<<"ppppppp0="<<Controller::erpRadius()<<"+"<<Controller::erpRotation()[0]<<"+"<<Controller::erpRotation()[1]<<"+"<<Controller::erpRotation()[2]<<"+"<<Controller::erpRotation()[3]<<std::endl;
+        
         Controller::setErpFocus( focus ); // add
         BaseClass::execPipeline( data );
         this->execRendering();

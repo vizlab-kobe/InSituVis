@@ -145,7 +145,6 @@ inline void EntropyBasedCameraFocusController::createPath()
     const auto positions = BaseClass::maxPositions();
     const auto rotations = BaseClass::maxRotations();
     const auto focuspoints = this->maxFocusPoints();
-
     const size_t n = 256;
     float l = 0.0f;
 
