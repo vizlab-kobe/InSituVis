@@ -264,7 +264,6 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
                 if ( BaseClass::isOutputImageEnabled() )
                 {
                     location = Controller::estimatedZoomPosition();
-                    //std::cout<<"IN Adaptor nohokan"<<location.position<<std::endl;
                     const auto level = Controller::estimatedZoomLevel();
                     const auto frame_buffer = zoom_frame_buffers[ level ];
                     timer.start();
@@ -290,12 +289,10 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         if ( Controller::isAutoZoomingEnabled() )
         {
             auto location = this->erpLocation( focus );
-            std::cout<<"adsfgh"<<location.position<<std::endl;
             auto frame_buffer = BaseClass::readback( location );
 
             Controller::setEstimatedZoomLevel( 0 );
             Controller::setEstimatedZoomPosition( location.position );
-            //std::cout<<"IN Adaptor "<<location.position<<std::endl;
             timer.start();
             if ( BaseClass::world().isRoot() )
             {
@@ -431,9 +428,7 @@ inline void CameraFocusControlledAdaptor::process(
 
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
-        Controller::setErpRadius( radius );
-std::cout<<"ppppppp0="<<Controller::erpRadius()<<"+"<<Controller::erpRotation()[0]<<"+"<<Controller::erpRotation()[1]<<"+"<<Controller::erpRotation()[2]<<"+"<<Controller::erpRotation()[3]<<std::endl;
-        
+        Controller::setErpRadius( radius );        
         Controller::setErpFocus( focus ); // add
         BaseClass::execPipeline( data );
         this->execRendering();
