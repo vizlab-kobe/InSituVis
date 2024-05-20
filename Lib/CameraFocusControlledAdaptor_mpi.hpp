@@ -368,30 +368,6 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
                 timer.stop();
                 save_time += BaseClass::saveTimer().time( timer );
             }
-        // if( BaseClass::isOutputCdbEnabled() )
-        // {
-        //     if ( BaseClass::world().isRoot() )
-        //     {
-        //     const auto time = BaseClass::timeStep();
-        //     const auto size = BaseClass::outputImageSize( location );
-        //     const auto space = location.index;
-        //     const auto output_time = kvs::String::From( time, 6, '0' );
-        //     const auto output_space = kvs::String::From( space, 6, '0' );
-        //     const auto output_basename = BaseClass::outputFilename();
-        //     const auto output_filename = output_basename + "_" + output_time + "_" + output_space + ".png";
-        //     const float x = location.position[0];
-        //     const float y = location.position[1];
-        //     const float z = location.position[2];
-        //     const float r = sqrt( x * x + y * y + z * z );
-        //     const float theta = std::acos( y / r ) * 180 / kvs::Math::pi;
-        //     const float phi = std::atan2( x, z ) * 180 / kvs::Math::pi;
-        //     const float Frame = time;
-        //     std::ofstream ofs_csv_file( m_cdb_dirname + "/data.csv",std::ios::app);
-        //     ofs_csv_file << time << ","<< Frame << "," << "image/"+output_filename << std::endl;
-        //     ofs_csv_file.close();
-        //     std::cout<<"ddddddddddd"<<std::endl;
-        //     }
-        // }
         }
     }
 

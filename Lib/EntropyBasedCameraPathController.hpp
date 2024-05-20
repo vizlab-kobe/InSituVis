@@ -247,6 +247,7 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
                             if ( this->dataQueue().size() > 0 ) { data_front = this->dataQueue().front(); }
                             else { data_front = data; }
                             const std::pair<float, kvs::Quat> path_front = this->path().front();
+
                             this->process( data_front, path_front.first, path_front.second );
                             this->path().pop();
                             m_sub_time_index += 1;
