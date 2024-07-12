@@ -67,6 +67,7 @@ private:
     DataQueue m_data_queue{}; ///< data queue
     EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f ); ///< entropy function
     Interpolator m_interpolator = Slerp(); ///< path interpolator
+    InterpolationMethod m_interpolation_method = InterpolationMethod::SLERP; //add
     bool m_enable_output_evaluation_image = false; ///< if true, all of evaluation images will be output
     bool m_enable_output_evaluation_image_depth = false; ///< if true, all of evaluation depth images will be output
     bool m_enable_output_entropies = false; ///< if true, calculated entropies for all viewpoints will be output
@@ -86,9 +87,17 @@ public:
     kvs::Quaternion erpRotation() const { return m_erp_rotation; }
     size_t subTimeIndex() const { return m_sub_time_index; }
 
-    void setCacheSize( const size_t cache_size ) { m_cache_size = cache_size; }
+    //void setCacheSize( const size_t cache_size ) { m_cache_size = cache_size; }
     void setDelta( const float delta ) { m_delta = delta; }
-    void setEntropyInterval( const size_t interval ) { m_entropy_interval = interval; }
+    void setEntropyInterval( const size_t interval ) 
+    { 
+            if( m_entropy_interval <= 0)
+                m_entropy_interval = 1;
+            else
+            {
+                m_entropy_interval = interval; 
+            }
+    }
     void setEntropyFunction( EntropyFunction func ) { m_entropy_function = func; }
     void setEntropyFunctionToLightness() { m_entropy_function = LightnessEntropy(); }
     void setEntropyFunctionToColor() { m_entropy_function = ColorEntropy(); }
@@ -98,29 +107,42 @@ public:
         m_entropy_function = MixedEntropy( e1, e2, p );
     }
 
-    void setInterpolator( InterpolationMethod interpolation_method )
-    {
-        if ( interpolation_method == InterpolationMethod::SLERP ) { this->setInterpolatorToSlerp(); }
-        else if ( interpolation_method == InterpolationMethod::SQUAD ) { this->setInterpolatorToSquad(); }
-    }
+    // void setInterpolator( InterpolationMethod interpolation_method )
+    // {
+    //     if ( interpolation_method == InterpolationMethod::SLERP ) { this->setInterpolatorToSlerp(); }
+    //     else if ( interpolation_method == InterpolationMethod::SQUAD ) { this->setInterpolatorToSquad(); }
+    // }
 
-    void setInterpolatorToSlerp()
-    {
-        m_interpolator = Slerp();
-        m_entropy_interval = m_cache_size + 1;
-    }
+    // void setInterpolatorToSlerp()
+    // {
+    //     m_interpolator = Slerp();
+    //     m_entropy_interval = m_cache_size + 1;
+    // }
 
-    void setInterpolatorToSquad()
-    {
-        m_interpolator = Squad();
-        if( m_cache_size > 0 )
-        {
-            if( m_cache_size % 2 == 0 ) m_cache_size -= 1;
-        }
-        else { m_cache_size = 1; }
-        m_entropy_interval = ( m_cache_size + 1 ) / 2;
-        this->pushMaxRotations( this->maxRotation() );
+    // void setInterpolatorToSquad()
+    // {
+    //     m_interpolator = Squad();
+    //     if( m_cache_size > 0 )
+    //     {
+    //         if( m_cache_size % 2 == 0 ) m_cache_size -= 1;
+    //     }
+    //     else { m_cache_size = 1; }
+    //     m_entropy_interval = ( m_cache_size + 1 ) / 2;
+    //     this->pushMaxRotations( this->maxRotation() );
+    // }
+
+    void setInterpolationMethod(InterpolationMethod method ){//add
+        m_interpolation_method = method;
+        if( method == SLERP)
+            m_interpolator = Slerp();
+        else if( method == SQUAD)
+            m_interpolator = Squad();
     }
+    InterpolationMethod isInterpolationMethod(){ return m_interpolation_method; }
+
+    void setInterpolationMethodToSlerp(){ this->setInterpolationMethod(SLERP); }//add
+    void setInterpolationMethodToSquad(){ this->setInterpolationMethod(SQUAD); }//add
+
 
     void setMaxIndex( const size_t index ) { m_max_index = index; }
     void setMaxEntropy( const float entropy ) { m_max_entropy = entropy; }
@@ -213,6 +235,27 @@ protected:
     void outputNumImages(
         const std::string& filename,
         const size_t interval );
+
+    //add
+    void updataCacheSize(){
+        switch( m_interpolation_method ){
+        case SLERP:
+            m_cache_size = m_entropy_interval - 1;
+            //m_entropy_interval = m_cache_size + 1;
+            break;
+        case SQUAD:
+            // if( m_cache_size > 0 )
+            // {
+            //     if( m_cache_size % 2 == 0 ) m_cache_size -= 1;
+            // }   
+            // else { m_cache_size = 1; }
+        //m_entropy_interval = ( m_cache_size + 1 ) / 2;
+            m_cache_size = m_entropy_interval * 2 - 1;
+            // this->pushMaxRotations( this->maxRotation() );
+            break;
+        }
+        // std::cout << m_interpolation_method << std::endl;
+    }
 };
 
 } // end of namespace InSituVis

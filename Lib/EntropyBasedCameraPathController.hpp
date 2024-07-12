@@ -219,6 +219,10 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
             this->pushMaxEntropies( this->maxEntropy() );
             this->pushMaxPositions( this->maxPosition() );
             this->pushMaxRotations( this->maxRotation() );
+            if ( this->isInterpolationMethod() == SQUAD )
+            {
+                this->pushMaxRotations( this->maxRotation() );
+            }
             this->pushNumImages( 1 );
             this->setIsInitialStep( false );
         }
@@ -267,7 +271,10 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
                         this->popMaxRotations();
                         this->setIsErpStep( false );
                     }
+                    if ( this->isInterpolationMethod() == SQUAD )
+                    {
                     this->dataQueue().push( data );
+                    }
                 }
                 else { this->dataQueue().push( data ); }
             }
