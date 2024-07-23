@@ -22,6 +22,10 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
             BaseClass::pushMaxPositions( BaseClass::maxPosition() );
             BaseClass::pushMaxRotations( BaseClass::maxRotation() );
+            if ( this->isInterpolationMethod() == SQUAD )
+            {
+                this->pushMaxRotations( this->maxRotation() );
+            }
             BaseClass::pushNumImages( 1 );
             BaseClass::setIsInitialStep( false );
             this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
@@ -145,7 +149,7 @@ inline void EntropyBasedCameraFocusController::createPath()
     const auto positions = BaseClass::maxPositions();
     const auto rotations = BaseClass::maxRotations();
     const auto focuspoints = this->maxFocusPoints();
-    const size_t n = 256;
+    const size_t n = 512;
     float l = 0.0f;
 
     for ( size_t i = 0; i < n; i++ )
@@ -174,7 +178,7 @@ inline void EntropyBasedCameraFocusController::createPath()
         const auto rot = BaseClass::pathInterpolation( rotations, t );
         const std::pair<float, kvs::Quaternion> elem( rad, rot );
         BaseClass::path().push( elem );
-        const auto f = ( 1.0 - t ) * focuspoints[0] + t * focuspoints[1]; // add
+        const auto f = ( 1.0f - t ) * focuspoints[0] + t * focuspoints[1]; // add
         this->focusPath().push( f );              // add
     }
 
