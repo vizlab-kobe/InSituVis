@@ -8,12 +8,10 @@ namespace InSituVis
 namespace mpi
 {
 
-// inline bool CameraPathTimeStepControlledAdaptor::isEntropyStep()
-// {
-//     return BaseClass::timeStep() % ( BaseClass::analysisInterval() * Controller::entropyInterval() ) == 0;
-// }
-
-
+inline bool CameraPathTimeStepControlledAdaptor::isEntropyStep()
+{
+    return BaseClass::timeStep() % ( BaseClass::analysisInterval() * Controller::entropyInterval() ) == 0;
+}
 
 inline bool CameraPathTimeStepControlledAdaptor::isFinalTimeStep()
 {
@@ -58,8 +56,8 @@ inline bool CameraPathTimeStepControlledAdaptor::dump()
         const auto interval = BaseClass::analysisInterval();
         const auto directory = BaseClass::outputDirectory();
         const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
-        Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
-        Controller::outputPathPositions( File( "output_path_positions"), interval );
+        // Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
+        // Controller::outputPathPositions( File( "output_path_positions"), interval );
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
         Controller::outputDivergences("Output/output_divergences.csv",Controller::divergences());
         Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
@@ -71,12 +69,15 @@ inline bool CameraPathTimeStepControlledAdaptor::dump()
 inline void CameraPathTimeStepControlledAdaptor::exec( const BaseClass::SimTime sim_time )
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
+    Controller::setIsEntStep( this->isEntropyStep() );
+    Controller::updataCacheSize();
+
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
     if( this->isFinalTimeStep())
     {
-        Controller::setFinalStep( true );
+        Controller::setIsFinalStep( true );
         const auto dummy = Data();
         Controller::push( dummy );
     }

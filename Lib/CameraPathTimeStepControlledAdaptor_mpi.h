@@ -50,7 +50,7 @@ public:
     float divergence( const Controller::Values& P0, const Controller::Values& P1 );
 
 protected:
-    // bool isEntropyStep();
+    bool isEntropyStep();
     bool isFinalTimeStep();
     Location erpLocation(
         const size_t index = 999999,
