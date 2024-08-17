@@ -181,7 +181,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         const auto max_position = max_location.position;
         const auto max_rotation = max_location.rotation;
         Controller::setMaxIndex( max_index );
-        // Controller::setMaxRotation( max_rotation );
+        Controller::setMaxRotation( max_rotation );
         Controller::setMaxEntropy( max_entropy );
 
         // Calculate camera focus point.
@@ -199,7 +199,6 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         // Readback frame buffer rendererd from updated location.
         BaseClass::world().broadcast( at.data(), sizeof(float) * 3 );
         Controller::setMaxFocusPoint( at );
-
         auto location = this->focusedLocation( max_location, at );
         Controller::setMaxPosition( max_position );
 
