@@ -6,6 +6,7 @@
 #include <chrono>
 
 
+
 namespace InSituVis
 {
 
@@ -45,7 +46,6 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                     if ( BaseClass::dataQueue().size() == BaseClass::cacheSize() )
                     {
                         BaseClass::setIsErpStep( true );
-                        
                         this->createPath();
                         Data data_front;
                         BaseClass::setSubTimeIndex( 0 );
