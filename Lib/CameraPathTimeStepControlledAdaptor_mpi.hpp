@@ -59,7 +59,7 @@ inline bool CameraPathTimeStepControlledAdaptor::dump()
         // Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
         // Controller::outputPathPositions( File( "output_path_positions"), interval );
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
-        Controller::outputDivergences("Output/output_divergences.csv",Controller::divergences());
+        Controller::outputDivergences("Output/output_divergences.csv",Controller::divergences(),Controller::threshold());
         Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
     }
 
@@ -92,7 +92,6 @@ inline void CameraPathTimeStepControlledAdaptor::execRendering()
     float entr_time = 0.0f;
 
     float max_entropy = -1.0f;
-    int max_index = 0;
 
     std::vector<float> entropies;
     std::vector<FrameBuffer> frame_buffers;
@@ -100,6 +99,7 @@ inline void CameraPathTimeStepControlledAdaptor::execRendering()
     // if ( this->isEntropyStep() )
     if ( Controller::isValidationStep() )
     {
+        max_index = 0;
         // Entropy evaluation
         for ( const auto& location : BaseClass::viewpoint().locations() )
         {
@@ -183,7 +183,11 @@ inline void CameraPathTimeStepControlledAdaptor::execRendering()
         {
             if ( BaseClass::isOutputImageEnabled() )
             {
+                // const auto index = Controller::maxIndex();
+                // const auto& location = BaseClass::viewpoint().at( index );
+                // const auto& frame_buffer = frame_buffers[ index ];
                 this->outputColorImage( location, frame_buffer );
+                // this->outputColorImage( location, frame_buffer );
                 //this->outputDepthImage( location, frame_buffer );
             }
         }

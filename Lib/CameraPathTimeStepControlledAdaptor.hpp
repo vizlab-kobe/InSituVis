@@ -46,7 +46,7 @@ inline bool CameraPathTimeStepControlledAdaptor::dump()
     // Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
     // Controller::outputPathPositions( File( "output_path_positions"), interval );
     Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
-    Controller::outputDivergences("Output/output_divergences.csv",Controller::divergences());
+    Controller::outputDivergences("Output/output_divergences.csv",Controller::divergences(),Controller::threshold());
     Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
 
 

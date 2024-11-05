@@ -21,6 +21,7 @@ public:
     using Values = Volume::Values;
     using DivergenceFunction = std::function<float(const Values&,const Values&, const float)>;
     
+    enum ThresholdDeterminationMethod { FIXED, ADAPTIVE };
         // divergence function
     static float GaussianKLDivergence( const Values& P0, const Values& P1, const float D_max );
 
@@ -28,12 +29,13 @@ private:
     size_t m_interval = 10; ///< time interval of entropy calculation
     float m_threshold = 0.0f; ///< threshold value for divergence evalution
     float m_previous_divergence = 0.0f; ///< divergence for the previous dataset
+    float m_reduction_rate = 0.0f;
     DivergenceFunction m_divergence_function = GaussianKLDivergence; ///< divergence function
     Data m_previous_data{}; ///< dataset at previous time-step
     kvs::Quaternion m_previous_rotation{};
     kvs::Vec3 m_previous_position{};
     std::vector<float> m_path_positions{};
-
+    ThresholdDeterminationMethod m_threshold_determination_method = ThresholdDeterminationMethod::FIXED; //add
     bool m_enable_output_divergence = false;
     std::vector<float> m_divergences;
     std::vector<float> var_divergences;
@@ -48,6 +50,7 @@ public:
     float divergenceThreshold() const { return m_threshold; }
 
     void setDivergenceThreshold( const float threshold ) { m_threshold = threshold; }
+    void setReductionRate( const float rate ) { m_reduction_rate = rate; }
     void setDivergenceFunction( DivergenceFunction func ) { m_divergence_function = func; }
 
     // void setEntropyInterval( const size_t interval ) { m_interval = interval; }
@@ -62,6 +65,11 @@ public:
     void setValidationStep( bool validation_step ){ m_validation_step = validation_step; }
     bool isValidationStep(){ return m_validation_step; }
 
+    ThresholdDeterminationMethod isThresholdDeterminationMethod(){ return m_threshold_determination_method; }
+    void setThresholdDeterminationMethod(ThresholdDeterminationMethod method ){//add
+        m_threshold_determination_method = method;
+    }
+
     const Data& previousData() const { return m_previous_data; }
     const kvs::Quaternion& previousRoation() const { return m_previous_rotation; }
     const kvs::Vec3& previousPosition() const { return m_previous_position; }
@@ -75,6 +83,7 @@ public:
     bool isOutputDivergenceEnabled() const { return m_enable_output_divergence; }////
 
     const std::vector<float>& divergences() const { return m_divergences; }
+    const std::vector<float>& threshold() const { return var_threshold; }
 
 
 protected:
@@ -127,7 +136,8 @@ protected:
     ///
     void outputDivergences(
         const std::string& filename,
-        const std::vector<float>& divergences );
+        const std::vector<float>& divergences,
+        const std::vector<float>& threshold );
 };
 
 } // end of namespace InSituVis
