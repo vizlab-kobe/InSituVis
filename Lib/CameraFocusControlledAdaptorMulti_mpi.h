@@ -41,6 +41,7 @@ private:
     int m_route_num;
 
     kvs::Vec2ui m_frame_divs{ 1, 1 }; ///< number of frame divisions
+    kvs::Real32 m_depth = 0.5;
 
 public:
     CameraFocusControlledAdaptorMulti( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
@@ -58,6 +59,8 @@ public:
     const kvs::Vec2ui& frameDivisions() const { return m_frame_divs; }
     void setZoomLevel( const size_t level ) { m_zoom_level = level; }
     void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
+    void setDepth( const kvs::Real32& depth ){ m_depth = depth; }
+    const kvs::Real32& depth() const { return m_depth; } 
 
     //add
     int routeNum() const { return m_route_num; }
@@ -92,6 +95,9 @@ private:
     kvs::Vec3 window_to_object( const kvs::Vec3& win, const Location& location );
     FrameBuffer crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices );
     kvs::Quat rotation( const kvs::Vec3& p );
+    std::vector<kvs::Vec3> biggestEntropyPoint(  std::vector<float> entropies,  std::vector<kvs::Vec2i> centers,  std::vector<kvs::Real32> depthes );
+    std::vector<kvs::Vec3> maximalEntropyPoint(std::vector<float> entropies,  std::vector<kvs::Vec2i> centers,  std::vector<kvs::Real32> depthes );
+
 };
 
 } // end of namespace mpi

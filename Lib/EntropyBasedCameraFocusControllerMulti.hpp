@@ -104,38 +104,37 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
         auto final_positions = BaseClass::maxPositions();
         auto final_rotations = BaseClass::maxRotations();
         auto final_focus_points = maxFocusPoints();
+
         for(int i = static_cast<int>(candidateNum());i>0;i-- ){
             BaseClass::pushMaxPositions( final_positions[final_positions.size() - i] );
             BaseClass::pushMaxRotations( final_rotations[final_rotations.size() - i] );
             pushMaxFocusPoints( final_focus_points[final_focus_points.size() - i] );
-
         }
-
         BaseClass::setIsErpStep( true );
         this->createPath();
         Data data_front;
         // BaseClass::setSubTimeIndex( 0 );
-        size_t num_points = BaseClass::path().size();
+        size_t num_points = (BaseClass::path().size())/(candidateNum()*candidateNum());
         size_t num_images = ( num_points + 1 ) / BaseClass::entropyInterval();
 
         for(int j = 0;j<static_cast<int>(candidateNum()*candidateNum()); j++){
-        for ( size_t i = 0; i < num_points; i++ )
-        {
-            if ( BaseClass::dataQueue().size() > 0 ) { data_front = BaseClass::dataQueue().front(); }
-            else { data_front = data; }
-            const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
-            process( data_front, path_front.first, path_front.second, focusPath().front(), j ); 
-            BaseClass::path().pop();
-            this->focusPath().pop();
-            // BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
-            
-            // if ( BaseClass::subTimeIndex() == num_images )
-            // {
-                BaseClass::pushNumImages( num_images );
-                // BaseClass::setSubTimeIndex( 0 );
-            // }
-        }}
-
+            for ( size_t i = 0; i < num_points; i++ )
+            {
+                if ( BaseClass::dataQueue().size() > 0 ) { data_front = BaseClass::dataQueue().front(); }
+                else { data_front = data; }
+                const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
+                process( data_front, path_front.first, path_front.second, focusPath().front(), j ); 
+                BaseClass::path().pop();
+                this->focusPath().pop();
+                // BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
+                
+                // if ( BaseClass::subTimeIndex() == num_images )
+                // {
+                    BaseClass::pushNumImages( num_images );
+                    // BaseClass::setSubTimeIndex( 0 );
+                // }
+            }
+        }
         if ( BaseClass::dataQueue().size() > 0 ) BaseClass::dataQueue().pop();
         // BaseClass::setSubTimeIndex( 0 );
         BaseClass::pushNumImages( num_images );
@@ -144,15 +143,16 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
         BaseClass::popMaxRotations();
         popCandFocusPoints();
         }
-for(size_t i = static_cast<int>(candidateNum());i>0;i-- ){
-        while ( BaseClass::dataQueue().size() > 0 )
-        {
-            const auto data_front = BaseClass::dataQueue().front();
-            process( data_front, final_positions[final_positions.size() - i].length(), final_rotations[final_positions.size() - i], final_focus_points[final_positions.size() - i], i );
-            BaseClass::pushNumImages( 1 );
-            BaseClass::dataQueue().pop();
+        for(size_t i = static_cast<int>(candidateNum());i>0;i-- ){
+                while ( BaseClass::dataQueue().size() > 0 )
+                {
+                    const auto data_front = BaseClass::dataQueue().front();
+                    process( data_front, final_positions[final_positions.size() - i].length(), final_rotations[final_positions.size() - i], final_focus_points[final_positions.size() - i], i );
+                    BaseClass::pushNumImages( 1 );
+                    BaseClass::dataQueue().pop();
+                }
+            }
         }
-    }}
 }
 
 
@@ -188,6 +188,7 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
                 const auto u = p1 - p0;
                 l += u.length();
             }
+            pushCameraPathLength( l );
             // const size_t num_images = static_cast<size_t>( l / ( BaseClass::entropyInterval() * BaseClass::delta() ) ) + 1;
             const size_t num_images = 1;
             const size_t num_points = num_images * BaseClass::entropyInterval() - 1;
@@ -201,6 +202,7 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
                 const auto f = ( 1.0f - t ) * focuspoints[j] + t * focuspoints[k]; // add
                 this->focusPath().push( f ); 
             }        // add
+            pushFocusPathLength( (focuspoints[k]-focuspoints[j]).length() );
         }
     }
     timer.stop();
@@ -208,5 +210,46 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
     const auto path_calc_time = timer.sec();
     BaseClass::pushPathCalcTimes( path_calc_time );
 }
+
+inline void EntropyBasedCameraFocusControllerMulti::outputVideoParams(
+    const std::string& filename1,
+    const std::vector<std::string>& filename2,
+    const std::vector<float>& focus_entropies,
+    const std::vector<float>& focus_path_length,
+    const std::vector<float>& camera_path_length
+    )  
+{
+    std::ofstream file( filename1 );
+    {
+        size_t CN2 = candidateNum()*candidateNum();
+        size_t t=-1;
+        file << "Filename,Entropy";
+        for(size_t i =0; i <  candidateNum(); i++ ){
+            file << ",preFocusPath[" << i << "]";
+        }
+        for(size_t i =0; i <  candidateNum(); i++ ){
+            file << ",PreCameraPath[" << i << "]";
+        }
+        file<<std::endl;
+        for ( size_t i = 0; i < filename2.size(); i++ )
+        {
+            if( i < candidateNum() ){
+                file << filename2[i] << "," << focus_entropies[i] <<std::endl;
+            }
+            else{
+                file << filename2[i] << "," << focus_entropies[i] << ",";
+                for(size_t j = 0; j<candidateNum(); j++ ){
+                    file << focus_path_length[( i%candidateNum() ) + (i/candidateNum() -1 )*CN2 + j*candidateNum()] << ","; 
+                } 
+                for(size_t j = 0; j<candidateNum(); j++ ){
+                    file << camera_path_length[( i%candidateNum() ) + (i/candidateNum() -1 )*CN2 + j*candidateNum()] << ","; 
+                } 
+                file<<std::endl;
+            }
+        }
+    }
+    file.close();
+}
+
 
 } // end of namespace InSituVis

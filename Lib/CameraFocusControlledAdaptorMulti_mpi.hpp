@@ -29,7 +29,8 @@ CameraFocusControlledAdaptorMulti::erpLocation(
     const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad,   0.0f } ), rot );
     const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rot );
     const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
-    return this->focusedLocation( { index, dir, p, u, rot, l }, focus );
+    // return this->focusedLocation( { index, dir, p, u, rot, l }, focus );
+    return  { index, dir, p, u, rot, focus };
 }
 
 // add
@@ -81,6 +82,8 @@ inline bool CameraFocusControlledAdaptorMulti::dump() //mod
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
         Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
         Controller::outputNumImages( File( "output_num_images" ), BaseClass::analysisInterval() );
+        //add
+        Controller::outputVideoParams( File("output_video_params" ), Controller::outputFilenames(), Controller::focusEntropies(), Controller::focusPathLength(), Controller::cameraPathLength() );
     }
 
     return BaseClass::dump() && ret && ret_f && ret_z;
@@ -267,6 +270,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
             }
             if ( Controller::isAutoZoomingEnabled() )
             {
+                BaseClass::world().broadcast( max_zoom_entropy );
                 BaseClass::world().broadcast( estimated_zoom_level );
                 BaseClass::world().broadcast( estimated_zoom_position.data(), sizeof(float) * 3 );
                 Controller::pushCandZoomLevels( estimated_zoom_level );
@@ -276,9 +280,11 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                 {                
                     if ( BaseClass::isOutputImageEnabled() )
                     {
-                        locations[i].position = estimated_zoom_position; //yet
+                        Controller::pushFocusEntropies( max_zoom_entropy );
+                        locations[i].position = estimated_zoom_position; 
                         const auto level = estimated_zoom_level;
                         const auto frame_buffer = zoom_frame_buffers[ level ];
+                        Controller::pushOutputFilenames( outputFinalImageName(i, level, 0) );
                         timer.start();
                         if ( Controller::isOutpuColorImage() ) this->outputColorImage( locations[i], frame_buffer, i, level, 0 );
                         else {this->outputDepthImage( locations[i], frame_buffer, i, level, 0 );}
@@ -518,27 +524,35 @@ inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::look_at_in_wind
             // }
         }
     }
-
-    std::vector<kvs::Vec2i> top_centers;
-    std::vector<kvs::Real32> top_depthes;
-    std::vector<float> top_entropies;
-    for (size_t i = 0; i < candidateNum(); i++ ){
-        int maxIndex = distance(entropies.begin(), max_element(entropies.begin(), entropies.end()));
-        // top_centers.push_back(centers[maxIndex]);
-        if(i > 1 && depthes[maxIndex] == 1.0f) {
-            top_depthes.push_back(top_depthes.back());
-            top_centers.push_back(top_centers.back());
-        }
-        else{
-            top_depthes.push_back(depthes[maxIndex]);
-            top_centers.push_back(centers[maxIndex]);
-        }
-        focuspoints.push_back( {top_centers[i].x(), top_centers[i].y(), top_depthes[i]} );
-        top_entropies.push_back(entropies[maxIndex]); 
-        entropies.erase( entropies.begin() + maxIndex );
-        centers.erase( centers.begin() + maxIndex ); //エントロピーの値はn番目に大きいもの
-        depthes.erase( depthes.begin() + maxIndex );
+    switch( Controller::isROIMethod() ){
+    case max:
+        focuspoints = biggestEntropyPoint(entropies, centers, depthes );
+        break;
+    case maximum:
+       focuspoints = maximalEntropyPoint(entropies, centers, depthes );
+       break;
     }
+
+    // std::vector<kvs::Vec2i> top_centers;
+    // std::vector<kvs::Real32> top_depthes;
+    // std::vector<float> top_entropies;
+    // for (size_t i = 0; i < candidateNum(); i++ ){
+    //     int maxIndex = distance(entropies.begin(), max_element(entropies.begin(), entropies.end()));
+    //     // top_centers.push_back(centers[maxIndex]);
+    //     if(i > 0 && depthes[maxIndex] == 1.0f) {
+    //         top_depthes.push_back(top_depthes.back());
+    //         top_centers.push_back(top_centers.back());
+    //     }
+    //     else{
+    //         top_depthes.push_back(depthes[maxIndex]);
+    //         top_centers.push_back(centers[maxIndex]);
+    //     }
+    //     focuspoints.push_back( {top_centers[i].x(), top_centers[i].y(), top_depthes[i]} );
+    //     top_entropies.push_back(entropies[maxIndex]); 
+    //     entropies.erase( entropies.begin() + maxIndex );
+    //     centers.erase( centers.begin() + maxIndex ); //エントロピーの値はn番目に大きいもの
+    //     depthes.erase( depthes.begin() + maxIndex );
+    // }
 
     if ( Controller::isOutputFrameEntropiesEnabled() )
     {
@@ -695,6 +709,105 @@ inline void CameraFocusControlledAdaptorMulti::outputZoomEntropies(
         }
     }
     file.close();
+}
+
+
+inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::biggestEntropyPoint(  std::vector<float> entropies,  std::vector<kvs::Vec2i> centers,  std::vector<kvs::Real32> depthes ){
+    std::vector<kvs::Vec3> focuspoints;
+    std::vector<kvs::Vec2i> top_centers;
+    std::vector<kvs::Real32> top_depthes;
+    std::vector<float> top_entropies;
+    for (size_t i = 0; i < candidateNum(); i++ ){
+        int maxIndex = distance(entropies.begin(), max_element(entropies.begin(), entropies.end()));
+        // top_centers.push_back(centers[maxIndex]);
+        if(i > 0 && depthes[maxIndex] == 1.0f) {
+            top_depthes.push_back(top_depthes.back());
+            top_centers.push_back(top_centers.back());
+        }
+        else{
+            top_depthes.push_back(depthes[maxIndex]);
+            top_centers.push_back(centers[maxIndex]);
+        }
+        focuspoints.push_back( {top_centers[i].x(), top_centers[i].y(), top_depthes[i]} );
+        top_entropies.push_back(entropies[maxIndex]); 
+        entropies.erase( entropies.begin() + maxIndex );
+        centers.erase( centers.begin() + maxIndex ); //エントロピーの値はn番目に大きいもの
+        depthes.erase( depthes.begin() + maxIndex );
+    }
+
+    return focuspoints;
+}
+
+inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::maximalEntropyPoint(std::vector<float> entropies,  std::vector<kvs::Vec2i> centers,  std::vector<kvs::Real32> depthes ){
+    std::vector<kvs::Vec3> focuspoints;
+    std::vector<kvs::Vec2i> top_centers;
+    std::vector<kvs::Real32> top_depthes;
+    std::vector<float> top_entropies;    
+    const int dx[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    const int dy[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+    auto m = m_frame_divs.y();
+    auto n = m_frame_divs.x();
+    std::vector<std::vector<float>> matrix(m, std::vector<float>(n));
+
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            matrix[i][j] = entropies[i * n + j];
+        }
+    }
+    int rows = matrix.size();
+    int cols = matrix[0].size();
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            bool isLocalMaxima = true;
+
+            // check nighbor
+            for (int k = 0; k < 8; ++k) {
+                int ni = i + dx[k];
+                int nj = j + dy[k];
+
+                if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
+                    if (matrix[i][j] <= matrix[ni][nj]) {
+                        isLocalMaxima = false;
+                        break;
+                    }
+                }
+            }
+
+            if (isLocalMaxima) {
+                top_centers.push_back(centers[i*n+j]); 
+                top_depthes.push_back(depthes[i*n+j]);
+                top_entropies.push_back(depthes[i*n+j]);
+            }
+        }
+    }
+    if( top_depthes.size() == 0 ){
+        for (size_t i = 0; i < candidateNum(); i++ ){
+            focuspoints.push_back( { ceil(frameDivisions().x()/2),ceil(frameDivisions().y()/2), depth() } );
+        }
+        return focuspoints;
+    }
+    for (size_t i = 0; i < candidateNum(); i++ ){
+        // top_centers.push_back(centers[maxIndex]);
+        if( top_depthes.size() > 0){
+            int maxIndex = distance(top_entropies.begin(), max_element(top_entropies.begin(), top_entropies.end()));
+            focuspoints.push_back( {top_centers[maxIndex].x(), top_centers[maxIndex].y(), top_depthes[maxIndex]} );
+            top_entropies.erase( top_entropies.begin() + maxIndex );
+            top_centers.erase( top_centers.begin() + maxIndex ); //エントロピーの値はn番目に大きいもの
+            top_depthes.erase( top_depthes.begin() + maxIndex );
+        }
+        else if( top_depthes.size() == 0) {
+            // top_depthes.push_back(top_depthes.back());
+            // top_centers.push_back(top_centers.back());
+            // top_entropies.push_back( top_entropies.back());
+            focuspoints.push_back( focuspoints.back() );
+            // top_entropies.erase( top_entropies.back() );
+            // top_centers.erase( top_centers.back() ); //エントロピーの値はn番目に大きいもの
+            // top_depthes.erase( top_depthes.back() );
+        }
+    }
+
+    return focuspoints;
 }
 
 } // end of namespace mpi

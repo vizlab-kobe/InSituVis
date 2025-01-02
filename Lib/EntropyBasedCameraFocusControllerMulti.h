@@ -15,9 +15,10 @@ class EntropyBasedCameraFocusControllerMulti : public EntropyBasedCameraPathCont
 {
 public:
     using BaseClass = EntropyBasedCameraPathController;
-
+    //add
+    enum ROIMethod { max, maximum };
+    
 private:
-
     kvs::Vec3 m_max_focus_point{ 0.0f, 0.0f, 0.0f }; ///< focus point estimated at the evaluation step
     std::vector<kvs::Vec3> m_max_focus_points{}; ///< data queue for m_max_focus_point
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
@@ -35,8 +36,14 @@ private:
     std::vector<kvs::Quat> m_cand_rotations{}; 
     std::vector<kvs::Vec3> m_cand_focus_points{};
     std::vector<size_t> m_cand_zoom_levels{};
-    size_t m_candidate_num = 2;
+    size_t m_candidate_num = 1;
+    std::vector<std::string> m_output_filenames{};
+    std::vector<float> m_focus_entropies{};
+    std::vector<float> m_focus_path_length{};
+    std::vector<float> m_camera_path_length{};
 
+    //add
+    ROIMethod m_ROI_method = ROIMethod::max;
 public:
     EntropyBasedCameraFocusControllerMulti() = default;
     virtual ~EntropyBasedCameraFocusControllerMulti() = default;
@@ -62,12 +69,25 @@ public:
     size_t candidateNum() const { return m_candidate_num; }
     void setCandidateNum( const size_t candidateNum ) { m_candidate_num = candidateNum; }
 
+    //add
+    void setROIMethod( ROIMethod method ){ m_ROI_method = method; }
+    ROIMethod isROIMethod(){ return m_ROI_method; }
+
 protected:
     std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
     std::queue<kvs::Vec3>& focusPath() { return m_focus_path; }
     std::queue<kvs::Vec3>& focusPathPositions() { return m_focus_path_positions; }
 
     //add
+    std::vector<std::string>& outputFilenames() {return m_output_filenames; }
+    std::vector<float>& focusEntropies() { return m_focus_entropies; }
+    std::vector<float>& focusPathLength() { return m_focus_path_length; }
+    std::vector<float>& cameraPathLength(){ return m_camera_path_length; }
+    void pushOutputFilenames( const std::string filename ) { m_output_filenames.push_back( filename ); }
+    void pushFocusEntropies( const float entropy ) { m_focus_entropies.push_back( entropy ); }
+    void pushFocusPathLength( const float path_length ) { m_focus_path_length.push_back( path_length ); }
+    void pushCameraPathLength( const float path_length ) { m_camera_path_length.push_back( path_length ); }
+
     std::vector<kvs::Vec3>& candPositions() { return m_cand_positions; }
     void pushCandPositions( const kvs::Vec3& position ) { m_cand_positions.push_back( position ); }
     void popCandPositions() { m_cand_positions.erase( m_cand_positions.begin() ); }
@@ -107,6 +127,13 @@ protected:
     {
         BaseClass::outputEntropies( filename, entropies );
     }
+    void outputVideoParams(
+        const std::string& filename1,
+        const std::vector<std::string>& filename2,
+        const std::vector<float>& focus_entropies,
+        const std::vector<float>& focus_path_length,
+        const std::vector<float>& camera_path_length
+    );
 };
 
 } // end of namespace InSituVis
