@@ -190,21 +190,16 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
         {
             const auto& frame_buffer = frame_buffers[ max_index ];
             auto at_w = this->look_at_in_window( frame_buffer ); 
-            for (auto a : at_w ){
-            }
             for( size_t i = 0; i<candidateNum(); i++){
                 at[i] = this->window_to_object( at_w[i], max_location );
-                    for (auto a : at ){
-    }
             }
         }
-
         timer.stop();
         focus_time += m_focus_timer.time( timer );
         // Readback frame buffer rendererd from updated location.
         std::vector<Viewpoint::Location> locations;
         for( size_t i = 0; i<candidateNum(); i++){
-        BaseClass::world().broadcast( at[i].data(),  at.size() );
+            BaseClass::world().broadcast( at[i].data(),  at.size() );
         }
         for( size_t i = 0; i<candidateNum(); i++){
 
