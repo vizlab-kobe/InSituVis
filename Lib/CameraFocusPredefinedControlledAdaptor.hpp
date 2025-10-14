@@ -7,7 +7,6 @@ namespace InSituVis
 
 inline void CameraFocusPredefinedControlledAdaptor::execRendering()
 {
-    std::cout << "exec" << std::endl;
     float rend_time = 0.0f;
     float save_time = 0.0f;
     {
@@ -18,7 +17,6 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
 
             //ここで注視点をカメラに設定（未実装）
             
-            std::cout << "exec" << std::endl;
 
             timer_rend.start();
             auto color_buffer = BaseClass::readback( location );
@@ -37,9 +35,6 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
             }
             timer_save.stop();
             save_time += m_save_timer.time( timer_save );
-
-            
-            std::cout << "set fin" << std::endl;
         }
     }
     m_rend_timer.stamp( rend_time );
