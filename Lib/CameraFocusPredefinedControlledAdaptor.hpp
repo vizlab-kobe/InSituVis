@@ -7,6 +7,7 @@ namespace InSituVis
 
 inline void CameraFocusPredefinedControlledAdaptor::execRendering()
 {
+    std::cout << "exec" << std::endl;
     float rend_time = 0.0f;
     float save_time = 0.0f;
     {
@@ -14,23 +15,13 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
         kvs::Timer timer_save;
         for (const auto& location : BaseClass::viewpoint().locations() )
         {
-            // Draw and readback framebuffer
-            // あなたが持っているワールド座標の注視点
-            auto focus= isFocusPoint();
 
-            const auto p0 = location.look_at - location.position; // 元々の視線ベクトル
-            const auto p1 = focus - location.position;            // 新しい注視点へのベクトル
-            const auto R = kvs::Quat::RotationQuaternion( p0, p1 );
-
-            auto l = InSituVis::Viewpoint::Location(
-                location.direction,
-                location.position,
-                kvs::Quat::Rotate( location.up_vector, R ), focus );
-            l.index = location.index;
-            l.look_at = focus;
+            //ここで注視点をカメラに設定（未実装）
+            
+            std::cout << "exec" << std::endl;
 
             timer_rend.start();
-            auto color_buffer = BaseClass::readback( l );
+            auto color_buffer = BaseClass::readback( location );
             timer_rend.stop();
             rend_time += m_rend_timer.time( timer_rend );
 
@@ -38,14 +29,17 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
             timer_save.start();
             if ( m_enable_output_image )
             {
-                const auto size = this->outputImageSize( l );
+                const auto size = this->outputImageSize( location );
                 const auto width = size.x();
                 const auto height = size.y();
                 kvs::ColorImage image( width, height, color_buffer );
-                image.write( this->outputImageName( l ) );
+                image.write( this->outputImageName( location ) );
             }
             timer_save.stop();
             save_time += m_save_timer.time( timer_save );
+
+            
+            std::cout << "set fin" << std::endl;
         }
     }
     m_rend_timer.stamp( rend_time );
@@ -56,33 +50,32 @@ inline void CameraFocusPredefinedControlledAdaptor::estimateFocusPoint(
     const kvs::ValueArray<float>& values ,
     const kvs::Vec3ui& dims)
 {
+
     this->computeGradients(values,dims);
-    std::cout<<"f point"<<std::endl;
+
     this->computeBlockEntropies(dims);
-    std::cout<<"fo point"<<std::endl;
-    this->printEntropies();
-    std::cout<<"foc point"<<std::endl;
-    this->setFocusPoint({0,0,0}); //注視点変更
+
+    //最大エントロピーを持つブロックを探す
+    auto max_iter = std::max_element(
+        m_blockentorpy_list.begin(),
+        m_blockentorpy_list.end(),
+        [](const BlockEntropy& a, const BlockEntropy& b) {
+            return a.entropy < b.entropy;
+        }
+    );
+
+    // ブロック中心(オブジェクト座標)をセット
+    kvs::Vec3 object_focus(
+        0.5f * (max_iter->region_min[0] + max_iter->region_max[0]),
+        0.5f * (max_iter->region_min[1] + max_iter->region_max[1]),
+        0.5f * (max_iter->region_min[2] + max_iter->region_max[2])
+    );
+    this->setFocusPoint(object_focus);
 }
 
 
-// inline void CameraFocusPredefinedControlledAdaptor::updateFocusPoint( 
-//     const kvs::ValueArray<float>& values ,
-//     const kvs::Vec3ui& dims)
-// {
-
-//     m_gradients = this->computeGradients( values, dims );
-//     this->computeBlockEntropies(dims);
-//     // std::vector<BlockEntropy> sorted = blocks;
-//     // std::sort(sorted.begin(), sorted.end(),
-//     //             [](const BlockEntropy& a, const BlockEntropy& b) {
-//     //                 return a.entropy > b.entropy;
-//     //             });
-    
-// }
-
-//ビンの数の変更に適用できるように要修正
-inline size_t CameraFocusPredefinedControlledAdaptor::directionIndex( const kvs::Vector3f& g )
+//ビンの数を変更できるように修正中
+inline size_t CameraFocusPredefinedControlledAdaptor::directionIndex( const kvs::Vec3& g )
 {
     float ax = std::fabs(g[0]);
     float ay = std::fabs(g[1]);
@@ -158,11 +151,7 @@ inline void CameraFocusPredefinedControlledAdaptor::computeBlockEntropies(
             for (size_t x = 0; x + block_size <= dims[0]; x += block_size)
             {
                 kvs::Vec3ui region_min( x, y, z );
-                kvs::Vec3ui region_max(
-                    static_cast<kvs::UInt32>(std::min<size_t>(x + block_size, dims[0])),
-                    static_cast<kvs::UInt32>(std::min<size_t>(y + block_size, dims[1])),
-                    static_cast<kvs::UInt32>(std::min<size_t>(z + block_size, dims[2]))
-                );
+                kvs::Vec3ui region_max( x + block_size, y + block_size, z + block_size );
 
                 auto hist = this->analyzeRegionDistribution(dims, region_min, region_max);
                 float H = this->computeEntropy(hist);
@@ -181,11 +170,6 @@ inline void CameraFocusPredefinedControlledAdaptor::computeGradients(
         return x + y * dims[0] + z * dims[0] * dims[1];
     };
 
-    const size_t size = dims[0] * dims[1] * dims[2];
-    // m_gradients.resize(size);
-    std::cout<<dims[0]<<std::endl;
-    std::cout<<dims[1]<<std::endl;
-    std::cout<<dims[2]<<std::endl;
     for (int z = 0; z < dims[2]; ++z)
     {
         for (int y = 0; y < dims[1]; ++y)
@@ -225,55 +209,11 @@ inline void CameraFocusPredefinedControlledAdaptor::computeGradients(
                     dy /= len;
                     dz /= len;
                 }
-
-                // m_gradients[index(x,y,z)] = kvs::Vector3<float>(dx, dy, dz);
-                // std::cout<<"/////"<<std::endl;
-                m_gradients.push_back(kvs::Vector3<float>(dx, dy, dz));
-                // std::cout <<  index(x,y,z) << "," << x <<"," << y <<"," << z << "," << dx <<"," << dy <<"," << dz << std::endl;
-
+                m_gradients.push_back(kvs::Vec3(dx, dy, dz));
             }
         }
     }
-    std::cout<<"for fin"<<std::endl;
 }
-
-//エントロピー出力
-inline void CameraFocusPredefinedControlledAdaptor::printEntropies()
-{
-    // 降順にソート
-    auto sorted = m_blockentorpy_list;
-    std::sort(sorted.begin(), sorted.end(),
-              [](const BlockEntropy& a, const BlockEntropy& b) {
-                  return a.entropy > b.entropy;
-              });
-
-    //TOP3
-    size_t topN = std::min<size_t>(10000000000, sorted.size());
-    std::cout << "Top " << topN << " blocks by entropy:\n";
-    size_t i;
-    
-    for (size_t i = 0; i < topN; ++i)
-    {
-        if (i == 0 || i == 599 || i == 299)
-        {
-            std::cout << i << ", " << sorted[i].entropy
-            << ","
-            << sorted[i].region_min[0] << "," << sorted[i].region_min[1] << "," << sorted[i].region_min[2]
-            << ","
-            << sorted[i].region_max[0]   << "," << sorted[i].region_max[1]   << "," << sorted[i].region_max[2]
-            << ","
-            << sorted[i].hist[0]   << "," << sorted[i].hist[1]   << "," << sorted[i].hist[2]
-            << ","
-            << sorted[i].hist[3]   << "," << sorted[i].hist[4]   << "," << sorted[i].hist[5] 
-            << "\n";
-            std::cout << sorted.size() << std::endl;
-        }
-    }
-    // vis->setTmpMinCoord(kvs::Vec3(sorted[0].region_min[0],sorted[0].region_min[1],sorted[0].region_min[2]));
-    // vis->setTmpMaxCoord(kvs::Vec3(sorted[0].region_max[0],sorted[0].region_max[1],sorted[0].region_max[2]));
-}
-
-
 
 } // end of namespace InSituVis
 
