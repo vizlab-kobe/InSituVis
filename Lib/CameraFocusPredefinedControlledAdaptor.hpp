@@ -68,55 +68,77 @@ inline void CameraFocusPredefinedControlledAdaptor::estimateFocusPoint(
     this->setFocusPoint(object_focus);
 }
 
-
-//ビンの数を変更できるように修正中
-inline size_t CameraFocusPredefinedControlledAdaptor::directionIndex( const kvs::Vec3& g )
+//ヒストグラムver2
+inline std::vector<kvs::Vec3> CameraFocusPredefinedControlledAdaptor::buildSphereDirections(size_t t)
 {
-    float ax = std::fabs(g[0]);
-    float ay = std::fabs(g[1]);
-    float az = std::fabs(g[2]);
+    std::vector<kvs::Vec3> directions;
 
-    if (ax >= ay && ax >= az)
+    for (int i = 0; i < t; ++i)
     {
-        return (g[0] >= 0.0f) ? 0 : 1;
+        // 傾斜角 θ_i = πi / t
+        double theta = M_PI * i / (t-1);
+
+        // 方位角の分割数 aθi = floor( 2 t sinθ + 1 )
+        int a_theta = static_cast<int>(std::floor(2.0 * (t-1) * std::sin(theta) + 1));
+
+        for (int j = 0; j < a_theta; ++j)
+        {
+            // φ_j = 2πj / aθi
+            double phi = 2.0 * M_PI * j / a_theta;
+
+            // 球面座標 -> デカルト座標
+            kvs::Vec3 v;
+            v.x() = std::sin(theta) * std::cos(phi);
+            v.y() = std::sin(theta) * std::sin(phi);
+            v.z() = std::cos(theta);
+
+            directions.push_back(v);
+        }
     }
-    else if (ay >= ax && ay >= az)
-    {
-        return (g[1] >= 0.0f) ? 2 : 3;
-    }
-    else
-    {
-        return (g[2] >= 0.0f) ? 4 : 5;
-    }
+
+    return directions;
 }
 
-//小領域ごとに勾配ベクトルのヒストグラムを作成 端は切り捨て
-inline kvs::ValueArray<size_t> CameraFocusPredefinedControlledAdaptor::analyzeRegionDistribution(
+inline kvs::ValueArray<float> CameraFocusPredefinedControlledAdaptor::analyzeRegionDistribution(
     const kvs::Vec3ui& dims,
     const kvs::Vec3ui& region_min,
-    const kvs::Vec3ui& region_max )
+    const kvs::Vec3ui& region_max
+)
 {
-    kvs::ValueArray<size_t> histogram(6);
-    histogram.fill(0);
+    const auto& bins = buildSphereDirections(bin_size);
+    const float cos_alpha = std::cos(alpha_deg * M_PI / 180.0);
 
-    for (size_t z = region_min[2]; z < region_max[2]; ++z)
+    kvs::ValueArray<float> histogram(bins.size());
+    histogram.fill(0.0f);
+
+    for(size_t z = region_min[2]; z < region_max[2]; ++z)
     {
-        for (size_t y = region_min[1]; y < region_max[1]; ++y)
+        for(size_t y = region_min[1]; y < region_max[1]; ++y)
         {
-            for (size_t x = region_min[0]; x < region_max[0]; ++x)
+            for(size_t x = region_min[0]; x < region_max[0]; ++x)
             {
-                size_t idx = x + y * dims[0] + z * dims[0] * dims[1];
-                const auto& g = m_gradients[idx];
-                size_t dir = this->directionIndex(g);
-                histogram[dir]++;
+                const size_t idx = x + y*dims[0] + z*dims[0]*dims[1];
+                const kvs::Vec3& n = m_gradients[idx];
+
+                for (size_t b = 0; b < bins.size(); ++b)
+                {
+                    const float dot = n.x() * bins[b].x() + n.y() * bins[b].y() + n.z() * bins[b].z();
+                    if (dot >= cos_alpha)
+                    {
+                        const float w = (dot - cos_alpha) / (1.0f - cos_alpha);
+                        histogram[b] += w;
+                    }
+                }
             }
         }
     }
+
     return histogram;
 }
 
+
 //数値データエントロピーを計算
-inline float CameraFocusPredefinedControlledAdaptor::computeEntropy( const kvs::ValueArray<size_t>& histogram )
+inline float CameraFocusPredefinedControlledAdaptor::computeEntropy( const kvs::ValueArray<float>& histogram )
 {
     size_t total = 0;
     for (size_t i = 0; i < histogram.size(); ++i) total += histogram[i];
