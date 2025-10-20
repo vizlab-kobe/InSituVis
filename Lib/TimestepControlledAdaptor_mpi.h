@@ -5,7 +5,7 @@
  */
 /*****************************************************************************/
 #pragma once
-#if defined( KVS_SUPPORT_MPI )
+#if defined( KVS_USE_MPI )
 #include "Adaptor_mpi.h"
 #include "AdaptiveTimestepController.h"
 #include <list>
@@ -41,4 +41,4 @@ private:
 
 #include "TimestepControlledAdaptor_mpi.hpp"
 
-#endif // KVS_SUPPORT_MPI
+#endif // KVS_USE_MPI

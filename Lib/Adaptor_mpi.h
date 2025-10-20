@@ -6,7 +6,7 @@
 /*****************************************************************************/
 #pragma once
 #include "Adaptor.h"
-#if defined( KVS_SUPPORT_MPI )
+#if defined( KVS_USE_MPI )
 #include <kvs/mpi/Communicator>
 #include <kvs/mpi/LogStream>
 #include <kvs/mpi/ImageCompositor>
@@ -109,4 +109,4 @@ private:
 
 #include "Adaptor_mpi.hpp"
 
-#endif // KVS_SUPPORT_MPI
+#endif // KVS_USE_MPI

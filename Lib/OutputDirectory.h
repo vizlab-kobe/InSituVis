@@ -9,9 +9,9 @@
 #include <string>
 #include <kvs/Directory>
 #include <kvs/String>
-#if defined( KVS_SUPPORT_MPI )
+#if defined( KVS_USE_MPI )
 #include <kvs/mpi/Communicator>
-#endif // KVS_SUPPORT_MPI
+#endif // KVS_USE_MPI
 
 
 namespace InSituVis
@@ -67,7 +67,7 @@ public:
         return true;
     }
 
-#if defined( KVS_SUPPORT_MPI )
+#if defined( KVS_USE_MPI )
     bool create( kvs::mpi::Communicator& world )
     {
         const int root = 0;

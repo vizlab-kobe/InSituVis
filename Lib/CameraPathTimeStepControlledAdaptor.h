@@ -5,7 +5,6 @@
  */
 /*****************************************************************************/
 #pragma once
-
 #include <InSituVis/Lib/Adaptor.h>
 #include "EntropyBasedCameraPathTimeStepController.h"
 #include <list>

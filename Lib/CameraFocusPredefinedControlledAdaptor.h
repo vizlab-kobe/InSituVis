@@ -1,11 +1,11 @@
-// /*****************************************************************************/
-// /**
-//  *  @file   CameraFocusPredefinedControlledAdaptor.h
-//  *  @author Kazuya Adachi, Naohisa Sakamoto
-//  */
-// /*****************************************************************************/
+/*****************************************************************************/
+/**
+ *  @file   CameraFocusPredefinedControlledAdaptor.h
+ *  @author Kazuya Adachi, Naohisa Sakamoto
+ */
+/*****************************************************************************/
 #pragma once
-#if defined( KVS_SUPPORT_MPI )
+//#if defined( KVS_SUPPORT_MPI )
 #include <InSituVis/Lib/Adaptor.h>
 #include <list>
 #include <queue>
@@ -22,7 +22,7 @@ public:
     using Location = Viewpoint::Location;
     struct BlockEntropy
     {
-        float entropy;               
+        float entropy;
         kvs::Vec3ui region_min;
         kvs::Vec3ui region_max;
         kvs::ValueArray<float> hist;
@@ -65,4 +65,4 @@ protected:
 
 #include "CameraFocusPredefinedControlledAdaptor.hpp"
 
-#endif 
+//#endif 

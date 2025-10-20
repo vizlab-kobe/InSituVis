@@ -5,7 +5,7 @@
  */
 /*****************************************************************************/
 #pragma once
-#if defined( KVS_SUPPORT_MPI )
+#if defined( KVS_USE_MPI )
 #include <InSituVis/Lib/Adaptor_mpi.h>
 #include "EntropyBasedCameraFocusControllerMulti.h"
 #include <list>
@@ -106,4 +106,4 @@ private:
 
 #include "CameraFocusControlledAdaptorMulti_mpi.hpp"
 
-#endif // KVS_SUPPORT_MPI
+#endif // KVS_USE_MPI

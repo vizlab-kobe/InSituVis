@@ -1,11 +1,11 @@
-CameraFocusControlledAdaptor.h/*****************************************************************************/
+/*****************************************************************************/
 /**
  *  @file   CameraPathControlledAdaptor.h
  *  @author Ken Iwata, Naohisa Sakamoto
  */
 /*****************************************************************************/
 #pragma once
-#if defined( KVS_SUPPORT_MPI )
+//#if defined( KVS_SUPPORT_MPI )
 #include <InSituVis/Lib/Adaptor.h>
 #include "EntropyBasedCameraFocusController.h"
 #include <list>
@@ -89,4 +89,4 @@ private:
 
 #include "CameraFocusControlledAdaptor.hpp"
 
-#endif 
+//#endif
