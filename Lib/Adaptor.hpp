@@ -12,6 +12,7 @@
 #include <kvs/PolygonObject>
 #include <kvs/StructuredVolumeObject>
 #include <kvs/UnstructuredVolumeObject>
+#include <kvs/StructuredVolumeObjectList>
 
 // Termination process.
 namespace
@@ -91,7 +92,17 @@ inline kvs::ObjectBase* ObjectPointer( const kvs::ObjectBase& object )
         using Volume = kvs::VolumeObjectBase;
         return VolumeObjectPointer( Volume::DownCast( &object ) );
     }
-    default: return nullptr;
+    default:
+    {
+        using VolumeList = kvs::StructuredVolumeObjectList;
+        if ( const auto* volume_list = VolumeList::DownCast( &object ) )
+        {
+            auto* ret = new VolumeList();
+            ret->shallowCopy( *volume_list );
+            return ret;
+        }
+        return nullptr;
+    }
     }
 }
 
