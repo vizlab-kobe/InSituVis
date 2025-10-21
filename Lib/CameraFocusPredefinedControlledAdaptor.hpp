@@ -16,10 +16,22 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
         {
 
             //ここで注視点をカメラに設定（未実装）
-            
+            auto* scene = BaseClass::screen().scene();
+            auto* om = scene->objectManager();
+            kvs::ObjectBase* obj = om->object( 3 );
+            kvs::Vec3 p = kvs::ObjectCoordinate( m_focus, obj ).toWorldCoordinate().position();
+
+            auto updated_location = location;
+            updated_location.look_at = p;
+
+            BaseClass::screen().scene()->camera()->setPosition(
+                updated_location.position,
+                updated_location.look_at,
+                updated_location.up_vector
+            );
 
             timer_rend.start();
-            auto color_buffer = BaseClass::readback( location );
+            auto color_buffer = BaseClass::readback( updated_location );
             timer_rend.stop();
             rend_time += m_rend_timer.time( timer_rend );
 
@@ -27,11 +39,11 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
             timer_save.start();
             if ( m_enable_output_image )
             {
-                const auto size = this->outputImageSize( location );
+                const auto size = this->outputImageSize( updated_location );
                 const auto width = size.x();
                 const auto height = size.y();
                 kvs::ColorImage image( width, height, color_buffer );
-                image.write( this->outputImageName( location ) );
+                image.write( this->outputImageName( updated_location ) );
             }
             timer_save.stop();
             save_time += m_save_timer.time( timer_save );
@@ -66,6 +78,9 @@ inline void CameraFocusPredefinedControlledAdaptor::estimateFocusPoint(
         0.5f * (max_iter->region_min[2] + max_iter->region_max[2])
     );
     this->setFocusPoint(object_focus);
+
+    m_blockentorpy_list.clear();
+    m_gradients.clear();
 }
 
 //ヒストグラムver2
