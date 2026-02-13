@@ -13,6 +13,10 @@
 #include <kvs/StructuredVolumeObject>
 #include <kvs/UnstructuredVolumeObject>
 
+#include <sys/stat.h>
+#include <fstream>
+#include <kvs/String>
+
 // Termination process.
 namespace
 {
@@ -135,19 +139,57 @@ inline void Adaptor::put( const Adaptor::Object& object )
 
 inline void Adaptor::exec( const SimTime sim_time )
 {
+    // 複数 Viewpoint がセットされていない場合は従来通り
+    if ( m_viewpoints.empty() )
+    {
+        if ( this->isAnalysisStep() )
+        {
+            const auto step = static_cast<float>( this->timeStep() );
+            m_tstep_list.stamp( step );
+
+            this->execPipeline();
+            this->execRendering();
+        }
+
+        this->incrementTimeStep();
+        this->clearObjects();
+        return;
+    }
+
+    // 複数 Viewpoint がある場合：同一タイムステップで順に出力
     if ( this->isAnalysisStep() )
     {
-        // Stack current time step.
         const auto step = static_cast<float>( this->timeStep() );
         m_tstep_list.stamp( step );
 
-        // Execute pipeline and rendering.
-        this->execPipeline();
-        this->execRendering();
+        // 現在のサブディレクトリ名を退避（戻すため）
+        const std::string original_subdir = m_output_directory.subDirectoryName();
+
+        for ( const auto& vp_name : m_viewpoints )
+        {
+            const auto& vp        = vp_name.first;
+            const auto& save_name = vp_name.second;
+
+            // Viewpoint を差し替え
+            this->setViewpoint( vp );
+
+            // 出力ルートを「base/save_name」へ切替
+            m_output_directory.setSubDirectoryName( save_name );
+            // 必要ならディレクトリ作成
+            m_output_directory.create();
+
+            // 各 Viewpoint ごとにパイプライン＆レンダリング
+            this->execPipeline();
+            this->execRendering();
+        }
+
+        // サブディレクトリ名を元に戻す
+        m_output_directory.setSubDirectoryName( original_subdir );
+        this->incrementTimeStep();
+        this->clearObjects();
     }
 
-    this->incrementTimeStep();
-    this->clearObjects();
+
 }
 
 inline bool Adaptor::dump()
@@ -168,7 +210,9 @@ inline bool Adaptor::dump()
 
 inline void Adaptor::execPipeline( const Object& object )
 {
-    m_pipeline( m_screen, object );
+    const std::string base_dir = m_output_directory.baseDirectoryName();
+    const int time_step = static_cast<int>( this->timeStep() );
+    m_pipeline( m_screen, object, base_dir, time_step );
 }
 
 inline void Adaptor::execPipeline( const ObjectList& objects )
@@ -194,6 +238,26 @@ inline void Adaptor::execRendering()
 {
     float rend_time = 0.0f;
     float save_time = 0.0f;
+
+    // ▼ 追加: 出力ディレクトリ "base/params" を用意
+    // const std::string base_dir   = m_output_directory.baseDirectoryName();
+    // const std::string params_dir = base_dir + "/viewpoints";
+
+
+    // 変更点：出力ルートを「base/sub を含む name()」にする
+    const std::string root_dir   = m_output_directory.name();
+    const std::string params_dir = root_dir + "/viewpoints";
+    {
+        struct stat st;
+        if ( ::stat( params_dir.c_str(), &st ) != 0 )
+        {
+            if ( ::mkdir( params_dir.c_str(), 0755 ) != 0 )
+            {
+                std::cerr << "Warning: Failed to create directory " << params_dir << "\n";
+            }
+        }
+    }
+
     {
         kvs::Timer timer_rend;
         kvs::Timer timer_save;
@@ -210,15 +274,59 @@ inline void Adaptor::execRendering()
             if ( m_enable_output_image )
             {
                 const auto size = this->outputImageSize( location );
-                const auto width = size.x();
-                const auto height = size.y();
-                kvs::ColorImage image( width, height, color_buffer );
+                kvs::ColorImage image( size.x(), size.y(), color_buffer );
                 image.write( this->outputImageName( location ) );
             }
             timer_save.stop();
             save_time += m_save_timer.time( timer_save );
+
+            // ▼ 追加: カメラ姿勢の JSON 出力（各 location ごと）
+            {
+                const auto time  = this->timeStep();
+
+                // 初めだけ視点を登録していく
+                if( time == 0 )
+                {
+                    const auto space = location.index;
+                    const auto out_time  = kvs::String::From( time,  6, '0' );
+                    const auto out_space = kvs::String::From( space, 6, '0' );
+
+                    const std::string json_basename = m_output_filename + "_" + out_space;
+                    const std::string json_path = params_dir + "/" + json_basename + ".json";
+
+                    std::ofstream ofs( json_path );
+                    if ( !ofs.is_open() )
+                    {
+                        std::cerr << "Error: Cannot open " << json_path << " for writing.\n";
+                    }
+                    else
+                    {
+                        kvs::Camera* cam = m_screen.scene()->camera();
+                        const float fovY = cam->fieldOfView();
+                        const float fovX = fovY; // 同値で運用
+
+                        const auto& pos    = location.position;
+                        const auto& up     = location.up_vector;
+                        const auto& lookAt = location.look_at;
+                        const auto& rot    = location.rotation;
+
+                        ofs << "{\n";
+                        ofs << "  \"camera_index\": " << int(space) << ",\n";
+                        ofs << "  \"camera_position\": [" << pos.x() << ", " << pos.y() << ", " << pos.z() << "],\n";
+                        ofs << "  \"up_vector\": [" << up.x() << ", " << up.y() << ", " << up.z() << "],\n";
+                        ofs << "  \"look_at\": [" << lookAt.x() << ", " << lookAt.y() << ", " << lookAt.z() << "],\n";
+                        ofs << "  \"rotation\": [" << rot.x() << ", " << rot.y() << ", " << rot.z() << ", " << rot.w() << "],\n";
+                        ofs << "  \"fovY\": " << fovY << ",\n";
+                        ofs << "  \"fovX\": " << fovX << "\n";
+                        ofs << "}\n";
+                    }
+
+                }
+
+            }
         }
     }
+
     m_rend_timer.stamp( rend_time );
     m_save_timer.stamp( save_time );
 }

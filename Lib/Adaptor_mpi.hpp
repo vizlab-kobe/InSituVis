@@ -48,14 +48,68 @@ inline bool Adaptor::finalize()
 
 inline void Adaptor::exec( const BaseClass::SimTime sim_time )
 {
-    if ( this->isAnalysisStep() )
-    {
-        // Stack current time step.
-        const auto step = static_cast<float>( BaseClass::timeStep() );
-        BaseClass::tstepList().stamp( step );
+    // if ( this->isAnalysisStep() )
+    // {
+    //     // Stack current time step.
+    //     const auto step = static_cast<float>( BaseClass::timeStep() );
+    //     BaseClass::tstepList().stamp( step );
 
-        this->execPipeline();
-        this->execRendering();
+    //     this->execPipeline();
+    //     this->execRendering();
+    // }
+
+    // BaseClass::incrementTimeStep();
+    // BaseClass::clearObjects();
+
+    const auto& vps = BaseClass::viewpoints(); // 複数VP（保存名付き）
+
+    if ( vps.empty() )
+    {
+        if ( this->isAnalysisStep() )
+        {
+            const auto step = static_cast<float>( BaseClass::timeStep() );
+            BaseClass::tstepList().stamp( step );
+
+            this->execPipeline();
+            this->execRendering();
+        }
+    }
+    else
+    {
+        if ( this->isAnalysisStep() )
+        {
+            const auto step = static_cast<float>( BaseClass::timeStep() );
+            BaseClass::tstepList().stamp( step );
+
+            // 現在のサブディレクトリ名を退避
+            const std::string original_dir = BaseClass::outputDirectory().baseDirectoryName();
+            // 各 Viewpoint ごとにパイプライン＆レンダリング
+            this->execPipeline();
+
+            for ( const auto& vp_name : vps )
+            {
+
+                const auto& vp        = vp_name.first;
+                const auto& save_name = vp_name.second; // "181" など
+
+                // Viewpoint 差し替え
+                BaseClass::setViewpoint( vp );
+
+                // base を "Output/<保存名>" に、sub は固定で "Process"
+                std::string new_base = original_dir;
+                if ( !new_base.empty() && new_base.back() != '/' ) new_base += '/';
+                new_base += save_name; // 例: "Output/181"
+
+                BaseClass::outputDirectory().setBaseDirectoryName( new_base );
+
+                // MPI 版ディレクトリ作成（全ランクで作成/同期）
+                BaseClass::outputDirectory().create( m_world );
+                this->execRendering();
+            }
+
+            // サブディレクトリ名を元に戻す
+            BaseClass::outputDirectory().setBaseDirectoryName( original_dir );
+        }
     }
 
     BaseClass::incrementTimeStep();
@@ -138,9 +192,30 @@ inline void Adaptor::execRendering()
     m_rend_time = 0.0f;
     m_comp_time = 0.0f;
     float save_time = 0.0f;
+
+
+    // ここが重要：各ビューごとの “時刻付き” ルート
+    const std::string root_dir   = BaseClass::outputDirectory().baseDirectoryName();
+
+    // 各ビュー配下に viewpoints/ を作る
+    const std::string params_dir = root_dir + "/viewpoints";
     {
-        for ( const auto& location : BaseClass::viewpoint().locations() )
+        struct stat st;
+        if ( ::stat( params_dir.c_str(), &st ) != 0 )
         {
+            if ( ::mkdir( params_dir.c_str(), 0755 ) != 0 )
+            {
+                std::cerr << "Warning: Failed to create directory " << params_dir << "\n";
+            }
+        }
+    }
+
+    {
+        const auto& locations = BaseClass::viewpoint().locations();
+        for ( size_t idx = 0; idx < locations.size(); ++idx )
+        {
+            const auto& location = locations[idx];
+
             // Draw and readback framebuffer
             auto frame_buffer = this->readback( location );
 
@@ -155,13 +230,81 @@ inline void Adaptor::execRendering()
                     const auto height = size.y();
                     const auto buffer = frame_buffer.color_buffer;
                     kvs::ColorImage image( width, height, buffer );
-                    image.write( this->outputFinalImageName( location ) );
+                    image.write( this->outputFinalImageName( location ) );   
+
+                    const auto depth_buffer = frame_buffer.depth_buffer;
+                    kvs::GrayImage depth_image( width, height, depth_buffer );
+                    depth_image.write( BaseClass::outputImageName( location, "_depth_") );
                 }
             }
             timer.stop();
             save_time += BaseClass::saveTimer().time( timer );
+
+            if ( m_world.isRoot() )
+            {
+                // ① タイムステップとビューインデックスを文字列化
+                const auto time  = BaseClass::timeStep();
+                const auto space = location.index;
+                const auto output_time  = kvs::String::From( time,  6, '0' );
+                const auto output_space = kvs::String::From( space, 6, '0' );
+
+                // ② JSON ファイル名を組み立て（例: params/output_000010_000005.json）
+                const std::string json_basename = BaseClass::outputFilename() + "_" + output_time + "_" + output_space;
+                const std::string json_path = params_dir + "/" + json_basename + ".json";
+
+                // ③ ofstream を開く
+                std::ofstream ofs( json_path );
+                if ( !ofs.is_open() )
+                {
+                    std::cerr << "Error: Cannot open " << json_path << " for writing.\n";
+                    continue;
+                }
+
+                // ④ Camera 情報を取得
+                kvs::Camera* cam = this->camera(); 
+                const float   fovY = cam->fieldOfView();
+                const float   fovX = fovY; // 同じ値を使う
+
+                const int              camera_index = static_cast<int>( location.index );
+                const kvs::Vec3&       pos          = location.position;
+                const kvs::Vec3&       up           = location.up_vector;
+                const kvs::Vec3&       lookAt       = location.look_at;
+                const kvs::Quaternion& rot          = location.rotation;
+
+                // ⑤ JSON を書き込む
+                ofs << "{\n";
+                ofs << "  \"camera_index\": " << camera_index << ",\n";
+
+                ofs << "  \"camera_position\": [ "
+                    << pos.x() << ", "
+                    << pos.y() << ", "
+                    << pos.z() << " ],\n";
+
+                ofs << "  \"up_vector\": [ "
+                    << up.x() << ", "
+                    << up.y() << ", "
+                    << up.z() << " ],\n";
+
+                ofs << "  \"look_at\": [ "
+                    << lookAt.x() << ", "
+                    << lookAt.y() << ", "
+                    << lookAt.z() << " ],\n";
+
+                ofs << "  \"rotation\": [ "
+                    << rot.x() << ", "
+                    << rot.y() << ", "
+                    << rot.z() << ", "
+                    << rot.w() << " ],\n";
+
+                ofs << "  \"fovY\": " << fovY << ",\n";
+                ofs << "  \"fovX\": " << fovX  << "\n";
+                ofs << "}\n";
+
+                ofs.close();
+            }
         }
     }
+
     BaseClass::saveTimer().stamp( save_time );
     BaseClass::rendTimer().stamp( m_rend_time );
     m_comp_timer.stamp( m_comp_time );
@@ -228,7 +371,8 @@ inline std::string Adaptor::outputFinalImageName( const Viewpoint::Location& loc
 
     const auto output_basename = BaseClass::outputFilename();
     const auto output_filename = output_basename + "_" + output_time + "_" + output_space;
-    const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
+    // 各保存名サブディレクトリ（Output/<保存名>）直下に保存
+    const auto filename = BaseClass::outputDirectory().name() + "/" + output_filename + ".bmp";
     return filename;
 }
 

@@ -31,7 +31,7 @@ public:
 
 private:
     bool m_enable_output_image_depth = false;
-    bool m_enable_output_evaluation_image = false;
+    bool m_enable_output_evaluation_image = true; 
     bool m_enable_output_evaluation_image_depth = false;
     kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
