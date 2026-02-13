@@ -25,13 +25,13 @@ namespace InSituVis
 class OutputDirectory
 {
 private:
-    std::string m_base_dirname = "Output"; ///< base directory name (e.g. "Output")
+    std::string m_base_dirname = "/data2/tomoya/CUBE/Output"; ///< base directory name (e.g. "Output")
     std::string m_sub_dirname = "Process"; ///< sub directory name (e.g. "Process")
     std::string m_dirname = ""; ///< output directory name (e.g. "Output/Process0000")
 
 public:
     OutputDirectory(
-        const std::string& base_dirname = "Output",
+        const std::string& base_dirname = "/data2/tomoya/CUBE/Output",
         const std::string& sub_dirname = "Process" ):
         m_base_dirname( base_dirname ),
         m_sub_dirname( sub_dirname )

@@ -42,7 +42,9 @@ public:
     using Screen = kvs::OffScreen;
     using Object = kvs::ObjectBase;
     using ObjectList = std::list<Object::Pointer>;
-    using Pipeline = std::function<void(Screen&,const Object&)>;
+
+    // VolumeRenderingに粒子生成を入れ込むだけにむちゃくちゃやってます。
+    using Pipeline = std::function<void(Screen&, const Object&, const std::string& /*base_dir*/, int /*time_step*/)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
 
     // Simulation time information.
@@ -70,6 +72,7 @@ private:
     kvs::StampTimer m_pipe_timer{}; ///< timer for pipeline execution process
     kvs::StampTimer m_rend_timer{}; ///< timer for rendering process
     kvs::StampTimer m_save_timer{}; ///< timer for image saving process
+    std::vector<std::pair<InSituVis::Viewpoint, std::string>> m_viewpoints;
 
 public:
     Adaptor();
@@ -89,6 +92,9 @@ public:
     kvs::StampTimer& pipeTimer() { return m_pipe_timer; }
     kvs::StampTimer& rendTimer() { return m_rend_timer; }
     kvs::StampTimer& saveTimer() { return m_save_timer; }
+    
+    kvs::Camera* camera() { return m_screen.scene()->camera(); }
+    const kvs::Camera* camera() const { return m_screen.scene()->camera(); }
 
     void setViewpoint( const Viewpoint& viewpoint ) { m_viewpoint = viewpoint; }
     void setAnalysisInterval( const size_t interval ) { m_analysis_interval = interval; }
@@ -97,6 +103,21 @@ public:
     void setOutputFilename( const std::string& filename ) { m_output_filename = filename; }
     void setImageSize( const size_t width, const size_t height ) { m_image_width = width; m_image_height = height; }
     void setOutputImageEnabled( const bool enable = true ) { m_enable_output_image = enable; }
+
+    // 単体追加
+    void addViewpoint( const InSituVis::Viewpoint& vp, const std::string& save_name )
+    {
+        m_viewpoints.emplace_back( vp, save_name );
+    }
+
+    // まとめて設定
+    void setViewpoints( const std::vector<std::pair<InSituVis::Viewpoint, std::string>>& vps )
+    {
+        m_viewpoints = vps;
+    }
+
+    // 参照（必要なら）
+    const auto& viewpoints() const { return m_viewpoints; }
 
     virtual bool initialize();
     virtual bool finalize();
