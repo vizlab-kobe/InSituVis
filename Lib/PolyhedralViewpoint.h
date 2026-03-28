@@ -18,13 +18,40 @@ private:
     kvs::Vec3 m_max_coord{  12,  12,  12 }; ///< max. coord in world coordinate
     kvs::Vec3 m_base_position{ 0.0f, 12.0f, 0.0f };
     kvs::Vec3 m_base_up_vector{ 0.0f, 0.0f, -1.0f };
-
+    kvs::Vec3 m_lookat_coord{ 0.0f, 0.0f, 0.0f }; ///< center / look-at point
 public:
     PolyhedralViewpoint() = default;
+
     PolyhedralViewpoint(
         const kvs::Vec3ui& dims,
         const Direction dir = Direction::Uni ):
         m_dims( dims )
+    {
+        this->create( dir );
+    }
+
+    PolyhedralViewpoint( 
+        const kvs::Vec3ui& dims,
+        const kvs::Vec3& min_coord,
+        const kvs::Vec3& max_coord,
+        const Direction dir = Direction::Uni ):
+        m_dims      ( dims ),
+        m_min_coord ( min_coord ),
+        m_max_coord ( max_coord )
+    {
+        this->create( dir );
+    }
+
+    PolyhedralViewpoint( 
+        const kvs::Vec3ui& dims,
+        const kvs::Vec3& min_coord,
+        const kvs::Vec3& max_coord,
+        const kvs::Vec3& look_at_coord,
+        const Direction dir = Direction::Uni ):
+        m_dims      ( dims ),
+        m_min_coord ( min_coord ),
+        m_max_coord ( max_coord ),
+        m_lookat_coord (look_at_coord)
     {
         this->create( dir );
     }
@@ -35,7 +62,9 @@ public:
     const kvs::Vec3& maxCoord() const { return m_max_coord; }
     const kvs::Vec3& basePosition() const { return m_base_position; }
     const kvs::Vec3& baseUpVector() const { return m_base_up_vector; }
-
+    const kvs::Vec3& lookAtCoord() const { return m_lookat_coord; }
+    
+    void setLookAtCoord( const kvs::Vec3& c ) { m_lookat_coord = c; }
     void setDims( const kvs::Vec3ui& dims ) { m_dims = dims; }
     void setMinMaxCoords( const kvs::Vec3& min_coord, const kvs::Vec3& max_coord )
     {
@@ -104,7 +133,8 @@ public:
         const float taui = ( -1.0f + sqrt( 5.0f ) ) * 0.5f; // tau inverse
         auto g = kvs::Vec3( 0.0f, 1.0f, 0.0f );
         auto rq = kvs::Quat( 0.0f, 0.0f, 0.0f, 1.0f );
-        const kvs::Vec3 l = { 0, 0, 0 };
+        // const kvs::Vec3 l = { 0.0, 0, 0 };
+        // const kvs::Vec3 l = { -0.8, 0.0, 0.0 };
         BaseClass::clear();
 
         switch ( m_dims[1] )
@@ -353,7 +383,7 @@ public:
         {
             const auto index = 0;
             const auto q = kvs::Quaternion( 0.0f, 0.0f, 0.0f, 1.0f );
-            BaseClass::add( { index, d, m_base_position, m_base_up_vector, q, l } );
+            BaseClass::add( { index, d, m_base_position, m_base_up_vector, q, m_lookat_coord } );
             return;
         }
         }
@@ -408,12 +438,12 @@ public:
             {
                 const auto index = vertices.size() * i + j;
                 const auto xyz = kvs::Vec3( { vertices[j].x() * r, vertices[j].y() * r, vertices[j].z() * r } );
-                const auto p = kvs::Quaternion::Rotate( xyz, rq );
+                const auto p = kvs::Quaternion::Rotate( xyz, rq )+ m_lookat_coord;
                 //const auto rtp = xyz_to_rtp( p );
                 const auto q = calc_rotation( p );
                 const auto u = kvs::Quaternion::Rotate( m_base_up_vector, q );
                 coords.push_back( p );
-                BaseClass::add( { index, d, p, u, q, l } );
+                BaseClass::add( { index, d, p, u, q, m_lookat_coord } );
             }
         }
         //output_coords_connections( coords, faces );

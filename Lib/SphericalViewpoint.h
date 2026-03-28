@@ -11,9 +11,9 @@ class SphericalViewpoint : public InSituVis::Viewpoint
     using BaseClass = InSituVis::Viewpoint;
 
 private:
-    kvs::Vec3ui m_dims{ 1, 1, 1 }; // grid resolution
-    kvs::Vec3 m_min_coord{ -12, -12, -12 }; ///< min. coord in world coordinate
-    kvs::Vec3 m_max_coord{  12,  12,  12 }; ///< max. coord in world coordinate
+    kvs::Vec3ui m_dims{ 1, 12, 12 }; // grid resolution
+    kvs::Vec3 m_min_coord{ -1, -1, -1 }; ///< min. coord in world coordinate
+    kvs::Vec3 m_max_coord{  1,  1,  1 }; ///< max. coord in world coordinate
     kvs::Vec3 m_base_position{ 0.0f, 12.0f, 0.0f };
 
 public:
@@ -101,10 +101,10 @@ public:
 
         BaseClass::clear();
 
-        const kvs::Vec3 l = { 0, 0, 0 };
+        const kvs::Vec3 l = { -0.7, 0, 0 };
         for ( size_t index = 0; index < m_dims[0] * m_dims[1] * m_dims[2]; ++index)
         {
-            const auto p = index_to_xyz( index );
+            const auto p = index_to_xyz( index ) ;
             const auto p_rtp = index_to_rtp( index );
             const auto u = calc_up_vector( p_rtp );
             const auto q = calc_rotation( index );
