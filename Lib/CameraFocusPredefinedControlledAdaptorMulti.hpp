@@ -525,7 +525,7 @@ inline bool findCriticalPointInCell(
 // =============================================================
 // Derivatives: boundary one-sided (same as yours)
 // =============================================================
-inline void CameraFocusPredefinedControlledAdaptor::computeDerivativesFull(
+inline void CameraFocusPredefinedControlledAdaptorMulti::computeDerivativesFull(
     const kvs::ValueArray<float>& f,
     const kvs::Vec3ui& dims,
     kvs::ValueArray<float>& fx,
@@ -618,7 +618,7 @@ inline void CameraFocusPredefinedControlledAdaptor::computeDerivativesFull(
     }
 }
 
-inline float CameraFocusPredefinedControlledAdaptor::dist3_(
+inline float CameraFocusPredefinedControlledAdaptorMulti::dist3_(
     const kvs::Vec3& a, const kvs::Vec3& b) const
 {
     const kvs::Vec3 d = a - b;
@@ -628,8 +628,8 @@ inline float CameraFocusPredefinedControlledAdaptor::dist3_(
 // =============================================================
 // readbackFrameBuffer: BaseClass::readback(color) + glReadPixels(depth)
 // =============================================================
-inline CameraFocusPredefinedControlledAdaptor::FrameBuffer
-CameraFocusPredefinedControlledAdaptor::readbackFrameBuffer( const Location& location )
+inline CameraFocusPredefinedControlledAdaptorMulti::FrameBuffer
+CameraFocusPredefinedControlledAdaptorMulti::readbackFrameBuffer( const Location& location )
 {
     FrameBuffer fb;
     fb.width  = BaseClass::imageWidth();
@@ -654,7 +654,7 @@ CameraFocusPredefinedControlledAdaptor::readbackFrameBuffer( const Location& loc
 // =============================================================
 // entropyRGBA
 // =============================================================
-inline float CameraFocusPredefinedControlledAdaptor::entropyRGBA(
+inline float CameraFocusPredefinedControlledAdaptorMulti::entropyRGBA(
     const kvs::ValueArray<kvs::UInt8>& rgba, size_t w, size_t h ) const
 {
     if (rgba.size() < w*h*4) return 0.0f;
@@ -690,8 +690,8 @@ inline float CameraFocusPredefinedControlledAdaptor::entropyRGBA(
 // =============================================================
 // cropFrameBuffer (tile)
 // =============================================================
-inline CameraFocusPredefinedControlledAdaptor::FrameBuffer
-CameraFocusPredefinedControlledAdaptor::cropFrameBuffer(
+inline CameraFocusPredefinedControlledAdaptorMulti::FrameBuffer
+CameraFocusPredefinedControlledAdaptorMulti::cropFrameBuffer(
     const FrameBuffer& fb, const kvs::Vec2i& ij ) const
 {
     const size_t w = fb.width;
@@ -733,7 +733,7 @@ CameraFocusPredefinedControlledAdaptor::cropFrameBuffer(
 // =============================================================
 // look_at_in_window: max entropy tile center + min depth in that tile
 // =============================================================
-inline kvs::Vec3 CameraFocusPredefinedControlledAdaptor::look_at_in_window( const FrameBuffer& fb ) const
+inline kvs::Vec3 CameraFocusPredefinedControlledAdaptorMulti::look_at_in_window( const FrameBuffer& fb ) const
 {
     const size_t w = fb.width;
     const size_t h = fb.height;
@@ -777,7 +777,7 @@ inline kvs::Vec3 CameraFocusPredefinedControlledAdaptor::look_at_in_window( cons
 // =============================================================
 // window_to_object: UnProject (same spirit as yours)
 // =============================================================
-inline kvs::Vec3 CameraFocusPredefinedControlledAdaptor::window_to_object(
+inline kvs::Vec3 CameraFocusPredefinedControlledAdaptorMulti::window_to_object(
     const kvs::Vec3 win,
     const Location& location )
 {
@@ -822,7 +822,7 @@ inline kvs::Vec3 CameraFocusPredefinedControlledAdaptor::window_to_object(
 // =============================================================
 // output filename
 // =============================================================
-inline std::string CameraFocusPredefinedControlledAdaptor::outputFinalImageName(
+inline std::string CameraFocusPredefinedControlledAdaptorMulti::outputFinalImageName(
     const size_t level, const size_t cid )
 {
     const auto time = BaseClass::timeStep();
@@ -843,7 +843,7 @@ inline std::string CameraFocusPredefinedControlledAdaptor::outputFinalImageName(
 }
 
 
-inline std::string CameraFocusPredefinedControlledAdaptor::outputInterpImageName(
+inline std::string CameraFocusPredefinedControlledAdaptorMulti::outputInterpImageName(
     const size_t prev_id, const size_t curr_id, const size_t s_id ) 
 {
     const auto time = BaseClass::timeStep();
@@ -858,7 +858,7 @@ inline std::string CameraFocusPredefinedControlledAdaptor::outputInterpImageName
 
 
 
-inline void CameraFocusPredefinedControlledAdaptor::appendParamsCSVRow(
+inline void CameraFocusPredefinedControlledAdaptorMulti::appendParamsCSVRow(
     const std::string& image_relpath,
     float pressure_value,
     const std::vector<float>& fp_from_prev,
@@ -895,7 +895,7 @@ inline void CameraFocusPredefinedControlledAdaptor::appendParamsCSVRow(
 }
 
 
-inline void CameraFocusPredefinedControlledAdaptor::updateCSVAndPrevCache_FP_CP(
+inline void CameraFocusPredefinedControlledAdaptorMulti::updateCSVAndPrevCache_FP_CP(
     const std::vector<kvs::Vec3>& curr_focus_worlds,
     const std::vector<kvs::Vec3>& curr_camera_worlds,
     const std::vector<float>& curr_pressures )
@@ -960,7 +960,7 @@ inline void CameraFocusPredefinedControlledAdaptor::updateCSVAndPrevCache_FP_CP(
 // execRendering (switch)
 //  - ImageEntropy: CreateExtremaObject は絶対呼ばれない
 // =============================================================
-inline void CameraFocusPredefinedControlledAdaptor::execRendering()
+inline void CameraFocusPredefinedControlledAdaptorMulti::execRendering()
 {
     float rend_time = 0.0f;
     float save_time = 0.0f;
@@ -1192,7 +1192,7 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
 // =============================================================
 // CreateExtremaObject (unchanged policy, but now NEVER called in ImageEntropy mode)
 // =============================================================
-inline void CameraFocusPredefinedControlledAdaptor::CreateExtremaObject(
+inline void CameraFocusPredefinedControlledAdaptorMulti::CreateExtremaObject(
     const std::vector<extremum>& extrema,
     int i,
     size_t top_n,
@@ -1309,7 +1309,7 @@ inline void CameraFocusPredefinedControlledAdaptor::CreateExtremaObject(
 // estimateFocusPoint (KEY): ONLY valid when FocusMode::Extrema
 // If mode != Extrema, do nothing (safety net).
 // =============================================================
-inline void CameraFocusPredefinedControlledAdaptor::estimateFocusPoint(
+inline void CameraFocusPredefinedControlledAdaptorMulti::estimateFocusPoint(
     const kvs::ValueArray<float>& values,
     const kvs::Vec3ui& dims )
 {

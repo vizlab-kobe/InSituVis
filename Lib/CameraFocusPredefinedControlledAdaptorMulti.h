@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /**
- *  @file   CameraFocusPredefinedControlled2.h
+ *  @file   CameraFocusPredefinedControlledAdaptorMulti.h
  */
 /*****************************************************************************/
 #pragma once
@@ -32,7 +32,7 @@
 namespace InSituVis
 {
 
-class CameraFocusPredefinedControlledAdaptor : public InSituVis::Adaptor
+class CameraFocusPredefinedControlledAdaptorMulti : public InSituVis::Adaptor
 {
 public:
     using BaseClass = InSituVis::Adaptor;
@@ -69,8 +69,8 @@ public:
     };
 
 public:
-    CameraFocusPredefinedControlledAdaptor() = default;
-    virtual ~CameraFocusPredefinedControlledAdaptor() = default;
+    CameraFocusPredefinedControlledAdaptorMulti() = default;
+    virtual ~CameraFocusPredefinedControlledAdaptorMulti() = default;
 
     // ---- mode ----
     FocusMode focusMode() const { return m_focus_mode; }

@@ -79,10 +79,10 @@ $ sh make.sh install
 $ cd ../Lib
 $ KVS_CPP=mpicxx ./kvsmake.py 
 
-・InSituVisのインストール&コンパイル
+・InSituVisのインストール
 $ git clone https://github.com/vizlab-kobe/InSituVis.git
-$ cd InSituVis/OpenfoamLib
-$ ./kvsmake.py
+InSituVisはヘッダだけのライブラリなので、事前コンパイルは不要です。
+利用するプログラムのinclude pathに、cloneしたInSituVisリポジトリの親ディレクトリを追加してください。
 
 ・OpenFOAMの環境構築
 ホームディレクトリに置いたopenfoam231.tar.gz を解凍
