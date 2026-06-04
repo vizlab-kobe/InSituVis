@@ -194,6 +194,13 @@ EntropyBasedCameraPathController::Squad()
         const std::vector<kvs::Quat>& q,
         float t ) -> kvs::Quat
     {
+        if ( q.empty() ) { return kvs::Quat::Identity(); }
+        if ( q.size() == 1 ) { return q[0]; }
+        if ( q.size() < 4 )
+        {
+            return kvs::Quat::SphericalLinearInterpolation( q[0], q[1], t, true, true );
+        }
+
         return kvs::Quat::SphericalQuadrangleInterpolation( q[0], q[1], q[2], q[3], t, true );
     };
 }
@@ -255,7 +262,7 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
                             this->process( data_front, path_front.first, path_front.second );
                             this->path().pop();
                             m_sub_time_index += 1;
-                            
+
                             if ( m_sub_time_index == num_images )
                             {
                                 this->dataQueue().pop();
@@ -302,7 +309,7 @@ inline void EntropyBasedCameraPathController::push( const Data& data )
             this->process( data_front, path_front.first, path_front.second );
             this->path().pop();
             m_sub_time_index += 1;
-            
+
             if( m_sub_time_index == num_images )
             {
                 this->dataQueue().pop();
@@ -348,7 +355,7 @@ inline void EntropyBasedCameraPathController::createPath()
 {
     std::queue<std::pair<float, kvs::Quat>> empty;
     this->path().swap( empty );
-    
+
     kvs::Timer timer( kvs::Timer::Start );
 
     const auto positions = this->maxPositions();

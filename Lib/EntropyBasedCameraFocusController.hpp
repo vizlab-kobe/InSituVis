@@ -51,7 +51,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                         BaseClass::setSubTimeIndex( 0 );
                         size_t num_points = BaseClass::path().size();
                         size_t num_images = ( num_points + 1 ) / BaseClass::entropyInterval();
-                    
+
 
                         for ( size_t i = 0; i < num_points; i++ )
                         {
@@ -62,7 +62,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                             BaseClass::path().pop();
                             this->focusPath().pop(); // add
                             BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
-                            
+
                             if ( BaseClass::subTimeIndex() == num_images )
                             {
                                 BaseClass::dataQueue().pop();
@@ -110,10 +110,10 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             BaseClass::path().pop();
             this->focusPath().pop(); // add
             BaseClass::setSubTimeIndex( BaseClass::subTimeIndex() + 1 );
-            
+
             if( BaseClass::subTimeIndex() == num_images )
             {
-                BaseClass::dataQueue().pop();
+                if ( !BaseClass::dataQueue().empty() ) { BaseClass::dataQueue().pop(); }
                 BaseClass::pushNumImages( num_images );
                 BaseClass::setSubTimeIndex( 0 );
             }
@@ -141,7 +141,7 @@ inline void EntropyBasedCameraFocusController::createPath()
 {
     std::queue<std::pair<float, kvs::Quaternion>> empty;
     BaseClass::path().swap( empty );
-    
+
     std::queue<kvs::Vec3> empty_focus;     // add
     this->focusPath().swap( empty_focus ); // add
     kvs::Timer timer( kvs::Timer::Start );
@@ -169,8 +169,7 @@ inline void EntropyBasedCameraFocusController::createPath()
 
     const size_t num_images = static_cast<size_t>( l / ( BaseClass::entropyInterval() * BaseClass::delta() ) ) + 1;
     const size_t num_points = num_images * BaseClass::entropyInterval() - 1;
-    
-    
+
     for ( size_t i = 0; i < num_points; i++ )
     {
         const auto t = static_cast<float>( i + 1 ) / static_cast<float>( num_points + 1 );
