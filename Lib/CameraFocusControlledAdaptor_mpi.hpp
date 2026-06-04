@@ -45,7 +45,7 @@ CameraFocusControlledAdaptor::focusedLocation(
     auto l = InSituVis::Viewpoint::Location(
         location.direction,
         location.position,
-        kvs::Quat::Rotate( location.up_vector, R ), 
+        kvs::Quat::Rotate( location.up_vector, R ),
         focus );
     l.index = location.index;
     //l.look_at = focus;
@@ -76,7 +76,7 @@ inline bool CameraFocusControlledAdaptor::dump() //mod
         kvs::StampTimerList z_timer_list;
         z_timer_list.push( m_zoom_timer );
         ret_z = z_timer_list.write( basedir + "zoom_proc_time.csv" );
-        
+
         const auto directory = BaseClass::outputDirectory();
         const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
@@ -122,7 +122,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
     // Auto zooming
     std::vector<float> zoom_entropies;
     std::vector<FrameBuffer> zoom_frame_buffers;
-    
+
     if ( Controller::isEntStep() && !Controller::isErpStep())
     {
         // Entropy evaluation
@@ -197,7 +197,7 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         focus_time += m_focus_timer.time( timer );
 
         // Readback frame buffer rendererd from updated location.
-        BaseClass::world().broadcast( at.data(), sizeof(float) * 3 );
+        BaseClass::world().broadcast( at.data(), 3 );
         Controller::setMaxFocusPoint( at );
         auto location = this->focusedLocation( max_location, at );
         Controller::setMaxPosition( max_position );
@@ -254,14 +254,12 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
         if ( Controller::isAutoZoomingEnabled() )
         {
             BaseClass::world().broadcast( estimated_zoom_level );
-            BaseClass::world().broadcast( estimated_zoom_position.data(), sizeof(float) * 3 );
+            BaseClass::world().broadcast( estimated_zoom_position.data(), 3 );
             Controller::setMaxPosition( estimated_zoom_position );
             Controller::setEstimatedZoomLevel( estimated_zoom_level );
             Controller::setEstimatedZoomPosition( estimated_zoom_position );
             Controller::setMaxRotation( this->rotation( estimated_zoom_position ) );
-            
-            
-            
+
             if ( BaseClass::world().isRoot() )
             {
                 if ( BaseClass::isOutputImageEnabled() )
@@ -283,7 +281,6 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
     }
     else
     {
-
         kvs::Timer timer;
 
         const auto focus = Controller::erpFocus();  // add
@@ -340,7 +337,6 @@ inline void CameraFocusControlledAdaptor::execRendering() //mod
                     {
                         if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, level );
                         else {this->outputDepthImage( location, frame_buffer, level );}
-                        
                     }
                 }
                 timer.stop();
@@ -369,7 +365,7 @@ inline void CameraFocusControlledAdaptor::process(
     const float radius,
     const kvs::Quaternion& rotation,
     const kvs::Vec3& focus )
-{ 
+{
         const auto current_step = BaseClass::timeStep();
 
         // Reset time step, which is used for output filename,
@@ -382,7 +378,7 @@ inline void CameraFocusControlledAdaptor::process(
 
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
-        Controller::setErpRadius( radius );        
+        Controller::setErpRadius( radius );
         Controller::setErpFocus( focus ); // add
         BaseClass::execPipeline( data );
         this->execRendering();

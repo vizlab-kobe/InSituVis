@@ -189,8 +189,9 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
         if ( BaseClass::world().isRoot() )
         {
             const auto& frame_buffer = frame_buffers[ max_index ];
-            auto at_w = this->look_at_in_window( frame_buffer ); 
-            for( size_t i = 0; i<candidateNum(); i++){
+            auto at_w = this->look_at_in_window( frame_buffer );
+            for ( size_t i = 0; i<candidateNum(); i++ )
+            {
                 at[i] = this->window_to_object( at_w[i], max_location );
             }
         }
@@ -198,16 +199,18 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
         focus_time += m_focus_timer.time( timer );
         // Readback frame buffer rendererd from updated location.
         std::vector<Viewpoint::Location> locations;
-        for( size_t i = 0; i<candidateNum(); i++){
-            BaseClass::world().broadcast( at[i].data(),  at.size() );
+        for ( size_t i = 0; i<candidateNum(); i++ )
+        {
+            BaseClass::world().broadcast( at[i].data(), 3 );
         }
-        for( size_t i = 0; i<candidateNum(); i++){
-
+        for ( size_t i = 0; i<candidateNum(); i++ )
+        {
             // Auto zooming
             std::vector<float> zoom_entropies;
             std::vector<FrameBuffer> zoom_frame_buffers;
             auto location = this->focusedLocation( max_location, at[i] );
-            if( !Controller::isAutoZoomingEnabled() ){        
+            if ( !Controller::isAutoZoomingEnabled() )
+            {
                 Controller::pushCandPositions( location.position );
                 Controller::pushCandRotations( this->rotation( location.position) );
             }
@@ -267,12 +270,12 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
             {
                 BaseClass::world().broadcast( max_zoom_entropy );
                 BaseClass::world().broadcast( estimated_zoom_level );
-                BaseClass::world().broadcast( estimated_zoom_position.data(), sizeof(float) * 3 );
+                BaseClass::world().broadcast( estimated_zoom_position.data(), 3 );
                 Controller::pushCandZoomLevels( estimated_zoom_level );
                 Controller::pushCandPositions( estimated_zoom_position ); //add
                 Controller::pushCandRotations( this->rotation( estimated_zoom_position ) );
                 if ( BaseClass::world().isRoot() )
-                {                
+                {
                     if ( BaseClass::isOutputImageEnabled() )
                     {
                         Controller::pushFocusEntropies( max_zoom_entropy );
@@ -282,7 +285,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                         Controller::pushOutputFilenames( outputFinalImageName(i, level, 0) );
                         timer.start();
                         if ( Controller::isOutpuColorImage() ) this->outputColorImage( locations[i], frame_buffer, i, level, 0 );
-                        else {this->outputDepthImage( locations[i], frame_buffer, i, level, 0 );}
+                        else { this->outputDepthImage( locations[i], frame_buffer, i, level, 0 ); }
                         timer.stop();
                         save_time += BaseClass::saveTimer().time( timer );
                     }
@@ -316,7 +319,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                 }
             }
             timer.stop();
-            save_time += BaseClass::saveTimer().time( timer );       
+            save_time += BaseClass::saveTimer().time( timer );
         }
         else
         {
@@ -349,8 +352,8 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                     if ( BaseClass::isOutputImageEnabled() )
                     {
                         if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, 999999, level, routeNum() );
-                        else {this->outputDepthImage( location, frame_buffer, 999999, level, routeNum() );}
-                        
+                        else { this->outputDepthImage( location, frame_buffer, 999999, level, routeNum() ); }
+
                     }
                 }
                 timer.stop();
@@ -393,7 +396,7 @@ inline void CameraFocusControlledAdaptorMulti::process(
 
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
-        Controller::setErpRadius( radius );        
+        Controller::setErpRadius( radius );
         Controller::setErpFocus( focus ); // add
         BaseClass::execPipeline( data );
         setRouteNum(route_num);

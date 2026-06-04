@@ -141,7 +141,7 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
         for(int i=0;i<static_cast<int>(candidateNum());i++){
         BaseClass::popMaxPositions();
         BaseClass::popMaxRotations();
-        popCandFocusPoints();
+        popMaxFocusPoints();
         }
         for(size_t i = static_cast<int>(candidateNum());i>0;i-- ){
                 while ( BaseClass::dataQueue().size() > 0 )
