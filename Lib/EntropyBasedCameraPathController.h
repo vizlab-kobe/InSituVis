@@ -9,7 +9,7 @@
 #include <utility>
 #include <functional>
 #include <kvs/VolumeObjectBase>
-#include <InSituVis/Lib/Adaptor_mpi.h>
+#include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
 #include <InSituVis/Lib/OutputDirectory.h>
 
@@ -26,7 +26,7 @@ public:
     using Volume = kvs::VolumeObjectBase;
     using Values = Volume::Values;
 
-    using FrameBuffer = InSituVis::mpi::Adaptor::FrameBuffer;
+    using FrameBuffer = InSituVis::Adaptor::FrameBuffer;
     using EntropyFunction = std::function<float(const FrameBuffer&)>;
     using Interpolator = std::function<kvs::Quat(const std::vector<kvs::Quat>&, float)>;
 
@@ -89,14 +89,10 @@ public:
 
     //void setCacheSize( const size_t cache_size ) { m_cache_size = cache_size; }
     void setDelta( const float delta ) { m_delta = delta; }
-    void setEntropyInterval( const size_t interval ) 
-    { 
-            if( m_entropy_interval <= 0)
-                m_entropy_interval = 1;
-            else
-            {
-                m_entropy_interval = interval; 
-            }
+    void setEntropyInterval( const size_t interval )
+    {
+        if ( m_entropy_interval <= 0 ) { m_entropy_interval = 1; }
+        else { m_entropy_interval = interval; }
     }
     void setEntropyFunction( EntropyFunction func ) { m_entropy_function = func; }
     void setEntropyFunctionToLightness() { m_entropy_function = LightnessEntropy(); }

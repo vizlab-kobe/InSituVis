@@ -65,8 +65,7 @@ inline void CameraPathControlledAdaptor::exec( const BaseClass::SimTime sim_time
 
 inline void CameraPathControlledAdaptor::execRendering()
 {
-    BaseClass::setRendTime( 0.0f );
-    BaseClass::setCompTime( 0.0f );
+    float rend_time = 0.0f;
     float save_time = 0.0f;
     float entr_time = 0.0f;
 
@@ -82,7 +81,10 @@ inline void CameraPathControlledAdaptor::execRendering()
         for ( const auto& location : BaseClass::viewpoint().locations() )
         {
             // Draw and readback framebuffer
-            auto frame_buffer = BaseClass::readback( location );
+            kvs::Timer timer_rend( kvs::Timer::Start );
+            auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+            timer_rend.stop();
+            rend_time += BaseClass::rendTimer().time( timer_rend );
 
             // Output framebuffer to image file at the root node
             kvs::Timer timer( kvs::Timer::Start );
@@ -105,7 +107,7 @@ inline void CameraPathControlledAdaptor::execRendering()
             {
                 this->outputDepthImage( location, frame_buffer );
             }
-        
+
             timer.stop();
             entr_time += BaseClass::saveTimer().time( timer );
         }
@@ -119,7 +121,6 @@ inline void CameraPathControlledAdaptor::execRendering()
             const auto filename = Controller::logDataFilename( basename, timestep, directory );
             Controller::outputEntropies( filename, entropies );
         }
-        
 
         // Distribute the index indicates the max entropy image
         const auto& max_location = BaseClass::viewpoint().at( max_index );
@@ -147,7 +148,10 @@ inline void CameraPathControlledAdaptor::execRendering()
     else
     {
         const auto location = this->erpLocation();
-        auto frame_buffer = BaseClass::readback( location );
+        kvs::Timer timer_rend( kvs::Timer::Start );
+        auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+        timer_rend.stop();
+        rend_time += BaseClass::rendTimer().time( timer_rend );
 
         // Output the rendering images.
         kvs::Timer timer( kvs::Timer::Start );
@@ -161,8 +165,7 @@ inline void CameraPathControlledAdaptor::execRendering()
     }
 
     BaseClass::saveTimer().stamp( save_time );
-    BaseClass::rendTimer().stamp( BaseClass::rendTime() );
-    BaseClass::compTimer().stamp( BaseClass::compTime() );
+    BaseClass::rendTimer().stamp( rend_time );
 }
 
 inline void CameraPathControlledAdaptor::process( const Data& data )

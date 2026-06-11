@@ -58,7 +58,7 @@ inline void CameraPathTimeStepControlledAdaptor::exec( const BaseClass::SimTime 
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::setIsEntStep( this->isEntropyStep() );
     Controller::updataCacheSize();
-    
+
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
@@ -73,8 +73,7 @@ inline void CameraPathTimeStepControlledAdaptor::exec( const BaseClass::SimTime 
 
 inline void CameraPathTimeStepControlledAdaptor::execRendering()
 {
-    BaseClass::setRendTime( 0.0f );
-    BaseClass::setCompTime( 0.0f );
+    float rend_time = 0.0f;
     float save_time = 0.0f;
     float entr_time = 0.0f;
 
@@ -91,7 +90,10 @@ inline void CameraPathTimeStepControlledAdaptor::execRendering()
         for ( const auto& location : BaseClass::viewpoint().locations() )
         {
             // Draw and readback framebuffer
-            auto frame_buffer = BaseClass::readback( location ); 
+            kvs::Timer timer_rend( kvs::Timer::Start );
+            auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+            timer_rend.stop();
+            rend_time += BaseClass::rendTimer().time( timer_rend );
 
             // Output framebuffer to image file at the root node
             kvs::Timer timer( kvs::Timer::Start );
@@ -115,12 +117,12 @@ inline void CameraPathTimeStepControlledAdaptor::execRendering()
             {
                 this->outputDepthImage( location, frame_buffer );
             }
-            
+
             timer.stop();
             entr_time += BaseClass::saveTimer().time( timer );
         }
 
-        // Distribute the index indicates the max entropy image //並列計算関係
+        // Distribute the index indicates the max entropy image
 
         const auto max_position = BaseClass::viewpoint().at( max_index ).position;
         const auto max_rotation = BaseClass::viewpoint().at( max_index ).rotation;
@@ -149,34 +151,35 @@ inline void CameraPathTimeStepControlledAdaptor::execRendering()
             const auto filename = Controller::logDataFilename( basename, timestep, directory );
             Controller::outputEntropies( filename, entropies );
         }
-        
+
         timer.stop();
         save_time += BaseClass::saveTimer().time( timer );
     }
     else
     {
         const auto location = this->erpLocation();
-        auto frame_buffer = BaseClass::readback( location );
+        kvs::Timer timer_rend( kvs::Timer::Start );
+        auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+        timer_rend.stop();
+        rend_time += BaseClass::rendTimer().time( timer_rend );
+
         const auto path_entropy = Controller::entropy( frame_buffer );
         Controller::setMaxEntropy( path_entropy );
         Controller::setMaxPosition( location.position );
 
         // Output the rendering images.
         kvs::Timer timer( kvs::Timer::Start );
-        
         if ( BaseClass::isOutputImageEnabled() )
         {
             this->outputColorImage( location, frame_buffer );
             //this->outputDepthImage( location, frame_buffer );
         }
-        
         timer.stop();
         save_time += BaseClass::saveTimer().time( timer );
     }
     m_entr_timer.stamp( entr_time );
     BaseClass::saveTimer().stamp( save_time );
-    BaseClass::rendTimer().stamp( BaseClass::rendTime() );
-    BaseClass::compTimer().stamp( BaseClass::compTime() );
+    BaseClass::rendTimer().stamp( rend_time );
 }
 
 inline void CameraPathTimeStepControlledAdaptor::process( const Data& data )

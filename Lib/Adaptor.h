@@ -44,6 +44,20 @@ public:
     using ObjectList = std::list<Object::Pointer>;
     using Pipeline = std::function<void(Screen&,const Object&)>;
     using ColorBuffer = kvs::ValueArray<kvs::UInt8>;
+    using DepthBuffer = kvs::ValueArray<kvs::Real32>;
+
+    struct FrameBuffer
+    {
+        ColorBuffer color_buffer;
+        DepthBuffer depth_buffer;
+        FrameBuffer() = default;
+        FrameBuffer( const ColorBuffer& cb, const DepthBuffer& db ):
+            color_buffer( cb ),
+            depth_buffer( db ) {}
+        FrameBuffer( const size_t width, const size_t height ):
+            color_buffer( width * height * 4 ),
+            depth_buffer( width * height ) {}
+    };
 
     // Simulation time information.
     struct SimTime
@@ -110,6 +124,7 @@ protected:
     virtual void execPipeline();
     virtual void execRendering();
     virtual ColorBuffer drawScreen();
+    virtual FrameBuffer drawFrameBuffer();
 //    virtual ColorBuffer drawColorBuffer();
 
     kvs::UInt32 timeStep() const { return m_time_step; }
@@ -122,13 +137,18 @@ protected:
     kvs::Vec2ui outputImageSize( const Viewpoint::Location& location ) const;
     std::string outputImageName( const Viewpoint::Location& location, const std::string& surfix = "" ) const;
     ColorBuffer backgroundColorBuffer() const;
+    DepthBuffer backgroundDepthBuffer() const;
     bool isInsideObject( const kvs::Vec3& position, const kvs::ObjectBase* object ) const;
     ColorBuffer readback( const Viewpoint::Location& location );
+    FrameBuffer readbackFrameBuffer( const Viewpoint::Location& location );
 
 private:
     ColorBuffer readback_uni_buffer( const Viewpoint::Location& location );
     ColorBuffer readback_omn_buffer( const Viewpoint::Location& location );
     ColorBuffer readback_adp_buffer( const Viewpoint::Location& location );
+    FrameBuffer readback_frame_buffer_uni( const Viewpoint::Location& location );
+    FrameBuffer readback_frame_buffer_omn( const Viewpoint::Location& location );
+    FrameBuffer readback_frame_buffer_adp( const Viewpoint::Location& location );
 };
 
 } // end of namespace InSituVis

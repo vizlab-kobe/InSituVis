@@ -241,6 +241,13 @@ inline Adaptor::ColorBuffer Adaptor::drawScreen()
     return m_screen.readbackColorBuffer();
 }
 
+inline Adaptor::FrameBuffer Adaptor::drawFrameBuffer()
+{
+    const auto color_buffer = this->drawScreen();
+    const auto depth_buffer = m_screen.readbackDepthBuffer();
+    return { color_buffer, depth_buffer };
+}
+
 inline kvs::Vec2ui Adaptor::outputImageSize( const Viewpoint::Location& location ) const
 {
     const auto image_size = kvs::Vec2ui( m_image_width, m_image_height );
@@ -292,6 +299,15 @@ inline Adaptor::ColorBuffer Adaptor::backgroundColorBuffer() const
     return buffer;
 }
 
+inline Adaptor::DepthBuffer Adaptor::backgroundDepthBuffer() const
+{
+    const auto width = m_screen.width();
+    const auto height = m_screen.height();
+    DepthBuffer buffer( width * height );
+    buffer.fill( 1.0f );
+    return buffer;
+}
+
 inline bool Adaptor::isInsideObject( const kvs::Vec3& position, const kvs::ObjectBase* object ) const
 {
     const auto min_obj = object->minObjectCoord();
@@ -311,6 +327,17 @@ inline Adaptor::ColorBuffer Adaptor::readback( const Viewpoint::Location& locati
     case Viewpoint::Direction::Omni: return this->readback_omn_buffer( location );
     case Viewpoint::Direction::Adaptive: return this->readback_adp_buffer( location );
     default: return this->backgroundColorBuffer();
+    }
+}
+
+inline Adaptor::FrameBuffer Adaptor::readbackFrameBuffer( const Viewpoint::Location& location )
+{
+    switch ( location.direction )
+    {
+    case Viewpoint::Direction::Uni: return this->readback_frame_buffer_uni( location );
+    case Viewpoint::Direction::Omni: return this->readback_frame_buffer_omn( location );
+    case Viewpoint::Direction::Adaptive: return this->readback_frame_buffer_adp( location );
+    default: return { this->backgroundColorBuffer(), this->backgroundDepthBuffer() };
     }
 }
 
@@ -396,4 +423,75 @@ inline Adaptor::ColorBuffer Adaptor::readback_adp_buffer( const Viewpoint::Locat
         this->readback_uni_buffer( location );
 }
 
+inline Adaptor::FrameBuffer Adaptor::readback_frame_buffer_uni( const Viewpoint::Location& location )
+{
+    const auto p = location.position;
+    const auto a = location.look_at;
+    const auto u = location.up_vector;
+    if ( p == a ) return { this->backgroundColorBuffer(), this->backgroundDepthBuffer() };
+
+    auto* camera = m_screen.scene()->camera();
+    auto* light = m_screen.scene()->light();
+
+    const auto p0 = camera->position();
+    const auto a0 = camera->lookAt();
+    const auto u0 = camera->upVector();
+
+    camera->setPosition( p, a, u );
+    light->setPosition( p );
+    const auto buffer = this->drawFrameBuffer();
+
+    camera->setPosition( p0, a0, u0 );
+    light->setPosition( p0 );
+
+    return buffer;
+}
+
+inline Adaptor::FrameBuffer Adaptor::readback_frame_buffer_omn( const Viewpoint::Location& location )
+{
+    using SphericalColorBuffer = InSituVis::SphericalBuffer<kvs::UInt8>;
+    using SphericalDepthBuffer = InSituVis::SphericalBuffer<kvs::Real32>;
+
+    auto* camera = m_screen.scene()->camera();
+    auto* light = m_screen.scene()->light();
+
+    const auto fov = camera->fieldOfView();
+    const auto front = camera->front();
+    const auto cp = camera->position();
+    const auto ca = camera->lookAt();
+    const auto cu = camera->upVector();
+    const auto lp = light->position();
+    const auto& p = location.position;
+
+    camera->setFieldOfView( 90.0 );
+    camera->setFront( 0.1 );
+    light->setPosition( p );
+
+    SphericalColorBuffer color_buffer( m_screen.width(), m_screen.height() );
+    SphericalDepthBuffer depth_buffer( m_screen.width(), m_screen.height() );
+
+    for ( size_t i = 0; i < SphericalColorBuffer::Direction::NumberOfDirections; i++ )
+    {
+        const auto d = SphericalColorBuffer::Direction(i);
+        camera->setPosition( p, p + SphericalColorBuffer::DirectionVector(d), SphericalColorBuffer::UpVector(d) );
+        const auto buffer = this->drawFrameBuffer();
+        color_buffer.setBuffer( d, buffer.color_buffer );
+        depth_buffer.setBuffer( d, buffer.depth_buffer );
+    }
+
+    camera->setFieldOfView( fov );
+    camera->setFront( front );
+    camera->setPosition( cp, ca, cu );
+    light->setPosition( lp );
+
+    return { color_buffer.stitch<4>(), depth_buffer.stitch<1>() };
+}
+
+inline Adaptor::FrameBuffer Adaptor::readback_frame_buffer_adp( const Viewpoint::Location& location )
+{
+    const auto* object = m_screen.scene()->objectManager();
+    return this->isInsideObject( location.position, object ) ?
+        this->readback_frame_buffer_omn( location ) :
+        this->readback_frame_buffer_uni( location );
+}
 } // end of namespace InSituVis

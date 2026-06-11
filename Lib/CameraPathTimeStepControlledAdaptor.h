@@ -32,14 +32,14 @@ private:
     // bool m_enable_output_evaluation_image = true;
     bool m_enable_output_evaluation_image = false;
     bool m_enable_output_evaluation_image_depth = false;
-    // kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
+    kvs::StampTimer m_entr_timer{}; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
 
 public:
     CameraPathTimeStepControlledAdaptor() = default;
     virtual ~CameraPathTimeStepControlledAdaptor() = default;
 
-    // kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
+    kvs::StampTimer& entrTimer() { return m_entr_timer; }
 
     virtual void exec( const BaseClass::SimTime sim_time = {} );
     virtual bool dump();

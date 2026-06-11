@@ -28,20 +28,8 @@ class Adaptor : public InSituVis::Adaptor
 {
 public:
     using BaseClass = InSituVis::Adaptor;
-    using DepthBuffer = kvs::ValueArray<kvs::Real32>;
-
-    struct FrameBuffer
-    {
-        ColorBuffer color_buffer;
-        DepthBuffer depth_buffer;
-        FrameBuffer() = default;
-        FrameBuffer( const ColorBuffer& cb, const DepthBuffer& db ):
-            color_buffer( cb ),
-            depth_buffer( db ) {}
-        FrameBuffer( const size_t width, const size_t height ):
-            color_buffer( width * height * 4 ),
-            depth_buffer( width * height ) {}
-    };
+    using DepthBuffer = BaseClass::DepthBuffer;
+    using FrameBuffer = BaseClass::FrameBuffer;
 
 private:
     kvs::mpi::Communicator m_world{}; ///< MPI communicator

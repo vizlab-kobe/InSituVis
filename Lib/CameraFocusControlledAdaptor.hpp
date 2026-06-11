@@ -78,7 +78,6 @@ inline bool CameraFocusControlledAdaptor::dump()
     Controller::outputPathPositions( File( "output_path_positions"), interval );
     //this->outputPathCalcTimes( Controller::pathCalcTimes() );
     //this->outputViewpointCoords();
-    
 
     return BaseClass::dump() && ret && ret_f && ret_z;
 }
@@ -100,8 +99,7 @@ inline void CameraFocusControlledAdaptor::exec( const BaseClass::SimTime sim_tim
 
 inline void CameraFocusControlledAdaptor::execRendering()
 {
-    BaseClass::setRendTime( 0.0f );
-    BaseClass::setCompTime( 0.0f );
+    float rend_time = 0.0f;
     float save_time = 0.0f;
     float entr_time = 0.0f;
     float focus_time = 0.0f;
@@ -123,7 +121,10 @@ inline void CameraFocusControlledAdaptor::execRendering()
         for ( const auto& location : BaseClass::viewpoint().locations() )
         {
             // Draw and readback framebuffer
-            auto frame_buffer = BaseClass::readback( location );
+            kvs::Timer timer_rend( kvs::Timer::Start );
+            auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+            timer_rend.stop();
+            rend_time += BaseClass::rendTimer().time( timer_rend );
 
             // Output framebuffer to image file at the root node
             kvs::Timer timer( kvs::Timer::Start );
@@ -149,7 +150,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 this->outputDepthImage( location, frame_buffer );
             }
             */
-        
+
             timer.stop();
             entr_time += m_entr_timer.time( timer );
         }
@@ -201,7 +202,10 @@ inline void CameraFocusControlledAdaptor::execRendering()
             zoom_time += m_zoom_timer.time( timer );
 
             // Rendering at the updated camera position.
-            auto frame_buffer =  BaseClass::readback( location );
+            kvs::Timer timer_rend( kvs::Timer::Start );
+            auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+            timer_rend.stop();
+            rend_time += BaseClass::rendTimer().time( timer_rend );
 
             // Output the rendering images and the heatmap of entropies.
             if ( Controller::isAutoZoomingEnabled() )
@@ -231,7 +235,6 @@ inline void CameraFocusControlledAdaptor::execRendering()
                     save_time += BaseClass::saveTimer().time( timer );
                 }
             }
-        
         }
 
         if ( Controller::isAutoZoomingEnabled() )
@@ -264,7 +267,10 @@ inline void CameraFocusControlledAdaptor::execRendering()
         if ( Controller::isAutoZoomingEnabled() )
         {
             auto location = this->erpLocation( focus );
-            auto frame_buffer = BaseClass::readback( location );
+            kvs::Timer timer_rend( kvs::Timer::Start );
+            auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+            timer_rend.stop();
+            rend_time += BaseClass::rendTimer().time( timer_rend );
 
             Controller::setEstimatedZoomLevel( 0 );
             Controller::setEstimatedZoomPosition( location.position );
@@ -276,7 +282,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 else {this->outputDepthImage( location, frame_buffer, 0 );}
             }
             timer.stop();
-            save_time += BaseClass::saveTimer().time( timer );        
+            save_time += BaseClass::saveTimer().time( timer );
         }
         else
         {
@@ -295,7 +301,10 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 zoom_time += m_zoom_timer.time( timer );
 
                 // Rendering at the updated camera position.
-                auto frame_buffer = BaseClass::readback( location );
+                kvs::Timer timer_rend( kvs::Timer::Start );
+                auto frame_buffer = BaseClass::readbackFrameBuffer( location );
+                timer_rend.stop();
+                rend_time += BaseClass::rendTimer().time( timer_rend );
 
                 if ( level == 0 )
                 {
@@ -309,7 +318,6 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 {
                     if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, level );
                     else {this->outputDepthImage( location, frame_buffer, level );}
-                    
                 }
                 timer.stop();
                 save_time += BaseClass::saveTimer().time( timer );
@@ -321,8 +329,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
     m_focus_timer.stamp( focus_time );
     m_zoom_timer.stamp( zoom_time );
     BaseClass::saveTimer().stamp( save_time );
-    BaseClass::rendTimer().stamp( BaseClass::rendTime() );
-    BaseClass::compTimer().stamp( BaseClass::compTime() );
+    BaseClass::rendTimer().stamp( rend_time );
 }
 
 inline void CameraFocusControlledAdaptor::process( const Data& data )
