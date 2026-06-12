@@ -44,7 +44,7 @@ public:
 
 private:
     size_t m_cache_size = 0;
-    float m_delta = 1.0f;
+    float m_path_sampling_distance = 1.0f;
     size_t m_entropy_interval = 1; ///< time interval of entropy calculation
     bool m_cache_enabled = true; ///< flag for data caching
     bool m_is_initial_step = true; ///< flag for checking whether the current step is initial step
@@ -77,7 +77,7 @@ public:
     virtual ~EntropyBasedCameraPathController() = default;
 
     size_t cacheSize() const { return m_cache_size; }
-    float delta() const { return m_delta; }
+    float pathSamplingDistance() const { return m_path_sampling_distance; }
     size_t entropyInterval() const { return m_entropy_interval; }
     size_t maxIndex() const { return m_max_index; }
     float maxEntropy() const { return m_max_entropy; }
@@ -88,7 +88,7 @@ public:
     size_t subTimeIndex() const { return m_sub_time_index; }
 
     //void setCacheSize( const size_t cache_size ) { m_cache_size = cache_size; }
-    void setDelta( const float delta ) { m_delta = delta; }
+    void setPathSamplingDistance( const float distance ) { m_path_sampling_distance = distance; }
     void setEntropyInterval( const size_t interval )
     {
         if ( m_entropy_interval <= 0 ) { m_entropy_interval = 1; }
@@ -102,6 +102,10 @@ public:
     {
         m_entropy_function = MixedEntropy( e1, e2, p );
     }
+
+    // backward compatibility
+    float delta() const { return this->pathSamplingDistance(); }
+    void setDelta( const float delta ) { this->setPathSamplingDistance( delta ); }
 
     // void setInterpolator( InterpolationMethod interpolation_method )
     // {

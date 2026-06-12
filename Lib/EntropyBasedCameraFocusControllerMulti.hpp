@@ -189,7 +189,7 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
                 l += u.length();
             }
             pushCameraPathLength( l );
-            // const size_t num_images = static_cast<size_t>( l / ( BaseClass::entropyInterval() * BaseClass::delta() ) ) + 1;
+            // const size_t num_images = static_cast<size_t>( l / ( BaseClass::entropyInterval() * BaseClass::pathSamplingDistance() ) ) + 1;
             const size_t num_images = 1;
             const size_t num_points = num_images * BaseClass::entropyInterval() - 1;
             for ( int i = 0; i < num_points; i++ )

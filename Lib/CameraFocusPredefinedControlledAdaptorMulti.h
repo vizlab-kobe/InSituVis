@@ -77,10 +77,10 @@ public:
     void setFocusMode( const FocusMode mode ) { m_focus_mode = mode; }
 
     // ---- transforms (index->physical->localCoord) ----
-    void setFocusFieldTransform( const kvs::Vec3& origin, const kvs::Vec3& delta )
+    void setFocusFieldTransform( const kvs::Vec3& origin, const kvs::Vec3& spacing )
     {
         m_focus_origin = origin;
-        m_focus_delta  = delta;
+        m_focus_grid_spacing = spacing;
         m_focus_has_transform = true;
     }
 
@@ -94,9 +94,9 @@ public:
     kvs::Vec3 indexToPhysical( const kvs::Vec3& p_index ) const
     {
         return kvs::Vec3(
-            m_focus_origin.x() + m_focus_delta.x() * p_index.x(),
-            m_focus_origin.y() + m_focus_delta.y() * p_index.y(),
-            m_focus_origin.z() + m_focus_delta.z() * p_index.z()
+            m_focus_origin.x() + m_focus_grid_spacing.x() * p_index.x(),
+            m_focus_origin.y() + m_focus_grid_spacing.y() * p_index.y(),
+            m_focus_origin.z() + m_focus_grid_spacing.z() * p_index.z()
         );
     }
 
@@ -192,7 +192,7 @@ private:
 
     // transforms
     kvs::Vec3 m_focus_origin{0,0,0};
-    kvs::Vec3 m_focus_delta{1,1,1};
+    kvs::Vec3 m_focus_grid_spacing{1,1,1};
     bool m_focus_has_transform = false;
 
     kvs::Vec3 m_global_min_coord{0,0,0};

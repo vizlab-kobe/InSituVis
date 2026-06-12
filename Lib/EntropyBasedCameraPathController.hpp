@@ -380,7 +380,7 @@ inline void EntropyBasedCameraPathController::createPath()
         l += u.length();
     }
 
-    const size_t num_images = static_cast<size_t>( l / ( m_entropy_interval * m_delta ) ) + 1;
+    const size_t num_images = static_cast<size_t>( l / ( m_entropy_interval * m_path_sampling_distance ) ) + 1;
     const size_t num_points = num_images * m_entropy_interval - 1;
 
     for ( size_t i = 0; i < num_points; i++ )
