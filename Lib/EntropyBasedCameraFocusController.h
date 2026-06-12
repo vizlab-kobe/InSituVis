@@ -56,6 +56,8 @@ public:
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
 
 protected:
+    using BaseClass::process;
+
     std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
     std::queue<kvs::Vec3>& focusPath() { return m_focus_path; }
     std::queue<kvs::Vec3>& focusPathPositions() { return m_focus_path_positions; }
@@ -67,8 +69,8 @@ protected:
     }
     void popMaxFocusPoints() { m_max_focus_points.erase( m_max_focus_points.begin() ); }
 
-    virtual void process( const Data& data ) {}
-    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus ) {};
+    void process( const Data& data ) override {}
+    virtual void process( const Data& data, const float radius, const kvs::Quat& rotation, const kvs::Vec3& focus ) {};
 
     virtual void push( const Data& data );
     virtual void createPath();

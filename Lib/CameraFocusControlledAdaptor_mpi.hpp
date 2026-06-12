@@ -8,6 +8,22 @@ namespace InSituVis
 namespace mpi
 {
 
+inline void CameraFocusControlledAdaptor::setViewpoint( const Viewpoint& viewpoint )
+{
+    if ( viewpoint.numberOfLocations() == 1 )
+    {
+        Viewpoint normalized;
+        auto location = viewpoint.locations().front();
+        location.rotation = this->rotation( location.position );
+        normalized.add( location );
+        BaseClass::setViewpoint( normalized );
+    }
+    else
+    {
+        BaseClass::setViewpoint( viewpoint );
+    }
+}
+
 inline bool CameraFocusControlledAdaptor::isEntropyStep()
 {
     return BaseClass::timeStep() % ( BaseClass::analysisInterval() * Controller::entropyInterval() ) == 0;

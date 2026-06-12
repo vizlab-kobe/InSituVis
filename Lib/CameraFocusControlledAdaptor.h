@@ -27,7 +27,7 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-    bool m_enable_output_image_depth = false;
+//    bool m_enable_output_image_depth = false;
     kvs::StampTimer m_entr_timer{}; ///< timer for entropy evaluation
     kvs::StampTimer m_focus_timer{}; ///< timer for entropy evaluation
     kvs::StampTimer m_zoom_timer{}; ///< timer for entropy evaluation
@@ -44,8 +44,8 @@ public:
     kvs::StampTimer& entrTimer() { return m_entr_timer; }
     kvs::StampTimer& focusTimer() { return m_focus_timer; }
     kvs::StampTimer& zoomTimer() { return m_zoom_timer; }
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
-    virtual bool dump();
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
 
     // add
@@ -54,7 +54,11 @@ public:
     void setZoomLevel( const size_t level ) { m_zoom_level = level; }
     void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
 
+    void setViewpoint( const Viewpoint& viewpoint );
+
 protected:
+    using Controller::process;
+
     bool isEntropyStep();
     bool isFinalTimeStep();
     Location erpLocation(
@@ -65,12 +69,11 @@ protected:
         const Location& location,
         const kvs::Vec3 focus );
 
-    virtual void execRendering();
-    virtual void process( const Data& data );
-    virtual void process( const Data& data, const float radius, const kvs::Vec3& focus, const kvs::Quat& rotation ); // add
+    void execRendering() override;
+    void process( const Data& data ) override;
+    void process( const Data& data, const float radius, const kvs::Quat& rotation, const kvs::Vec3& focus ) override;
 
     std::string outputFinalImageName( const size_t level );
-
     void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level ); // add
     void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level);
 

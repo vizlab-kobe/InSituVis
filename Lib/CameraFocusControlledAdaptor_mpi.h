@@ -30,7 +30,7 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-    bool m_enable_output_image_depth = false;
+//    bool m_enable_output_image_depth = false;
     kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_focus_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_zoom_timer{ BaseClass::world() }; ///< timer for entropy evaluation
@@ -47,8 +47,8 @@ public:
     kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
     kvs::mpi::StampTimer& focusTimer() { return m_focus_timer; }
     kvs::mpi::StampTimer& zoomTimer() { return m_zoom_timer; }
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
-    virtual bool dump();
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
 
     // add
@@ -57,7 +57,11 @@ public:
     void setZoomLevel( const size_t level ) { m_zoom_level = level; }
     void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
 
+    void setViewpoint( const Viewpoint& viewpoint );
+
 protected:
+    using Controller::process;
+
     bool isEntropyStep();
     bool isFinalTimeStep();
     Location erpLocation(
@@ -68,9 +72,9 @@ protected:
         const Location& location,
         const kvs::Vec3 focus );
 
-    virtual void execRendering();
-    virtual void process( const Data& data );
-    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus );
+    void execRendering() override;
+    void process( const Data& data ) override;
+    void process( const Data& data, const float radius, const kvs::Quat& rotation, const kvs::Vec3& focus ) override;
 
     std::string outputFinalImageName( const size_t level );
 

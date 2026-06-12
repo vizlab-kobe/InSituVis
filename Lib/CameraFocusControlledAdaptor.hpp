@@ -5,6 +5,22 @@
 namespace InSituVis
 {
 
+inline void CameraFocusControlledAdaptor::setViewpoint( const Viewpoint& viewpoint )
+{
+    if ( viewpoint.numberOfLocations() == 1 )
+    {
+        Viewpoint normalized;
+        auto location = viewpoint.locations().front();
+        location.rotation = this->rotation( location.position );
+        normalized.add( location );
+        BaseClass::setViewpoint( normalized );
+    }
+    else
+    {
+        BaseClass::setViewpoint( viewpoint );
+    }
+}
+
 inline bool CameraFocusControlledAdaptor::isEntropyStep()
 {
     return BaseClass::timeStep() % ( BaseClass::analysisInterval() * Controller::entropyInterval() ) == 0;
@@ -71,11 +87,14 @@ inline bool CameraFocusControlledAdaptor::dump()
     z_timer_list.push( m_zoom_timer );
     ret_z = z_timer_list.write( basedir + "zoom_proc_time.csv" );
 
-    const auto interval = BaseClass::analysisInterval();
+//    const auto interval = BaseClass::analysisInterval();
     const auto directory = BaseClass::outputDirectory();
     const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
-    Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
-    Controller::outputPathPositions( File( "output_path_positions"), interval );
+    Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
+    Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
+    Controller::outputNumImages( File( "output_num_images" ), BaseClass::analysisInterval() );
+//    Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
+//    Controller::outputPathPositions( File( "output_path_positions"), interval );
     //this->outputPathCalcTimes( Controller::pathCalcTimes() );
     //this->outputViewpointCoords();
 
@@ -85,12 +104,14 @@ inline bool CameraFocusControlledAdaptor::dump()
 inline void CameraFocusControlledAdaptor::exec( const BaseClass::SimTime sim_time )
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
+    Controller::setIsEntStep( this->isEntropyStep() );
+    Controller::updataCacheSize();
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
     if( this->isFinalTimeStep())
     {
-        Controller::setFinalStep( true );
+        Controller::setIsFinalStep( true );
         const auto dummy = Data();
         Controller::push( dummy );
     }
@@ -115,7 +136,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
     std::vector<float> zoom_entropies;
     std::vector<FrameBuffer> zoom_frame_buffers;
 
-    if ( this->isEntropyStep() )
+    if ( Controller::isEntStep() && !Controller::isErpStep() )
     {
         // Entropy evaluation
         for ( const auto& location : BaseClass::viewpoint().locations() )
@@ -239,6 +260,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
 
         if ( Controller::isAutoZoomingEnabled() )
         {
+            Controller::setMaxPosition( estimated_zoom_position );
             Controller::setEstimatedZoomLevel( estimated_zoom_level );
             Controller::setEstimatedZoomPosition( estimated_zoom_position );
             Controller::setMaxRotation( this->rotation( estimated_zoom_position ) );
@@ -262,7 +284,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
         kvs::Timer timer;
 
         const auto focus = Controller::erpFocus();  // add
-        Controller::setMaxFocusPoint( focus );      // add
+        //Controller::setMaxFocusPoint( focus );      // add
 
         if ( Controller::isAutoZoomingEnabled() )
         {
@@ -272,8 +294,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
             timer_rend.stop();
             rend_time += BaseClass::rendTimer().time( timer_rend );
 
-            Controller::setEstimatedZoomLevel( 0 );
-            Controller::setEstimatedZoomPosition( location.position );
+            //Controller::setEstimatedZoomLevel( 0 );
+            //Controller::setEstimatedZoomPosition( location.position );
 
             timer.start();
             if ( BaseClass::isOutputImageEnabled() )
@@ -287,7 +309,7 @@ inline void CameraFocusControlledAdaptor::execRendering()
         else
         {
             auto location = this->erpLocation( focus );
-            Controller::setMaxPosition( location.position );
+            //Controller::setMaxPosition( location.position );
 
             // Zooming
             const auto p = location.position;
@@ -306,11 +328,11 @@ inline void CameraFocusControlledAdaptor::execRendering()
                 timer_rend.stop();
                 rend_time += BaseClass::rendTimer().time( timer_rend );
 
-                if ( level == 0 )
-                {
-                    const auto path_entropy = Controller::entropy( frame_buffer );
-                    Controller::setMaxEntropy( path_entropy );
-                }
+                //if ( level == 0 )
+                //{
+                //    const auto path_entropy = Controller::entropy( frame_buffer );
+                //    Controller::setMaxEntropy( path_entropy );
+                //}
 
                 timer.start();
 
@@ -342,8 +364,8 @@ inline void CameraFocusControlledAdaptor::process( const Data& data )
 inline void CameraFocusControlledAdaptor::process(
     const Data& data,
     const float radius,
-    const kvs::Vec3& focus,
-    const kvs::Quat& rotation )
+    const kvs::Quat& rotation,
+    const kvs::Vec3& focus )
 {
     const auto current_step = BaseClass::timeStep();
     {
