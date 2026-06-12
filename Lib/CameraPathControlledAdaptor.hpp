@@ -99,7 +99,7 @@ inline void CameraPathControlledAdaptor::execRendering()
                 max_index = location.index;
             }
 
-            if ( Controller::isOutputEvaluatuinImageEnabled() )
+            if ( Controller::isOutputEvaluationImageEnabled() )
             {
                 this->outputColorImage( location, frame_buffer );
             }
