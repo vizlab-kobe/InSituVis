@@ -27,9 +27,6 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-    bool m_enable_output_image_depth = false;
-    bool m_enable_output_evaluation_image = false;
-    bool m_enable_output_evaluation_image_depth = false;
     kvs::StampTimer m_entr_timer{}; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
 

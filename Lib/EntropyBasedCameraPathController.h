@@ -168,7 +168,7 @@ public:
     void setOutputEntropiesEnabled( const bool enable = true ) { m_enable_output_entropies = enable; }
 
     bool isOutputEvaluationImageEnabled() const { return m_enable_output_evaluation_image; }
-    bool isOutputEvaluationDepathImageEnabled() const { return m_enable_output_evaluation_image_depth; }
+    bool isOutputEvaluationDepthImageEnabled() const { return m_enable_output_evaluation_image_depth; }
     bool isOutputEntropiesEnabled() const { return m_enable_output_entropies; }
 
 protected:

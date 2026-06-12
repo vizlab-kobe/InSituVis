@@ -105,12 +105,12 @@ inline void CameraPathControlledAdaptor::execRendering()
                     max_index = location.index;
                 }
 
-                if ( m_enable_output_evaluation_image )
+                if ( Controller::isOutputEvaluationImageEnabled() )
                 {
                     this->outputColorImage( location, frame_buffer );
                 }
 
-                if ( m_enable_output_evaluation_image_depth )
+                if ( Controller::isOutputEvaluationDepthImageEnabled() )
                 {
                     this->outputDepthImage( location, frame_buffer );
                 }
