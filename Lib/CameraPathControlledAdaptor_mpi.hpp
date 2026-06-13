@@ -57,7 +57,7 @@ inline void CameraPathControlledAdaptor::exec( const BaseClass::SimTime sim_time
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::setIsEntStep( this->isEntropyStep() );
-    Controller::updataCacheSize();
+    Controller::updateCacheSize();
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();

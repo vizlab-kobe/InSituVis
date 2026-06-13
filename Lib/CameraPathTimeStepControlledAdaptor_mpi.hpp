@@ -31,7 +31,6 @@ CameraPathTimeStepControlledAdaptor::erpLocation(
     return { index, dir, p, u, rot, l };
 }
 
-///
 inline float CameraPathTimeStepControlledAdaptor::divergence(
     const Controller::Values& P0,
     const Controller::Values& P1 )
@@ -70,7 +69,7 @@ inline void CameraPathTimeStepControlledAdaptor::exec( const BaseClass::SimTime 
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::setIsEntStep( this->isEntropyStep() );
-    Controller::updataCacheSize();
+    Controller::updateCacheSize();
 
     Controller::push( BaseClass::objects() );
 

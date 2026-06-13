@@ -69,7 +69,7 @@ public:
     }
 
     const Data& previousData() const { return m_previous_data; }
-    const kvs::Quaternion& previousRoation() const { return m_previous_rotation; }
+    const kvs::Quaternion& previousRotation() const { return m_previous_rotation; }
     const kvs::Vec3& previousPosition() const { return m_previous_position; }
     const float previousDivergence() const { return m_previous_divergence; }
     const size_t dataQueueSize() const { return m_dataqueue_size; }
@@ -81,6 +81,8 @@ public:
     const std::vector<float>& divergences() const { return m_divergences; }
     const std::vector<float>& threshold() const { return var_threshold; }
 
+    // backward compatibility
+    const kvs::Quaternion& previousRoation() const { return this->previousRotation(); }
 
 protected:
     void setPreviousData( const Data& data ) { m_previous_data = data; }

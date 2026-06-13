@@ -60,17 +60,18 @@ public:
     void setEstimatedZoomPosition( const kvs::Vec3& position ) { m_estimated_zoom_position = position; }
     void setEstimatedZoomLevel( const size_t level ) { m_estimated_zoom_level = level; }
     bool isAutoZoomingEnabled() { return m_enable_auto_zooming; }
-    bool isOutpuColorImage() { return m_image_type; }
+    bool isOutputColorImage() { return m_image_type; }
     kvs::Vec3 estimatedZoomPosition() const { return m_estimated_zoom_position; }
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
     size_t focusPointCandidateNum() const { return m_focus_point_candidate_num; }
     size_t viewPointCandidateNum() const { return m_viewpoint_candidate_num; }
     void setFocusPointCandidateNum( const size_t focusPointCandidateNum ) { m_focus_point_candidate_num = focusPointCandidateNum; }
     void setViewPointCandidateNum( const size_t viewPointCandidateNum ) { m_viewpoint_candidate_num = viewPointCandidateNum; }
-
-    //add
     void setROIMethod( ROIMethod method ){ m_ROI_method = method; }
     ROIMethod isROIMethod(){ return m_ROI_method; }
+
+    // backward compatibility
+    bool isOutpuColorImage() const { return this->isOutputColorImage(); }
 
 protected:
     std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }

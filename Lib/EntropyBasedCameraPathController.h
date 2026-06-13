@@ -86,12 +86,8 @@ public:
     size_t subTimeIndex() const { return m_sub_time_index; }
 
     //void setCacheSize( const size_t cache_size ) { m_cache_size = cache_size; }
-    void setPathSamplingDistance( const float distance ) { m_path_sampling_distance = distance; }
-    void setEntropyInterval( const size_t interval )
-    {
-        if ( m_entropy_interval <= 0 ) { m_entropy_interval = 1; }
-        else { m_entropy_interval = interval; }
-    }
+    void setPathSamplingDistance( const float distance ) { m_path_sampling_distance = distance > 0.0f ? distance : 1.0f; }
+    void setEntropyInterval( const size_t interval ) { m_entropy_interval = interval == 0 ? 1 : interval; }
     void setEntropyFunction( EntropyFunction func ) { m_entropy_function = func; }
     void setEntropyFunctionToLightness() { m_entropy_function = LightnessEntropy(); }
     void setEntropyFunctionToColor() { m_entropy_function = ColorEntropy(); }
@@ -234,25 +230,21 @@ protected:
         const std::string& filename,
         const size_t interval );
 
-    void updataCacheSize(){
-        switch( m_interpolation_method ){
+    void updateCacheSize()
+    {
+        switch ( m_interpolation_method )
+        {
         case SLERP:
             m_cache_size = m_entropy_interval - 1;
-            //m_entropy_interval = m_cache_size + 1;
             break;
         case SQUAD:
-            // if( m_cache_size > 0 )
-            // {
-            //     if( m_cache_size % 2 == 0 ) m_cache_size -= 1;
-            // }   
-            // else { m_cache_size = 1; }
-        //m_entropy_interval = ( m_cache_size + 1 ) / 2;
             m_cache_size = m_entropy_interval * 2 - 1;
-            // this->pushMaxRotations( this->maxRotation() );
             break;
         }
-        // std::cout << m_interpolation_method << std::endl;
     }
+
+    // backward compatibility
+    void updataCacheSize() { this->updateCacheSize(); }
 };
 
 } // end of namespace InSituVis

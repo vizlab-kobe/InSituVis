@@ -14,8 +14,6 @@
 namespace InSituVis
 {
 
-
-
 class CameraPathTimeStepControlledAdaptor :
         public InSituVis::Adaptor,
         public InSituVis::EntropyBasedCameraPathTimeStepController
@@ -64,8 +62,6 @@ protected:
     void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer );
 };
 
-
 } // end of namespace InSituVis
 
 #include "CameraPathTimeStepControlledAdaptor.hpp"
-

@@ -59,22 +59,23 @@ public:
     void setEstimatedZoomPosition( const kvs::Vec3& position ) { m_estimated_zoom_position = position; }
     void setEstimatedZoomLevel( const size_t level ) { m_estimated_zoom_level = level; }
     bool isAutoZoomingEnabled() { return m_enable_auto_zooming; }
-    bool isOutpuColorImage() { return m_image_type; }
+    bool isOutputColorImage() { return m_image_type; }
     kvs::Vec3 estimatedZoomPosition() const { return m_estimated_zoom_position; }
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
     size_t candidateNum() const { return m_candidate_num; }
     void setCandidateNum( const size_t candidateNum ) { m_candidate_num = candidateNum; }
 
-    //add
     void setROIMethod( ROIMethod method ){ m_ROI_method = method; }
     ROIMethod isROIMethod(){ return m_ROI_method; }
+
+    // backward compatibility
+    bool isOutpuColorImage() const { return this->isOutputColorImage(); }
 
 protected:
     std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
     std::queue<kvs::Vec3>& focusPath() { return m_focus_path; }
     std::queue<kvs::Vec3>& focusPathPositions() { return m_focus_path_positions; }
 
-    //add
     std::vector<std::string>& outputFilenames() {return m_output_filenames; }
     std::vector<float>& focusEntropies() { return m_focus_entropies; }
     std::vector<float>& focusPathLength() { return m_focus_path_length; }
@@ -95,7 +96,7 @@ protected:
     void popCandFocusPoints() { m_cand_focus_points.erase( m_cand_focus_points.begin() ); }
     std::vector<size_t>& candZoomLevels() { return m_cand_zoom_levels; }
     void pushCandZoomLevels( const size_t& zoom_level ) { m_cand_zoom_levels.push_back( zoom_level ); }
-    void popCandZoomLevels() { m_cand_zoom_levels.erase( m_cand_zoom_levels.begin() ); }    
+    void popCandZoomLevels() { m_cand_zoom_levels.erase( m_cand_zoom_levels.begin() ); }
 
     void pushMaxFocusPoints( const kvs::Vec3& point ) { m_max_focus_points.push_back( point ); }
     void pushFocusPathPositions( const kvs::Vec3& position )

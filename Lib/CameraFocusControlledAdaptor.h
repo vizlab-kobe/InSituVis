@@ -45,7 +45,12 @@ public:
 
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
     void setZoomLevel( const size_t level ) { m_zoom_level = level; }
-    void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
+    void setFrameDivisions( const kvs::Vec2ui& divs )
+    {
+        m_frame_divs = kvs::Vec2ui(
+            divs.x() == 0 ? 1 : divs.x(),
+            divs.y() == 0 ? 1 : divs.y() );
+    }
     void setViewpoint( const Viewpoint& viewpoint );
 
     void exec( const BaseClass::SimTime sim_time = {} ) override;

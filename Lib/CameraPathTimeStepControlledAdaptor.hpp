@@ -5,7 +5,6 @@
 namespace InSituVis
 {
 
-
 inline bool CameraPathTimeStepControlledAdaptor::isEntropyStep()
 {
     return BaseClass::timeStep() % ( BaseClass::analysisInterval() * Controller::entropyInterval() ) == 0;
@@ -29,7 +28,6 @@ CameraPathTimeStepControlledAdaptor::erpLocation(
     return { index, dir, p, u, rot, l };
 }
 
-
 inline bool CameraPathTimeStepControlledAdaptor::dump()
 {
     bool ret = true;
@@ -49,7 +47,6 @@ inline bool CameraPathTimeStepControlledAdaptor::dump()
     Controller::outputDivergences("Output/output_divergences.csv",Controller::divergences(),Controller::threshold());
     Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
 
-
     return BaseClass::dump() && ret;
 }
 
@@ -57,14 +54,13 @@ inline void CameraPathTimeStepControlledAdaptor::exec( const BaseClass::SimTime 
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::setIsEntStep( this->isEntropyStep() );
-    Controller::updataCacheSize();
-
+    Controller::updateCacheSize();
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
     if( this->isFinalTimeStep())
     {
-        Controller::setFinalStep( true );
+        Controller::setIsFinalStep( true );
         const auto dummy = Data();
         Controller::push( dummy );
     }
@@ -248,6 +244,5 @@ inline void CameraPathTimeStepControlledAdaptor::outputDepthImage(
     kvs::GrayImage image( size.x(), size.y(), buffer );
     image.write( this->outputDepthImageName( location ) );
 }
-
 
 } // end of namespace InSituVis

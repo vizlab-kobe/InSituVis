@@ -156,7 +156,7 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
         }
 }
 
-inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
+inline void EntropyBasedCameraFocusControllerMulti::createPath()
 {
     std::queue<std::pair<float, kvs::Quaternion>> empty;
     BaseClass::path().swap( empty );
@@ -166,7 +166,7 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
     kvs::Timer timer( kvs::Timer::Start );
 
     const auto positions = BaseClass::maxPositions(); //2queued if SLERP
-    const auto rotations = BaseClass::maxRotations(); //
+    const auto rotations = BaseClass::maxRotations();
     const auto focuspoints = this->maxFocusPoints();
     const size_t n = 512;
 

@@ -36,7 +36,6 @@ private:
     kvs::mpi::StampTimer m_zoom_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
 
-    // add
     size_t m_zoom_level = 1; ///< zoom level
     int m_route_num;
 
@@ -54,15 +53,18 @@ public:
     virtual bool dump();
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
 
-    // add
     size_t zoomLevel() const { return m_zoom_level; }
     const kvs::Vec2ui& frameDivisions() const { return m_frame_divs; }
     void setZoomLevel( const size_t level ) { m_zoom_level = level; }
-    void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
+    void setFrameDivisions( const kvs::Vec2ui& divs )
+    {
+        m_frame_divs = kvs::Vec2ui(
+            divs.x() == 0 ? 1 : divs.x(),
+            divs.y() == 0 ? 1 : divs.y() );
+    }
     void setDepth( const kvs::Real32& depth ){ m_depth = depth; }
     const kvs::Real32& depth() const { return m_depth; } 
 
-    //add
     int routeNum() const { return m_route_num; }
     void setRouteNum( const int route ){ m_route_num = route; }
 
@@ -83,14 +85,13 @@ protected:
 
     std::string outputFinalImageName( const size_t numImages, const size_t level, const size_t from_to );
 
-    void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t numImages, const size_t level, const size_t route_num ); // add
+    void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t numImages, const size_t level, const size_t route_num );
     void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t numImages, const size_t level, const size_t route_num );
 
     void outputZoomEntropies(
         const std::vector<float> entropies );
 
 private:
-    // add
     std::vector<kvs::Vec3> look_at_in_window( const FrameBuffer& frame_buffer );
     kvs::Vec3 window_to_object( const kvs::Vec3& win, const Location& location );
     FrameBuffer crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices );

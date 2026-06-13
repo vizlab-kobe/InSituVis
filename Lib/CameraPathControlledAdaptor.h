@@ -5,7 +5,6 @@
  */
 /*****************************************************************************/
 #pragma once
-//#if defined( KVS_SUPPORT_MPI )
 #include <InSituVis/Lib/Adaptor.h>
 #include "EntropyBasedCameraPathController.h"
 #include <list>
@@ -61,5 +60,3 @@ protected:
 } // end of namespace InSituVis
 
 #include "CameraPathControlledAdaptor.hpp"
-
-//#endif // KVS_SUPPORT_MPI

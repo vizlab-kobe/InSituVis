@@ -116,7 +116,12 @@ public:
     void setOutputImageEnabled( const bool enabled ) { m_enable_output_image = enabled; }
 
     // ---- image entropy params ----
-    void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
+    void setFrameDivisions( const kvs::Vec2ui& divs )
+    {
+        m_frame_divs = kvs::Vec2ui(
+            divs.x() == 0 ? 1 : divs.x(),
+            divs.y() == 0 ? 1 : divs.y() );
+    }
     void setEntropyBins( const size_t bins ) { m_entropy_bins = std::max<size_t>(8, bins); }
 
     // ---- extrema pipeline ----

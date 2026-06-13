@@ -29,7 +29,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             }
             BaseClass::pushNumImages( 1 );
             BaseClass::setIsInitialStep( false );
-            this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
+            this->pushMaxFocusPoints( this->maxFocusPoint() );
         }
         else
         {
@@ -41,7 +41,7 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                     BaseClass::pushMaxEntropies( BaseClass::maxEntropy() );
                     BaseClass::pushMaxPositions( BaseClass::maxPosition() );
                     BaseClass::pushMaxRotations( BaseClass::maxRotation() );
-                    this->pushMaxFocusPoints( this->maxFocusPoint() ); // add
+                    this->pushMaxFocusPoints( this->maxFocusPoint() );
 
                     if ( BaseClass::dataQueue().size() == BaseClass::cacheSize() )
                     {
@@ -58,9 +58,9 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
                             if ( BaseClass::dataQueue().size() > 0 ) { data_front = BaseClass::dataQueue().front(); }
                             else { data_front = data; }
                             const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
-                            this->process( data_front, path_front.first, path_front.second, this->focusPath().front() ); //mod
+                            this->process( data_front, path_front.first, path_front.second, this->focusPath().front() );
                             BaseClass::path().pop();
-                            this->focusPath().pop(); // add
+                            this->focusPath().pop();
                             BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
 
                             if ( BaseClass::subTimeIndex() == num_images )
@@ -106,9 +106,9 @@ inline void EntropyBasedCameraFocusController::push( const Data& data )
             if ( BaseClass::dataQueue().size() > 0 ) { data_front = BaseClass::dataQueue().front(); }
             else { data_front = data; }
             const std::pair<float, kvs::Quaternion> path_front = BaseClass::path().front();
-            this->process( data_front, path_front.first, path_front.second, this->focusPath().front() ); //mod
+            this->process( data_front, path_front.first, path_front.second, this->focusPath().front() );
             BaseClass::path().pop();
-            this->focusPath().pop(); // add
+            this->focusPath().pop();
             BaseClass::setSubTimeIndex( BaseClass::subTimeIndex() + 1 );
 
             if( BaseClass::subTimeIndex() == num_images )
@@ -142,8 +142,8 @@ inline void EntropyBasedCameraFocusController::createPath()
     std::queue<std::pair<float, kvs::Quaternion>> empty;
     BaseClass::path().swap( empty );
 
-    std::queue<kvs::Vec3> empty_focus;     // add
-    this->focusPath().swap( empty_focus ); // add
+    std::queue<kvs::Vec3> empty_focus;
+    this->focusPath().swap( empty_focus );
     kvs::Timer timer( kvs::Timer::Start );
 
     const auto positions = BaseClass::maxPositions();
@@ -177,8 +177,8 @@ inline void EntropyBasedCameraFocusController::createPath()
         const auto rot = BaseClass::pathInterpolation( rotations, t );
         const std::pair<float, kvs::Quaternion> elem( rad, rot );
         BaseClass::path().push( elem );
-        const auto f = ( 1.0f - t ) * focuspoints[0] + t * focuspoints[1]; // add
-        this->focusPath().push( f );              // add
+        const auto f = ( 1.0f - t ) * focuspoints[0] + t * focuspoints[1];
+        this->focusPath().push( f );
     }
 
     timer.stop();

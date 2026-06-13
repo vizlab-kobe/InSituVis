@@ -17,7 +17,6 @@ public:
     using BaseClass = EntropyBasedCameraPathController;
 
 private:
-
     kvs::Vec3 m_max_focus_point{ 0.0f, 0.0f, 0.0f }; ///< focus point estimated at the evaluation step
     std::vector<kvs::Vec3> m_max_focus_points{}; ///< data queue for m_max_focus_point
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
@@ -25,12 +24,10 @@ private:
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
     bool m_enable_output_frame_entropies = false; ///< if true, calculated entropies on the divided framebuffer will be output
     bool m_enable_output_zoom_entropies = false; ///< if true, calculated entropies along the viewing ray will be output
-
     bool m_enable_auto_zooming = false; ///< if true, auto-zooming fuctionality will be available
     bool m_image_type = true;
     kvs::Vec3 m_estimated_zoom_position{ 0.0f, 0.0f, 0.0f }; ///< estimated zoom position along the viewing ray
     size_t m_estimated_zoom_level = 0; ///< estimated zoom level
-
 
 public:
     EntropyBasedCameraFocusController() = default;
@@ -51,9 +48,12 @@ public:
     void setEstimatedZoomPosition( const kvs::Vec3& position ) { m_estimated_zoom_position = position; }
     void setEstimatedZoomLevel( const size_t level ) { m_estimated_zoom_level = level; }
     bool isAutoZoomingEnabled() { return m_enable_auto_zooming; }
-    bool isOutpuColorImage() { return m_image_type; }
+    bool isOutputColorImage() { return m_image_type; }
     kvs::Vec3 estimatedZoomPosition() const { return m_estimated_zoom_position; }
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
+
+    // backward compatibility
+    bool isOutpuColorImage() const { return this->isOutputColorImage(); }
 
 protected:
     using BaseClass::process;

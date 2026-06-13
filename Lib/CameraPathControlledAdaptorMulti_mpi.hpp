@@ -123,8 +123,7 @@ inline void CameraPathControlledAdaptorMulti::exec( const BaseClass::SimTime sim
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::setIsEntStep( this->isEntropyStep() );
-    Controller::updataCacheSize();
-
+    Controller::updateCacheSize();
     Controller::push( BaseClass::objects() );
 
     BaseClass::incrementTimeStep();
@@ -146,8 +145,8 @@ inline std::vector<int> CameraPathControlledAdaptorMulti::getMaximalLocations(
     const std::vector<Viewpoint::Location>& locations,
     const std::vector<float>& entropies )
 {
-    const int rows    = this->viewPointDimention().y();
-    const int columns = this->viewPointDimention().z();
+    const int rows    = this->viewpointDimentions().y();
+    const int columns = this->viewpointDimentions().z();
 
     if ( entropies.size() != static_cast<size_t>(columns * rows) )
     {
@@ -357,13 +356,12 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
                             timer.stop();
                             zoom_time += m_zoom_timer.time( timer );
                         }
-                        
                         else
                         {
                             if ( BaseClass::isOutputImageEnabled() )
                             {
                                 timer.start();
-                                if ( Controller::isOutpuColorImage() ) this->outputColorImage( locations[fp_j], frame_buffer, fp_j, level, 0 );
+                                if ( Controller::isOutputColorImage() ) this->outputColorImage( locations[fp_j], frame_buffer, fp_j, level, 0 );
                                 else this->outputDepthImage( locations[fp_j], frame_buffer, fp_j, level, 0 );
                                 timer.stop();
                                 save_time += BaseClass::saveTimer().time( timer );
@@ -397,7 +395,7 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
                             Controller::pushOutputFilenames( outputFinalImageName(location, fp_j, level, 0) );
 
                             timer.start();
-                            if ( Controller::isOutpuColorImage() ) this->outputColorImage( locations[fp_j], frame_buffer, fp_j, level, 0 );
+                            if ( Controller::isOutputColorImage() ) this->outputColorImage( locations[fp_j], frame_buffer, fp_j, level, 0 );
                             else this->outputDepthImage( locations[fp_j], frame_buffer, fp_j, level, 0 );
                             timer.stop();
                             save_time += BaseClass::saveTimer().time( timer );
@@ -438,7 +436,7 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
                 //     << "\n";
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, 999999, 0, routeNum() );
+                    if ( Controller::isOutputColorImage() ) this->outputColorImage( location, frame_buffer, 999999, 0, routeNum() );
                     else this->outputDepthImage( location, frame_buffer, 999999, 0, routeNum() );
                 }
             }
@@ -471,7 +469,7 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
                 {
                     if ( BaseClass::isOutputImageEnabled() )
                     {
-                        if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, 999999, level, routeNum() );
+                        if ( Controller::isOutputColorImage() ) this->outputColorImage( location, frame_buffer, 999999, level, routeNum() );
                         else this->outputDepthImage( location, frame_buffer, 999999, level, routeNum() );
                     }
                 }

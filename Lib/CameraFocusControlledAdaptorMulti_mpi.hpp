@@ -33,7 +33,6 @@ CameraFocusControlledAdaptorMulti::erpLocation(
     return  { index, dir, p, u, rot, focus };
 }
 
-// add
 inline CameraFocusControlledAdaptorMulti::Location
 CameraFocusControlledAdaptorMulti::focusedLocation(
     const Location& location,
@@ -53,10 +52,10 @@ CameraFocusControlledAdaptorMulti::focusedLocation(
     return l;
 }
 
-inline bool CameraFocusControlledAdaptorMulti::dump() //mod
+inline bool CameraFocusControlledAdaptorMulti::dump()
 {
     bool ret = true;
-    bool ret_f = true; // add
+    bool ret_f = true;
     bool ret_z = true;
     if ( BaseClass::world().isRoot() )
     {
@@ -67,33 +66,32 @@ inline bool CameraFocusControlledAdaptorMulti::dump() //mod
         const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
         ret = entr_timer_list.write( basedir + "ent_proc_time.csv" );
 
-        if ( m_focus_timer.title().empty() ) { m_focus_timer.setTitle( "focus time" ); } // add
-        kvs::StampTimerList f_timer_list;                                                // add
-        f_timer_list.push( m_focus_timer );                                              // add
-        ret_f = f_timer_list.write( basedir + "focus_proc_time.csv" );                   // add
+        if ( m_focus_timer.title().empty() ) { m_focus_timer.setTitle( "focus time" ); }
+        kvs::StampTimerList f_timer_list;
+        f_timer_list.push( m_focus_timer );
+        ret_f = f_timer_list.write( basedir + "focus_proc_time.csv" );
 
         if ( m_zoom_timer.title().empty() ) { m_zoom_timer.setTitle( "zoom time" ); }
         kvs::StampTimerList z_timer_list;
         z_timer_list.push( m_zoom_timer );
         ret_z = z_timer_list.write( basedir + "zoom_proc_time.csv" );
-        
+
         const auto directory = BaseClass::outputDirectory();
         const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
         Controller::outputPathCalcTimes( File( "output_path_calc_times" ) );
         Controller::outputViewpointCoords( File( "output_viewpoint_coords" ), BaseClass::viewpoint() );
         Controller::outputNumImages( File( "output_num_images" ), BaseClass::analysisInterval() );
-        //add
         Controller::outputVideoParams( File("output_video_params" ), Controller::outputFilenames(), Controller::focusEntropies(), Controller::focusPathLength(), Controller::cameraPathLength() );
     }
 
     return BaseClass::dump() && ret && ret_f && ret_z;
 }
 
-inline void CameraFocusControlledAdaptorMulti::exec( const BaseClass::SimTime sim_time ) //mod
+inline void CameraFocusControlledAdaptorMulti::exec( const BaseClass::SimTime sim_time )
 {
     Controller::setCacheEnabled( BaseClass::isAnalysisStep() );
     Controller::setIsEntStep( this->isEntropyStep() );
-    Controller::updataCacheSize();
+    Controller::updateCacheSize();
     Controller::push( BaseClass::objects() );
     BaseClass::incrementTimeStep();
     if( this->isFinalTimeStep())
@@ -105,7 +103,7 @@ inline void CameraFocusControlledAdaptorMulti::exec( const BaseClass::SimTime si
     BaseClass::clearObjects();
 }
 
-inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
+inline void CameraFocusControlledAdaptorMulti::execRendering()
 {
     BaseClass::setRendTime( 0.0f );
     BaseClass::setCompTime( 0.0f );
@@ -119,7 +117,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
 
     std::vector<float> entropies;
     std::vector<FrameBuffer> frame_buffers;
-    
+
     if ( Controller::isEntStep() && !Controller::isErpStep())
     {
         // Entropy evaluation
@@ -258,7 +256,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                         {
                             timer.start();
                             // Controller::pushCandRotations( this->rotation( estimated_zoom_position ) );
-                            if ( Controller::isOutpuColorImage() ) this->outputColorImage( locations[i], frame_buffer, i, level,0 );
+                            if ( Controller::isOutputColorImage() ) this->outputColorImage( locations[i], frame_buffer, i, level,0 );
                             else {this->outputDepthImage( locations[i], frame_buffer, i, level, 0 );}
                             timer.stop();
                             save_time += BaseClass::saveTimer().time( timer );
@@ -272,7 +270,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                 BaseClass::world().broadcast( estimated_zoom_level );
                 BaseClass::world().broadcast( estimated_zoom_position.data(), 3 );
                 Controller::pushCandZoomLevels( estimated_zoom_level );
-                Controller::pushCandPositions( estimated_zoom_position ); //add
+                Controller::pushCandPositions( estimated_zoom_position );
                 Controller::pushCandRotations( this->rotation( estimated_zoom_position ) );
                 if ( BaseClass::world().isRoot() )
                 {
@@ -284,7 +282,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                         const auto frame_buffer = zoom_frame_buffers[ level ];
                         Controller::pushOutputFilenames( outputFinalImageName(i, level, 0) );
                         timer.start();
-                        if ( Controller::isOutpuColorImage() ) this->outputColorImage( locations[i], frame_buffer, i, level, 0 );
+                        if ( Controller::isOutputColorImage() ) this->outputColorImage( locations[i], frame_buffer, i, level, 0 );
                         else { this->outputDepthImage( locations[i], frame_buffer, i, level, 0 ); }
                         timer.stop();
                         save_time += BaseClass::saveTimer().time( timer );
@@ -299,8 +297,8 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
     {
         kvs::Timer timer;
 
-        const auto focus = Controller::erpFocus();  // add
-        // Controller::setMaxFocusPoint( focus );      // add
+        const auto focus = Controller::erpFocus();
+        // Controller::setMaxFocusPoint( focus );
 
         if ( Controller::isAutoZoomingEnabled() )
         {
@@ -314,7 +312,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
             { 
                 if ( BaseClass::isOutputImageEnabled() )
                 {
-                    if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, 999999, 0, routeNum() );
+                    if ( Controller::isOutputColorImage() ) this->outputColorImage( location, frame_buffer, 999999, 0, routeNum() );
                     else {this->outputDepthImage( location, frame_buffer, 999999, 0, routeNum() );}
                 }
             }
@@ -351,7 +349,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering() //mod
                 {
                     if ( BaseClass::isOutputImageEnabled() )
                     {
-                        if ( Controller::isOutpuColorImage() ) this->outputColorImage( location, frame_buffer, 999999, level, routeNum() );
+                        if ( Controller::isOutputColorImage() ) this->outputColorImage( location, frame_buffer, 999999, level, routeNum() );
                         else { this->outputDepthImage( location, frame_buffer, 999999, level, routeNum() ); }
 
                     }
@@ -376,14 +374,13 @@ inline void CameraFocusControlledAdaptorMulti::process( const Data& data )
     this->execRendering();
 }
 
-// add
 inline void CameraFocusControlledAdaptorMulti::process(
     const Data& data,
     const float radius,
     const kvs::Quaternion& rotation,
     const kvs::Vec3& focus,
     const int route_num )
-{ 
+{
         const auto current_step = BaseClass::timeStep();
         // Reset time step, which is used for output filename,
         // for visualizing the stacked dataset.
@@ -397,13 +394,12 @@ inline void CameraFocusControlledAdaptorMulti::process(
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
         Controller::setErpRadius( radius );
-        Controller::setErpFocus( focus ); // add
+        Controller::setErpFocus( focus );
         BaseClass::execPipeline( data );
         setRouteNum(route_num);
         this->execRendering();
 
         BaseClass::setTimeStep( current_step );
-
 }
 
 inline std::string CameraFocusControlledAdaptorMulti::outputFinalImageName( const size_t candidateNum, const size_t level, const size_t from_to  )
@@ -413,7 +409,7 @@ inline std::string CameraFocusControlledAdaptorMulti::outputFinalImageName( cons
     const auto output_basename = BaseClass::outputFilename();
     const auto output_candidate_num = kvs::String::From( candidateNum, 6, '0' );
     const auto output_zoom_level = kvs::String::From( level, 6, '0' );
-    const auto output_route = kvs::String::From( from_to, 6, '0');//add
+    const auto output_route = kvs::String::From( from_to, 6, '0');
     const auto output_filename = output_basename + "_" + output_time + "_" + output_candidate_num + "_" + output_zoom_level + "_" + output_route;
     const auto filename = BaseClass::outputDirectory().baseDirectoryName() + "/" + output_filename + ".bmp";
     return filename;
@@ -423,7 +419,7 @@ inline void CameraFocusControlledAdaptorMulti::outputColorImage(
     const InSituVis::Viewpoint::Location& location,
     const FrameBuffer& frame_buffer,
     const size_t candidateNum,
-    const size_t level, 
+    const size_t level,
     const size_t from_to )
 {
     const auto size = BaseClass::outputImageSize( location );
@@ -436,7 +432,7 @@ inline void CameraFocusControlledAdaptorMulti::outputDepthImage(
     const InSituVis::Viewpoint::Location& location,
     const FrameBuffer& frame_buffer,
     const size_t candidateNum,
-    const size_t level, 
+    const size_t level,
     const size_t from_to)
 {
     const auto size = BaseClass::outputImageSize( location );
@@ -445,7 +441,6 @@ inline void CameraFocusControlledAdaptorMulti::outputDepthImage(
     image.write( this->outputFinalImageName( candidateNum, level, from_to ) );
 }
 
-// mod
 inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::look_at_in_window( const FrameBuffer& frame_buffer )
 {
     const auto w = BaseClass::imageWidth(); // frame buffer width
@@ -473,8 +468,7 @@ inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::look_at_in_wind
         const auto& depth_buffer = buffer.depth_buffer;
         if ( depth_buffer[ index ] < 1.0f )
         {
-            return depth_buffer[ index ]; 
-            
+            return depth_buffer[ index ];
         }
         else
         {
@@ -491,7 +485,6 @@ inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::look_at_in_wind
 //    cropped_buffer.color_buffer.allocate( cw * ch * 4 );
 //    cropped_buffer.depth_buffer.allocate( cw * ch );
 
-//add
     std::vector<kvs::Vec3> focuspoints;
     std::vector<float> entropies;
     std::vector<kvs::Vec2i> centers;
@@ -565,7 +558,6 @@ inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::look_at_in_wind
     return focuspoints;
 }
 
-// add
 inline kvs::Vec3 CameraFocusControlledAdaptorMulti::window_to_object(
     const kvs::Vec3& win,
     const Location& location )
@@ -613,7 +605,6 @@ inline kvs::Vec3 CameraFocusControlledAdaptorMulti::window_to_object(
     return kvs::Vec3( obj );
 }
 
-// add
 inline CameraFocusControlledAdaptorMulti::FrameBuffer
 CameraFocusControlledAdaptorMulti::crop_frame_buffer(
     const FrameBuffer& frame_buffer,
@@ -689,7 +680,6 @@ inline kvs::Quat CameraFocusControlledAdaptorMulti::rotation( const kvs::Vec3& p
     return q_theta * q_phi;
 }
 
-//add
 inline void CameraFocusControlledAdaptorMulti::outputZoomEntropies(
     const std::vector<float> zoom_entropies )
 {
@@ -740,7 +730,7 @@ inline std::vector<kvs::Vec3> CameraFocusControlledAdaptorMulti::maximalEntropyP
     std::vector<kvs::Vec3> focuspoints;
     std::vector<kvs::Vec2i> top_centers;
     std::vector<kvs::Real32> top_depthes;
-    std::vector<float> top_entropies;    
+    std::vector<float> top_entropies;
     const int dx[] = {-1, -1, -1, 0, 0, 1, 1, 1};
     const int dy[] = {-1, 0, 1, -1, 1, -1, 0, 1};
     auto m = m_frame_divs.y();
