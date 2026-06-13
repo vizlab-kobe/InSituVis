@@ -72,6 +72,8 @@ public:
     bool isOutpuColorImage() const { return this->isOutputColorImage(); }
 
 protected:
+    using BaseClass::process;
+
     std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
     std::queue<kvs::Vec3>& focusPath() { return m_focus_path; }
     std::queue<kvs::Vec3>& focusPathPositions() { return m_focus_path_positions; }
@@ -105,7 +107,7 @@ protected:
     }
     void popMaxFocusPoints() { m_max_focus_points.erase( m_max_focus_points.begin() ); }
 
-    virtual void process( const Data& data ){}
+    void process( const Data& data ) override {}
     virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus, const int route_num ){}
 
     virtual void push( const Data& data );

@@ -220,8 +220,8 @@ inline void EntropyBasedCameraFocusControllerMulti::outputVideoParams(
 {
     std::ofstream file( filename1 );
     {
-        size_t CN2 = candidateNum()*candidateNum();
-        size_t t=-1;
+        const size_t CN2 = candidateNum()*candidateNum();
+//        size_t t=-1;
         file << "Filename,Entropy";
         for(size_t i =0; i <  candidateNum(); i++ ){
             file << ",preFocusPath[" << i << "]";
