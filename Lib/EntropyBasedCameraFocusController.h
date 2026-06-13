@@ -23,8 +23,8 @@ private:
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
     std::queue<kvs::Vec3> m_focus_path_positions{}; ///< focus points on the interpolated path
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
-    bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
-    bool m_enable_output_zoom_entropies = false; ///< if true, calculted entropies along the viewing ray will be output
+    bool m_enable_output_frame_entropies = false; ///< if true, calculated entropies on the divided framebuffer will be output
+    bool m_enable_output_zoom_entropies = false; ///< if true, calculated entropies along the viewing ray will be output
 
     bool m_enable_auto_zooming = false; ///< if true, auto-zooming fuctionality will be available
     bool m_image_type = true;

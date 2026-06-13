@@ -30,13 +30,10 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-//    bool m_enable_output_image_depth = false;
     kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_focus_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_zoom_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     size_t m_final_time_step = 0;
-
-    // add
     size_t m_zoom_level = 1; ///< zoom level
     kvs::Vec2ui m_frame_divs{ 1, 1 }; ///< number of frame divisions
 
@@ -47,17 +44,16 @@ public:
     kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
     kvs::mpi::StampTimer& focusTimer() { return m_focus_timer; }
     kvs::mpi::StampTimer& zoomTimer() { return m_zoom_timer; }
-    void exec( const BaseClass::SimTime sim_time = {} ) override;
-    bool dump() override;
-    void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
-
-    // add
     size_t zoomLevel() const { return m_zoom_level; }
     const kvs::Vec2ui& frameDivisions() const { return m_frame_divs; }
+
+    void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
     void setZoomLevel( const size_t level ) { m_zoom_level = level; }
     void setFrameDivisions( const kvs::Vec2ui& divs ) { m_frame_divs = divs; }
-
     void setViewpoint( const Viewpoint& viewpoint );
+
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
 
 protected:
     using Controller::process;
@@ -78,14 +74,13 @@ protected:
 
     std::string outputFinalImageName( const size_t level );
 
-    void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level ); // add
+    void outputColorImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level );
     void outputDepthImage( const Viewpoint::Location& location, const FrameBuffer& frame_buffer, const size_t level);
 
     void outputZoomEntropies(
         const std::vector<float> entropies );
 
 private:
-    // add
     kvs::Vec3 look_at_in_window( const FrameBuffer& frame_buffer );
     kvs::Vec3 window_to_object( const kvs::Vec3 win, const Location& location );
     FrameBuffer crop_frame_buffer( const FrameBuffer& frame_buffer, const kvs::Vec2i& indices );
@@ -94,7 +89,7 @@ private:
 
 } // end of namespace mpi
 
-} // end of namespace local
+} // end of namespace InSituVis
 
 #include "CameraFocusControlledAdaptor_mpi.hpp"
 

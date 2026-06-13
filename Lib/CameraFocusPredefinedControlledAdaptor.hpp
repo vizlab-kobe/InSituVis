@@ -47,7 +47,7 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
                 updated_location.look_at,
                 updated_location.up_vector
             );
-            
+
             // //zoomしたい
             auto t = 0.5;
             updated_location.position = ( 1 - t ) * location.position + t * p;
@@ -72,7 +72,7 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
             }
             timer_save.stop();
             save_time += m_save_timer.time( timer_save );
-            
+
             //補間画像作成
             if ( this->isInitialStep() ) this->setIsInitialStep(false);
             else
@@ -105,7 +105,6 @@ inline void CameraFocusPredefinedControlledAdaptor::execRendering()
                     std::cout << "path size :" << focusPath().size() << std::endl;
                 }
             }
-            
         }
     }
     m_rend_timer.stamp( rend_time );
@@ -127,16 +126,15 @@ inline void CameraFocusPredefinedControlledAdaptor::createPath()
 {
     std::queue<std::pair<float, kvs::Quaternion>> empty;
     this->path().swap( empty );
-    
-    std::queue<kvs::Vec3> empty_focus;     // add
-    this->focusPath().swap( empty_focus ); // add
+
+    std::queue<kvs::Vec3> empty_focus;
+    this->focusPath().swap( empty_focus );
 
     const auto positions = this->maxPositions();
     const auto rotations = this->maxRotations();
     const auto focuspoints = this->maxFocusPoints();
 
     const size_t num_points = 3;
-    
     for ( size_t i = 0; i < num_points; i++ )
     {
         const auto t = static_cast<float>( i + 1 ) / static_cast<float>( num_points + 1 );
@@ -144,8 +142,8 @@ inline void CameraFocusPredefinedControlledAdaptor::createPath()
         const auto rot = kvs::Quat::SphericalLinearInterpolation( rotations[0],rotations[1], t, true, true );
         const std::pair<float, kvs::Quaternion> elem( rad, rot );
         this->path().push( elem );
-        const auto f = ( 1.0f - t ) * focuspoints[0] + t * focuspoints[1]; // add
-        this->focusPath().push( f );              // add
+        const auto f = ( 1.0f - t ) * focuspoints[0] + t * focuspoints[1];
+        this->focusPath().push( f );
     }
 }
 

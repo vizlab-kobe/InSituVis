@@ -20,9 +20,7 @@ public:
     using Volume = kvs::VolumeObjectBase;
     using Values = Volume::Values;
     using DivergenceFunction = std::function<float(const Values&,const Values&, const float)>;
-    
     enum ThresholdDeterminationMethod { FIXED, ADAPTIVE };
-        // divergence function
     static float GaussianKLDivergence( const Values& P0, const Values& P1, const float D_max );
 
 private:
@@ -66,7 +64,7 @@ public:
     bool isValidationStep(){ return m_validation_step; }
 
     ThresholdDeterminationMethod isThresholdDeterminationMethod(){ return m_threshold_determination_method; }
-    void setThresholdDeterminationMethod(ThresholdDeterminationMethod method ){//add
+    void setThresholdDeterminationMethod(ThresholdDeterminationMethod method ){
         m_threshold_determination_method = method;
     }
 
@@ -77,10 +75,8 @@ public:
     const size_t dataQueueSize() const { return m_dataqueue_size; }
     const std::vector<float>& pathPositions() const { return m_path_positions; }
 
-
-    ///
-    void setOutputDivergenceEnabled( const bool enable = true ) { m_enable_output_divergence = enable; }////
-    bool isOutputDivergenceEnabled() const { return m_enable_output_divergence; }////
+    void setOutputDivergenceEnabled( const bool enable = true ) { m_enable_output_divergence = enable; }
+    bool isOutputDivergenceEnabled() const { return m_enable_output_divergence; }
 
     const std::vector<float>& divergences() const { return m_divergences; }
     const std::vector<float>& threshold() const { return var_threshold; }
@@ -95,7 +91,7 @@ protected:
     virtual void process( const Data& data ) {}
     virtual void process( const Data& data, const float radius, const kvs::Quat& rotation ) {}
     std::vector<float>& pathPositions() { return m_path_positions; }
-    
+
     virtual void push( const Data& data );
     // void createPath(
     //     const float r2,

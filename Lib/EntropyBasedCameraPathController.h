@@ -22,10 +22,8 @@ class EntropyBasedCameraPathController
 public:
     using Data = InSituVis::Adaptor::ObjectList;
     using DataQueue = std::queue<Data>;
-
     using Volume = kvs::VolumeObjectBase;
     using Values = Volume::Values;
-
     using FrameBuffer = InSituVis::Adaptor::FrameBuffer;
     using EntropyFunction = std::function<float(const FrameBuffer&)>;
     using Interpolator = std::function<kvs::Quat(const std::vector<kvs::Quat>&, float)>;
@@ -67,7 +65,7 @@ private:
     DataQueue m_data_queue{}; ///< data queue
     EntropyFunction m_entropy_function = MixedEntropy( LightnessEntropy(), DepthEntropy(), 0.5f ); ///< entropy function
     Interpolator m_interpolator = Slerp(); ///< path interpolator
-    InterpolationMethod m_interpolation_method = InterpolationMethod::SLERP; //add
+    InterpolationMethod m_interpolation_method = InterpolationMethod::SLERP;
     bool m_enable_output_evaluation_image = false; ///< if true, all of evaluation images will be output
     bool m_enable_output_evaluation_image_depth = false; ///< if true, all of evaluation depth images will be output
     bool m_enable_output_entropies = false; ///< if true, calculated entropies for all viewpoints will be output
@@ -236,7 +234,6 @@ protected:
         const std::string& filename,
         const size_t interval );
 
-    //add
     void updataCacheSize(){
         switch( m_interpolation_method ){
         case SLERP:

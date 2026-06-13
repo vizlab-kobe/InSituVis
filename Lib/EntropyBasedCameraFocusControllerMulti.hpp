@@ -5,6 +5,7 @@
 #include <time.h>
 #include <chrono>
 
+
 namespace InSituVis
 {
 
@@ -28,7 +29,7 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
                 popCandFocusPoints();
                 if(isAutoZoomingEnabled())popCandZoomLevels();
             }
-                        // if ( this->isInterpolationMethod() == SQUAD )
+            // if ( this->isInterpolationMethod() == SQUAD )
             // {
             //     this->pushMaxRotations( this->maxRotation() );
             // }
@@ -59,7 +60,7 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
                         // BaseClass::setSubTimeIndex( 0 );
                         size_t num_points = (BaseClass::path().size())/(candidateNum()*candidateNum());
                         size_t num_images = ( num_points + 1 ) / BaseClass::entropyInterval();
-                
+
                         for(int j = 0; j<static_cast<int>(candidateNum()*candidateNum()); j++){
                             for (size_t i = 0; i < num_points; i++ )
                             {
@@ -100,7 +101,7 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
             }
         }
     }
-    else{       
+    else{
         auto final_positions = BaseClass::maxPositions();
         auto final_rotations = BaseClass::maxRotations();
         auto final_focus_points = maxFocusPoints();
@@ -127,7 +128,7 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
                 BaseClass::path().pop();
                 this->focusPath().pop();
                 // BaseClass::setSubTimeIndex(BaseClass::subTimeIndex() + 1);
-                
+
                 // if ( BaseClass::subTimeIndex() == num_images )
                 // {
                     BaseClass::pushNumImages( num_images );
@@ -155,14 +156,13 @@ inline void EntropyBasedCameraFocusControllerMulti::push( const Data& data )
         }
 }
 
-
 inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
 {
     std::queue<std::pair<float, kvs::Quaternion>> empty;
     BaseClass::path().swap( empty );
-    
-    std::queue<kvs::Vec3> empty_focus;     // add
-    this->focusPath().swap( empty_focus ); // add
+
+    std::queue<kvs::Vec3> empty_focus;
+    this->focusPath().swap( empty_focus );
     kvs::Timer timer( kvs::Timer::Start );
 
     const auto positions = BaseClass::maxPositions(); //2queued if SLERP
@@ -175,7 +175,7 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
             float l = 0.0f;
             std::vector<kvs::Quat> R{rotations[j],rotations[k]};
             for ( int i = 0; i < n; i++ ) {
-                
+
                 const auto t0 = static_cast<float>( i ) / static_cast<float>( n );
                 const auto rad0 = BaseClass::radiusInterpolation( positions[j].length(), positions[k].length(), t0 );
                 const auto rot0 = BaseClass::pathInterpolation( R, t0 );
@@ -199,9 +199,9 @@ inline void EntropyBasedCameraFocusControllerMulti::createPath() //fin
                 const auto rot = BaseClass::pathInterpolation( R, t );
                 const std::pair<float, kvs::Quaternion> elem( rad, rot );
                 BaseClass::path().push( elem );
-                const auto f = ( 1.0f - t ) * focuspoints[j] + t * focuspoints[k]; // add
-                this->focusPath().push( f ); 
-            }        // add
+                const auto f = ( 1.0f - t ) * focuspoints[j] + t * focuspoints[k];
+                this->focusPath().push( f );
+            }
             pushFocusPathLength( (focuspoints[k]-focuspoints[j]).length() );
         }
     }
@@ -216,8 +216,7 @@ inline void EntropyBasedCameraFocusControllerMulti::outputVideoParams(
     const std::vector<std::string>& filename2,
     const std::vector<float>& focus_entropies,
     const std::vector<float>& focus_path_length,
-    const std::vector<float>& camera_path_length
-    )  
+    const std::vector<float>& camera_path_length )
 {
     std::ofstream file( filename1 );
     {
@@ -250,6 +249,5 @@ inline void EntropyBasedCameraFocusControllerMulti::outputVideoParams(
     }
     file.close();
 }
-
 
 } // end of namespace InSituVis

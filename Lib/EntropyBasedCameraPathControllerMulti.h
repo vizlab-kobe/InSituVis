@@ -15,25 +15,22 @@ class EntropyBasedCameraPathControllerMulti : public EntropyBasedCameraPathContr
 {
 public:
     using BaseClass = EntropyBasedCameraPathController;
-    //add
     enum ROIMethod { max, maximum };
-    
+
 private:
     kvs::Vec3 m_max_focus_point{ 0.0f, 0.0f, 0.0f }; ///< focus point estimated at the evaluation step
     std::vector<kvs::Vec3> m_max_focus_points{}; ///< data queue for m_max_focus_point
     std::queue<kvs::Vec3> m_focus_path{}; ///< 
     std::queue<kvs::Vec3> m_focus_path_positions{}; ///< focus points on the interpolated path
     kvs::Vec3 m_erp_focus{ 0.0f, 0.0f, 0.0f }; ///< interpolated focus point
-    bool m_enable_output_frame_entropies = false; ///< if true, calculted entropies on the divided framebuffer will be output
-    bool m_enable_output_zoom_entropies = false; ///< if true, calculted entropies along the viewing ray will be output
-
+    bool m_enable_output_frame_entropies = false; ///< if true, calculated entropies on the divided framebuffer will be output
+    bool m_enable_output_zoom_entropies = false; ///< if true, calculated entropies along the viewing ray will be output
     bool m_enable_auto_zooming = false; ///< if true, auto-zooming fuctionality will be available
     bool m_image_type = true;
     kvs::Vec3 m_estimated_zoom_position{ 0.0f, 0.0f, 0.0f }; ///< estimated zoom position along the viewing ray
     size_t m_estimated_zoom_level = 0; ///< estimated zoom level
-    //add
-    std::vector<kvs::Vec3> m_cand_positions{}; 
-    std::vector<kvs::Quat> m_cand_rotations{}; 
+    std::vector<kvs::Vec3> m_cand_positions{};
+    std::vector<kvs::Quat> m_cand_rotations{};
     std::vector<kvs::Vec3> m_cand_focus_points{};
     std::vector<size_t> m_cand_zoom_levels{};
     size_t m_focus_point_candidate_num = 1;
@@ -42,9 +39,8 @@ private:
     std::vector<float> m_focus_entropies{};
     std::vector<float> m_focus_path_length{};
     std::vector<float> m_camera_path_length{};
-
-    //add
     ROIMethod m_ROI_method = ROIMethod::max;
+
 public:
     EntropyBasedCameraPathControllerMulti() = default;
     virtual ~EntropyBasedCameraPathControllerMulti() = default;
@@ -80,8 +76,6 @@ protected:
     std::vector<kvs::Vec3>& maxFocusPoints() { return m_max_focus_points; }
     std::queue<kvs::Vec3>& focusPath() { return m_focus_path; }
     std::queue<kvs::Vec3>& focusPathPositions() { return m_focus_path_positions; }
-
-    //add
     std::vector<std::string>& outputFilenames() {return m_output_filenames; }
     std::vector<float>& focusEntropies() { return m_focus_entropies; }
     std::vector<float>& focusPathLength() { return m_focus_path_length; }

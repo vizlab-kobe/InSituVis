@@ -4,10 +4,8 @@
  */
 /*****************************************************************************/
 #pragma once
-
 #include <InSituVis/Lib/Adaptor.h>
 #include <InSituVis/Lib/Viewpoint.h>
-
 #include <kvs/ValueArray>
 #include <kvs/Vector3>
 #include <kvs/Vector2>
@@ -19,7 +17,6 @@
 #include <kvs/Xform>
 #include <kvs/OpenGL>
 #include <kvs/Math>
-
 #include <vector>
 #include <string>
 #include <numeric>
@@ -28,6 +25,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstring>
+
 
 namespace InSituVis
 {
@@ -145,7 +143,7 @@ protected:
         kvs::ValueArray<float>& fxz,
         kvs::ValueArray<float>& fyz,
         kvs::ValueArray<float>& fxyz );
-    
+
     void appendParamsCSVRow(
         const std::string& image_relpath,
         float pressure_value,

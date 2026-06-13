@@ -114,4 +114,3 @@ public:
 };
 
 } // end of namespace InSituVis
-

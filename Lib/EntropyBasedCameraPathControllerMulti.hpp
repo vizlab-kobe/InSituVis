@@ -1,5 +1,3 @@
-// EntropyBasedCameraPathControllerMulti.hpp (debug-removed)
-
 #pragma once
 #include <kvs/Math>
 #include <kvs/Stat>
@@ -12,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+
 
 namespace InSituVis
 {

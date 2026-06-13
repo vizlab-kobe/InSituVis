@@ -45,7 +45,6 @@ CameraFocusControlledAdaptor::erpLocation(
     return this->focusedLocation( { index, dir, p, u, rot, l }, focus );
 }
 
-// add
 inline CameraFocusControlledAdaptor::Location
 CameraFocusControlledAdaptor::focusedLocation(
     const Location& location,
@@ -68,7 +67,7 @@ CameraFocusControlledAdaptor::focusedLocation(
 inline bool CameraFocusControlledAdaptor::dump()
 {
     bool ret = true;
-    bool ret_f = true; // add
+    bool ret_f = true;
     bool ret_z = true;
     if ( m_entr_timer.title().empty() ) { m_entr_timer.setTitle( "Ent time" ); }
     kvs::StampTimerList timer_list;
@@ -77,10 +76,10 @@ inline bool CameraFocusControlledAdaptor::dump()
     const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
     ret = timer_list.write( basedir + "ent_proc_time.csv" );
 
-    if ( m_focus_timer.title().empty() ) { m_focus_timer.setTitle( "focus time" ); } // add
-    kvs::StampTimerList f_timer_list;                                                // add
-    f_timer_list.push( m_focus_timer );                                              // add
-    ret_f = f_timer_list.write( basedir + "focus_proc_time.csv" );                   // add
+    if ( m_focus_timer.title().empty() ) { m_focus_timer.setTitle( "focus time" ); }
+    kvs::StampTimerList f_timer_list;
+    f_timer_list.push( m_focus_timer );
+    ret_f = f_timer_list.write( basedir + "focus_proc_time.csv" );
 
     if ( m_zoom_timer.title().empty() ) { m_zoom_timer.setTitle( "zoom time" ); }
     kvs::StampTimerList z_timer_list;
@@ -283,8 +282,8 @@ inline void CameraFocusControlledAdaptor::execRendering()
     {
         kvs::Timer timer;
 
-        const auto focus = Controller::erpFocus();  // add
-        //Controller::setMaxFocusPoint( focus );      // add
+        const auto focus = Controller::erpFocus();
+        //Controller::setMaxFocusPoint( focus );
 
         if ( Controller::isAutoZoomingEnabled() )
         {
@@ -360,7 +359,6 @@ inline void CameraFocusControlledAdaptor::process( const Data& data )
     this->execRendering();
 }
 
-// add
 inline void CameraFocusControlledAdaptor::process(
     const Data& data,
     const float radius,
@@ -386,14 +384,13 @@ inline void CameraFocusControlledAdaptor::process(
         // Execute vis. pipeline and rendering.
         Controller::setErpRotation( rotation );
         Controller::setErpRadius( radius );
-        Controller::setErpFocus( focus ); // add
+        Controller::setErpFocus( focus );
         BaseClass::execPipeline( data );
         this->execRendering();
     }
     BaseClass::setTimeStep( current_step );
 }
 
-// add
 inline std::string CameraFocusControlledAdaptor::outputFinalImageName( const size_t level )
 {
     const auto time = BaseClass::timeStep();
@@ -408,7 +405,7 @@ inline std::string CameraFocusControlledAdaptor::outputFinalImageName( const siz
 inline void CameraFocusControlledAdaptor::outputColorImage(
     const InSituVis::Viewpoint::Location& location,
     const FrameBuffer& frame_buffer,
-    const size_t level ) // add
+    const size_t level )
 {
     const auto size = BaseClass::outputImageSize( location );
     const auto buffer = frame_buffer.color_buffer;
@@ -427,7 +424,6 @@ inline void CameraFocusControlledAdaptor::outputDepthImage(
     image.write( this->outputFinalImageName( level ) );
 }
 
-// add
 inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuffer& frame_buffer )
 {
     const auto w = BaseClass::imageWidth(); // frame buffer width
@@ -507,7 +503,6 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::look_at_in_window( const FrameBuf
     return { static_cast<float>( center.x() ), static_cast<float>( center.y() ), depth };
 }
 
-// add
 inline kvs::Vec3 CameraFocusControlledAdaptor::window_to_object(
     const kvs::Vec3 win,
     const Location& location )
@@ -555,7 +550,6 @@ inline kvs::Vec3 CameraFocusControlledAdaptor::window_to_object(
     return kvs::Vec3( obj );
 }
 
-// add
 inline CameraFocusControlledAdaptor::FrameBuffer
 CameraFocusControlledAdaptor::crop_frame_buffer(
     const FrameBuffer& frame_buffer,
@@ -631,7 +625,6 @@ inline kvs::Quat CameraFocusControlledAdaptor::rotation( const kvs::Vec3& positi
     return q_theta * q_phi;
 }
 
-//add
 inline void CameraFocusControlledAdaptor::outputZoomEntropies(
     const std::vector<float> zoom_entropies )
 {

@@ -1,8 +1,6 @@
 #pragma once
-
 #include <kvs/PointRenderer>
 #include <kvs/ParticleBasedRenderer>
-
 #include <array>
 #include <limits>
 #include <cstring>
@@ -902,8 +900,6 @@ inline void CameraFocusPredefinedControlledAdaptorMulti::updateCSVAndPrevCache_F
 {
     if (!m_enable_output_params_csv) return;
 
-    
-
     const int cand = (int)curr_focus_worlds.size();
     if (cand <= 0) return;
     if ((int)curr_pressures.size() != cand) return;
@@ -947,14 +943,12 @@ inline void CameraFocusPredefinedControlledAdaptorMulti::updateCSVAndPrevCache_F
             this->appendParamsCSVRow(rel, curr_pressures[to], fp, cp);
         }
     }
-    
 
     // prev 更新
     m_prev_focus_worlds  = curr_focus_worlds;
     m_prev_camera_worlds = curr_camera_worlds;
     m_has_prev_focus = true;
 }
-
 
 // =============================================================
 // execRendering (switch)
@@ -1185,9 +1179,6 @@ inline void CameraFocusPredefinedControlledAdaptorMulti::execRendering()
     m_rend_timer.stamp(rend_time);
     m_save_timer.stamp(save_time);
 }
-
-
-
 
 // =============================================================
 // CreateExtremaObject (unchanged policy, but now NEVER called in ImageEntropy mode)
@@ -1466,6 +1457,5 @@ inline void CameraFocusPredefinedControlledAdaptorMulti::estimateFocusPoint(
         << " topN=" << n
         << "\n";
 }
-
 
 } // end namespace InSituVis

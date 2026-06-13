@@ -6,6 +6,7 @@
 #include <chrono>
 #include <kvs/AnyValueArray>
 
+
 namespace
 {
 
@@ -73,7 +74,6 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
             {
                 if ( this->isEntStep() )
                 {
-                    
                     std::cout << this->dataQueue().size() << "," << this->cacheSize() << "," << this->dataQueue().size() << std::endl;
 
                     const auto D_thr = m_threshold;
@@ -84,7 +84,6 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
                     if( V_prv.size() != 0 & V_crr.size() != 0){
                         P_prv = Volume::DownCast( V_prv.front().get() )->values();
                         P_crr = Volume::DownCast( V_crr.front().get() )->values();
-                        // std::cout << "------------------------------------------------------  " << typeid(P_crr).name() << std::endl;
                     }
                     const auto D_crr = this->divergence( P_prv, P_crr );
                     m_divergences.push_back( D_crr );
@@ -138,7 +137,6 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
                             BaseClass::setIsErpStep( false );
                             // }
                             // this->dataQueue().push( data );
-                            
                         }
                         this->setPreviousData( data );
                     }
@@ -174,14 +172,14 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
                         // BaseClass::path().pop();
                         // this->dataQueue().pop();
                         this->setPreviousData( data );
-                    }  
+                    }
                     if ( this->isInterpolationMethod() == SQUAD )
                     {
                         this->dataQueue().push( data );
                     }
                 }
                 else { 
-                    this->dataQueue().push( data ); 
+                    this->dataQueue().push( data );
                 }
             }
         }
@@ -208,7 +206,7 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
             this->process( data_front, path_front.first, path_front.second );
             BaseClass::path().pop();
             BaseClass::setSubTimeIndex( BaseClass::subTimeIndex() + 1 );
-            
+
             if( BaseClass::subTimeIndex() == num_images )
             {
                 BaseClass::dataQueue().pop();
@@ -259,13 +257,10 @@ inline float EntropyBasedCameraPathTimeStepController::GaussianKLDivergence(
     }
 }
 
-
 inline float EntropyBasedCameraPathTimeStepController::divergence( const Values& P0, const Values& P1 )
 {
     return m_divergence_function( P0, P1, m_threshold );
 }
-
-
 
 inline void EntropyBasedCameraPathTimeStepController::outputDivergences(
     const std::string& filename, 

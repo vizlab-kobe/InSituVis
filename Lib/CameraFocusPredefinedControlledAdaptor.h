@@ -5,7 +5,6 @@
  */
 /*****************************************************************************/
 #pragma once
-//#if defined( KVS_SUPPORT_MPI )
 #include <InSituVis/Lib/Adaptor.h>
 #include <list>
 #include <queue>
@@ -80,7 +79,6 @@ public:
     void popMaxPositions() { m_max_positions.erase( m_max_positions.begin() ); }
     void popMaxRotations() { m_max_rotations.erase( m_max_rotations.begin() ); }
     void popMaxFocusPoints() { m_max_focus_points.erase( m_max_focus_points.begin() ); }
-    
 
 protected:
     virtual void execRendering();
@@ -93,11 +91,8 @@ protected:
     std::queue<std::pair<float, kvs::Quat>>& path() { return m_path; }
     void createPath();
     std::string outputFinalImageName( const size_t level );
-
 };
 
-} // end of namespace local
+} // end of namespace InSituVis
 
 #include "CameraFocusPredefinedControlledAdaptor.hpp"
-
-//#endif 
