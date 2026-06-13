@@ -58,8 +58,8 @@ public:
     void setOutputColorImage( const bool color = true ) { m_image_type = color; }
     void setEstimatedZoomPosition( const kvs::Vec3& position ) { m_estimated_zoom_position = position; }
     void setEstimatedZoomLevel( const size_t level ) { m_estimated_zoom_level = level; }
-    bool isAutoZoomingEnabled() { return m_enable_auto_zooming; }
-    bool isOutputColorImage() { return m_image_type; }
+    bool isAutoZoomingEnabled() const { return m_enable_auto_zooming; }
+    bool isOutputColorImage() const { return m_image_type; }
     kvs::Vec3 estimatedZoomPosition() const { return m_estimated_zoom_position; }
     size_t estimatedZoomLevel() const { return m_estimated_zoom_level; }
     size_t candidateNum() const { return m_candidate_num; }

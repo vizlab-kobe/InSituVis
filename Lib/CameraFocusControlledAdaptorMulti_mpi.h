@@ -49,8 +49,8 @@ public:
     kvs::mpi::StampTimer& entrTimer() { return m_entr_timer; }
     kvs::mpi::StampTimer& focusTimer() { return m_focus_timer; }
     kvs::mpi::StampTimer& zoomTimer() { return m_zoom_timer; }
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
-    virtual bool dump();
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
 
     size_t zoomLevel() const { return m_zoom_level; }
@@ -79,9 +79,9 @@ protected:
         const Location& location,
         const kvs::Vec3 focus );
 
-    virtual void execRendering();
-    virtual void process( const Data& data );
-    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus, const int route_num );
+    void execRendering() override;
+    void process( const Data& data ) override;
+    void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus, const int route_num ) override;
 
     std::string outputFinalImageName( const size_t numImages, const size_t level, const size_t from_to );
 

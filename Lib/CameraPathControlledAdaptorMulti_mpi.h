@@ -50,7 +50,7 @@ public:
     kvs::mpi::StampTimer& zoomTimer() { return m_zoom_timer; }
     size_t zoomLevel() const { return m_zoom_level; }
     const kvs::Vec2ui& frameDivisions() const { return m_frame_divs; }
-    const kvs::Vec3ui& viewpointDimentions() const { return m_viewDim; }
+    const kvs::Vec3ui& viewpointDimensions() const { return m_viewDim; }
     const kvs::Real32& depth() const { return m_depth; }
     int routeNum() const { return m_route_num; }
 

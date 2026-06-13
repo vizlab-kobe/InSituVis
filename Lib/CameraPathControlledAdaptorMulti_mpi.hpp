@@ -145,8 +145,8 @@ inline std::vector<int> CameraPathControlledAdaptorMulti::getMaximalLocations(
     const std::vector<Viewpoint::Location>& locations,
     const std::vector<float>& entropies )
 {
-    const int rows    = this->viewpointDimentions().y();
-    const int columns = this->viewpointDimentions().z();
+    const int rows    = this->viewpointDimensions().y();
+    const int columns = this->viewpointDimensions().z();
 
     if ( entropies.size() != static_cast<size_t>(columns * rows) )
     {
