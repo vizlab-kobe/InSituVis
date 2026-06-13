@@ -30,7 +30,7 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-    bool m_enable_output_image_depth = false;
+    // bool m_enable_output_image_depth = false;
     // bool m_enable_output_evaluation_image = true;
     bool m_enable_output_evaluation_image = false;
     bool m_enable_output_evaluation_image_depth = false;

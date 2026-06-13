@@ -30,7 +30,7 @@ public:
     using Location = Viewpoint::Location;
 
 private:
-    bool m_enable_output_image_depth = false;
+    // bool m_enable_output_image_depth = false;
     kvs::mpi::StampTimer m_entr_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_focus_timer{ BaseClass::world() }; ///< timer for entropy evaluation
     kvs::mpi::StampTimer m_zoom_timer{ BaseClass::world() }; ///< timer for entropy evaluation

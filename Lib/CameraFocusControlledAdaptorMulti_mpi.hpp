@@ -28,7 +28,7 @@ CameraFocusControlledAdaptorMulti::erpLocation(
     const auto rot = Controller::erpRotation();
     const auto p = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, rad,   0.0f } ), rot );
     const auto u = kvs::Quat::Rotate( kvs::Vec3( { 0.0f, 0.0f, -1.0f } ), rot );
-    const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
+    //const auto l = kvs::Vec3( { 0.0f, 0.0f, 0.0f } );
     // return this->focusedLocation( { index, dir, p, u, rot, l }, focus );
     return  { index, dir, p, u, rot, focus };
 }
@@ -174,7 +174,7 @@ inline void CameraFocusControlledAdaptorMulti::execRendering()
         BaseClass::world().broadcast( max_entropy );
         const auto& max_location = BaseClass::viewpoint().at( max_index );
         const auto max_position = max_location.position;
-        const auto max_rotation = max_location.rotation;
+        //const auto max_rotation = max_location.rotation;
         Controller::setMaxIndex( max_index );
         //Controller::setMaxRotation( max_rotation ); //yet
         Controller::setMaxEntropy( max_entropy );

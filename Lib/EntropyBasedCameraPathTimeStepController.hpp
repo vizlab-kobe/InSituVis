@@ -81,7 +81,8 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
                     const auto V_prv = previousData();
                     auto P_prv = kvs::AnyValueArray();
                     auto P_crr = kvs::AnyValueArray();
-                    if( V_prv.size() != 0 & V_crr.size() != 0){
+                    if ( V_prv.size() != 0 && V_crr.size() != 0 )
+                    {
                         P_prv = Volume::DownCast( V_prv.front().get() )->values();
                         P_crr = Volume::DownCast( V_crr.front().get() )->values();
                     }
@@ -89,7 +90,8 @@ inline void EntropyBasedCameraPathTimeStepController::push( const Data& data )
                     m_divergences.push_back( D_crr );
                     var_threshold.push_back( D_thr );
 
-                    if( this->isThresholdDeterminationMethod() == ADAPTIVE && m_divergences.size() > 10){
+                    if ( this->isThresholdDeterminationMethod() == ADAPTIVE && m_divergences.size() > 10 )
+                    {
                         var_divergences = m_divergences;
                         std::sort(var_divergences.begin(),var_divergences.end());
                         m_threshold = var_divergences[(int)(var_divergences.size()*m_reduction_rate)];

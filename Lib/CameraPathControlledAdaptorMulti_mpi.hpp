@@ -227,7 +227,7 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
     float zoom_time  = 0.0f;
 
     float max_entropy = -1.0f;
-    int   max_index   = 0;
+//    int   max_index   = 0;
 
     std::vector<float> entropies;
     std::vector<FrameBuffer> frame_buffers;
@@ -251,7 +251,7 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
                 if ( e > max_entropy )
                 {
                     max_entropy = e;
-                    max_index = static_cast<int>(location.index);
+//                    max_index = static_cast<int>(location.index);
                 }
             }
             timer.stop();
@@ -422,9 +422,9 @@ inline void CameraPathControlledAdaptorMulti::execRendering()
             timer.start();
             if ( BaseClass::world().isRoot() )
             {
-                const auto& p = location.position;
-                const auto& a = location.look_at;
-                const auto& u = location.up_vector;
+                //const auto& p = location.position;
+                //const auto& a = location.look_at;
+                //const auto& u = location.up_vector;
 
                 // std::cerr
                 //     << "[OUT][VIEWPOINT]"

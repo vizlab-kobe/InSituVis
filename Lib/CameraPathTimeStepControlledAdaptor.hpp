@@ -38,7 +38,7 @@ inline bool CameraPathTimeStepControlledAdaptor::dump()
     const auto basedir = BaseClass::outputDirectory().baseDirectoryName() + "/";
     ret = entr_timer_list.write( basedir + "ent_proc_time.csv" );
 
-    const auto interval = BaseClass::analysisInterval();
+    //const auto interval = BaseClass::analysisInterval();
     const auto directory = BaseClass::outputDirectory();
     const auto File = [&]( const std::string& name ) { return Controller::logDataFilename( name, directory ); };
     // Controller::outputPathEntropies( File( "output_path_entropies" ), interval );
