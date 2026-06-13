@@ -60,14 +60,15 @@ public:
     void setAlphaBlendingEnabled( const bool enable = true ) { m_enable_alpha_blending = enable; }
     bool isAlphaBlendingEnabled() const { return m_enable_alpha_blending; }
 
-    virtual bool initialize();
-    virtual bool finalize();
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
-    virtual bool dump();
+    bool initialize() override;
+    bool finalize() override;
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
 
 protected:
     using BaseClass::drawScreen;
-    virtual void execRendering();
+
+    void execRendering() override;
     virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func );
 
     float rendTime() const { return m_rend_time; }

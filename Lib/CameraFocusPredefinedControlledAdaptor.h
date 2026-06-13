@@ -81,7 +81,7 @@ public:
     void popMaxFocusPoints() { m_max_focus_points.erase( m_max_focus_points.begin() ); }
 
 protected:
-    virtual void execRendering();
+    void execRendering() override;
     std::vector<kvs::Vec3> buildSphereDirections(size_t t);
     kvs::ValueArray<float> analyzeRegionDistribution( const kvs::Vec3ui& dims,const kvs::Vec3ui& region_min,const kvs::Vec3ui& region_max );
     float computeEntropy( const kvs::ValueArray<float>& histogram );

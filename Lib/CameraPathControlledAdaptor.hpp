@@ -175,7 +175,7 @@ inline void CameraPathControlledAdaptor::process( const Data& data )
     this->execRendering();
 }
 
-inline void CameraPathControlledAdaptor::process( const Data& data, const float radius, const kvs::Quaternion& rotation )
+inline void CameraPathControlledAdaptor::process( const Data& data, const float radius, const kvs::Quat& rotation )
 {
     const auto current_step = BaseClass::timeStep();
 

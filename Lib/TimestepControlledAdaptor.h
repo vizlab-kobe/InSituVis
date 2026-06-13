@@ -24,10 +24,10 @@ public:
     TimestepControlledAdaptor() = default;
     virtual ~TimestepControlledAdaptor() = default;
 
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
 
 private:
-    void process( const Data& data );
+    void process( const Data& data ) override;
 };
 
 } // end of namespace InSituVis

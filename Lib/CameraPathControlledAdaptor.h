@@ -35,8 +35,8 @@ public:
 
     kvs::StampTimer& entrTimer() { return m_entr_timer; }
 
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
-    virtual bool dump();
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
     void setFinalTimeStep( const size_t step ) { m_final_time_step = step; }
 
 protected:
@@ -46,9 +46,9 @@ protected:
         const size_t index = 999999,
         const Viewpoint::Direction dir = Viewpoint::Uni );
 
-    virtual void execRendering();
-    virtual void process( const Data& data );
-    virtual void process( const Data& data , const float radius, const kvs::Quaternion& rotation );
+    void execRendering() override;
+    void process( const Data& data ) override;
+    void process( const Data& data , const float radius, const kvs::Quat& rotation ) override;
 
     std::string outputColorImageName( const Viewpoint::Location& location );
     std::string outputDepthImageName( const Viewpoint::Location& location );

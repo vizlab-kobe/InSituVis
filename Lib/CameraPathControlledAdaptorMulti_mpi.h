@@ -61,8 +61,8 @@ public:
     void setDepth( const kvs::Real32& depth ){ m_depth = depth; }
     void setViewDim( const kvs::Vec3ui& viewDim ){ m_viewDim = viewDim; }
 
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
-    virtual bool dump();
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
+    bool dump() override;
 
     // backward compatibility
     const kvs::Vec3ui& viewpointDimention() const { return this->viewpointDimensions(); }
@@ -79,9 +79,9 @@ protected:
         const Location& location,
         const kvs::Vec3 focus );
 
-    virtual void execRendering();
-    virtual void process( const Data& data );
-    virtual void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus, const int route_num );
+    void execRendering() override;
+    void process( const Data& data ) override;
+    void process( const Data& data, const float radius, const kvs::Quaternion& rotation, const kvs::Vec3& focus, const int route_num ) override;
 
     std::string outputFinalImageName( const Viewpoint::Location& location, const size_t numImages, const size_t level, const size_t from_to );
 

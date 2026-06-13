@@ -28,11 +28,11 @@ public:
     TimestepControlledAdaptor( const MPI_Comm world = MPI_COMM_WORLD, const int root = 0 ): BaseClass( world, root ) {}
     virtual ~TimestepControlledAdaptor() = default;
 
-    virtual void exec( const BaseClass::SimTime sim_time = {} );
+    void exec( const BaseClass::SimTime sim_time = {} ) override;
 
 private:
-    void process( const Data& data );
-    float divergence( const Controller::Values& P0, const Controller::Values& P1 );
+    void process( const Data& data ) override;
+    float divergence( const Controller::Values& P0, const Controller::Values& P1 ) override;
 };
 
 } // end of namespace mpi

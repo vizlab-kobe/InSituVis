@@ -57,7 +57,7 @@ public:
 
 private:
 //    virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func = [] ( const FrameBuffer& ) {} );
-    virtual FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func );
+    FrameBuffer drawScreen( std::function<void(const FrameBuffer&)> func ) override;
 };
 
 } // end of namespace mpi

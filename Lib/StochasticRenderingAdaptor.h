@@ -37,7 +37,7 @@ public:
     }
 
 private:
-    virtual ColorBuffer drawScreen();
+    ColorBuffer drawScreen() override;
 //    virtual ColorBuffer drawColorBuffer();
 };
 
